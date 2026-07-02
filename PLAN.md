@@ -39,8 +39,8 @@ Build Mycelium — a relationship management system for social purpose organisat
 
 ### Phase 2: Network (Weeks 7-12)
 
-- [ ] Network data model — network_links table, strength calculation
-- [ ] Network link inference — detect connections from co-mentioned moments
+- [x] Network data model — network_links table, strength calculation
+- [x] Network link inference — detect connections from co-mentioned moments
 - [ ] Cluster detection — algorithm for identifying densely connected groups
 - [ ] D3.js network view — force-directed graph, nodes sized by strength
 - [ ] Network interactions — click, hover, drag, zoom levels, filtering

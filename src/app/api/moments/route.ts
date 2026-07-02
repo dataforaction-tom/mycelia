@@ -4,6 +4,7 @@ import { moments, momentConnections, organisations } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { createMomentSchema, listMomentsSchema } from "@/lib/validators/moments";
+import { strengthenLinksForMoment } from "@/lib/network/infer-links";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { and, eq, asc, desc, count, gte } from "drizzle-orm";
 
@@ -148,6 +149,13 @@ export async function POST(request: NextRequest) {
           connectionId,
         }))
       );
+
+      if (parsed.data.connectionIds.length >= 2) {
+        await strengthenLinksForMoment(
+          organisationId,
+          parsed.data.connectionIds
+        );
+      }
     }
 
     return successResponse(moment, 201);

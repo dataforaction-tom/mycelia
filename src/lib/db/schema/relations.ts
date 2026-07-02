@@ -5,6 +5,7 @@ import { spaces } from "./spaces";
 import { connections, connectionSpaces } from "./connections";
 import { moments, momentConnections } from "./moments";
 import { qualities } from "./qualities";
+import { networkLinks } from "./network-links";
 
 // Auth relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -58,6 +59,8 @@ export const connectionsRelations = relations(connections, ({ one, many }) => ({
   connectionSpaces: many(connectionSpaces),
   momentConnections: many(momentConnections),
   qualities: many(qualities),
+  sourceLinks: many(networkLinks, { relationName: "sourceLinks" }),
+  targetLinks: many(networkLinks, { relationName: "targetLinks" }),
 }));
 
 export const connectionSpacesRelations = relations(
@@ -114,5 +117,23 @@ export const qualitiesRelations = relations(qualities, ({ one }) => ({
   moment: one(moments, {
     fields: [qualities.momentId],
     references: [moments.id],
+  }),
+}));
+
+// Network link relations
+export const networkLinksRelations = relations(networkLinks, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [networkLinks.organisationId],
+    references: [organisations.id],
+  }),
+  sourceConnection: one(connections, {
+    fields: [networkLinks.sourceConnectionId],
+    references: [connections.id],
+    relationName: "sourceLinks",
+  }),
+  targetConnection: one(connections, {
+    fields: [networkLinks.targetConnectionId],
+    references: [connections.id],
+    relationName: "targetLinks",
   }),
 }));

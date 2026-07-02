@@ -39,3 +39,9 @@ export const qualitySourceEnum = pgEnum("quality_source", [
   "confirmed",
   "manual",
 ]);
+
+export const linkSourceEnum = pgEnum("link_source", [
+  "inferred",
+  "confirmed",
+  "manual",
+]);

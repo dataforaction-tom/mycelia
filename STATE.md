@@ -36,6 +36,7 @@ stateDiagram-v2
 | Unit tests | ✅ Done | 12 tests (slugify + permissions) |
 | Homepage flow | ✅ Done | CTA for unauth, auto-redirect for auth users |
 | Network data model | ✅ Done | `network_links` table, canonical pair strength calc, co-mention inference hook, `GET /api/network` |
+| Cluster detection | ✅ Done | Deterministic label propagation (`src/lib/network/clusters.ts`), wired into `GET /api/network` as `clusterId` per node |
 | DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
 | Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |
@@ -82,7 +83,7 @@ flowchart LR
 - `npm run build` — passes (24 routes, 0 errors)
 - `npm run lint` — passes
 - `npx tsc --noEmit` — passes
-- `npm test` — 19 tests pass (slugify: 6, permissions: 6, network strength: 7)
+- `npm test` — 25 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6)
 - `npm run lint` — 1 pre-existing error unrelated to this work (`settings/members/page.tsx` setState-in-effect)
 
 <!--

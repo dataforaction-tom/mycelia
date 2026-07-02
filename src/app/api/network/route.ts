@@ -4,6 +4,7 @@ import { networkLinks, connections } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { getNetworkSchema } from "@/lib/validators/network";
+import { detectClusters } from "@/lib/network/clusters";
 import { and, eq, gte } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -50,7 +51,13 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    return successResponse({ nodes, edges });
+    const clusterMap = detectClusters(nodes, edges);
+    const nodesWithClusters = nodes.map((node) => ({
+      ...node,
+      clusterId: clusterMap.get(node.id) ?? node.id,
+    }));
+
+    return successResponse({ nodes: nodesWithClusters, edges });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);

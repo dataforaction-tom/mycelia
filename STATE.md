@@ -37,6 +37,7 @@ stateDiagram-v2
 | Homepage flow | ✅ Done | CTA for unauth, auto-redirect for auth users |
 | Network data model | ✅ Done | `network_links` table, canonical pair strength calc, co-mention inference hook, `GET /api/network` |
 | Cluster detection | ✅ Done | Deterministic label propagation (`src/lib/network/clusters.ts`), wired into `GET /api/network` as `clusterId` per node |
+| D3 network view | ✅ Done | `/{orgSlug}/network` page, static force-directed SVG render, nodes sized/colored, edges styled by strength. No drag/zoom/click/filter yet — separate PLAN.md task |
 | DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
 | Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |
@@ -72,7 +73,7 @@ flowchart LR
 
 | Dependency | Status | Notes |
 |------------|--------|-------|
-| Neon Postgres | Not verified | DATABASE_URL is in .env.example — needs .env.local |
+| Neon Postgres | Configured | `DATABASE_URL` is set in `.env.local`; dev server boots and `/api/network` responds (401 unauthenticated, as expected) — full authenticated flow still needs Google OAuth |
 | Google OAuth | Not set up | Need AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET |
 | AUTH_SECRET | Set in .env.example | Run `npx auth secret` to set in .env.local |
 | Resend (email) | Not set up | Need AUTH_RESEND_KEY |
@@ -80,11 +81,22 @@ flowchart LR
 
 ## Build Status
 
-- `npm run build` — passes (24 routes, 0 errors)
-- `npm run lint` — passes
+- `npm run build` — passes (26 routes, 0 errors)
 - `npx tsc --noEmit` — passes
 - `npm test` — 25 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6)
-- `npm run lint` — 1 pre-existing error unrelated to this work (`settings/members/page.tsx` setState-in-effect)
+- `npm run lint` — 1 pre-existing error unrelated to network work (`settings/members/page.tsx` setState-in-effect)
+- Dev server smoke test: boots cleanly against the real Neon DB, `/api/network` correctly 401s unauthenticated, `/` returns 200
+
+## Known Issues (additions)
+
+- **jsdom test environment is broken in this dev environment**: Node is
+  v20.18.1, but jsdom 27's `@csstools/css-calc` (via `@asamuzakjp/css-color`)
+  requires Node ≥20.19 and ships an ESM-only build that fails a CJS
+  `require()` at vitest worker startup (`ERR_REQUIRE_ESM`). This means no
+  `@testing-library/react` component test can run here until Node is
+  upgraded — not just the "cosmetic" engine warning previously noted.
+  A planned smoke test for `network-graph.tsx` was dropped for this reason;
+  see MISTAKES.md.
 
 <!--
 Keep this file as the single source of truth for "where are we?"

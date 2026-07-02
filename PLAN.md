@@ -42,7 +42,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Network data model — network_links table, strength calculation
 - [x] Network link inference — detect connections from co-mentioned moments
 - [x] Cluster detection — algorithm for identifying densely connected groups
-- [ ] D3.js network view — force-directed graph, nodes sized by strength
+- [x] D3.js network view — force-directed graph, nodes sized by strength
 - [ ] Network interactions — click, hover, drag, zoom levels, filtering
 - [ ] WebGL rendering — for networks >500 nodes
 - [ ] Connection story view — thread display, quality indicators, moment stream

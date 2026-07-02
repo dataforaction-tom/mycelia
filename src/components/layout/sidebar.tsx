@@ -79,6 +79,30 @@ function getNavItems(orgSlug: string): NavItem[] {
     ),
   },
   {
+    label: "Network",
+    href: `/${orgSlug}/network`,
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="5" cy="6" r="3" />
+        <circle cx="19" cy="6" r="3" />
+        <circle cx="12" cy="18" r="3" />
+        <path d="M7.5 7.5 10.5 16" />
+        <path d="M16.5 7.5 13.5 16" />
+        <path d="M8 6h8" />
+      </svg>
+    ),
+  },
+  {
     label: "Settings",
     href: `/${orgSlug}/settings`,
     icon: (

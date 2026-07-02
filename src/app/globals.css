@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf6f1;
+  --foreground: #3d2c1e;
+  --terracotta: #c67a4a;
+  --terracotta-light: #d49a76;
+  --terracotta-dark: #a85d30;
+  --moss: #6b8f5e;
+  --moss-light: #8aad7e;
+  --moss-dark: #4e6d43;
+  --bark: #5c4332;
+  --bark-light: #7a5d4a;
+  --bark-dark: #3d2c1e;
+  --cream: #faf6f1;
+  --cream-dark: #f0e8dd;
+  --amber: #d4953a;
+  --amber-light: #e8b96a;
+  --sky: #6ba3be;
+  --sky-light: #8ebfd4;
+  --muted: #9c8b7a;
+  --muted-light: #c4b8ab;
+  --border: #e2d8cc;
+  --destructive: #c44a4a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-light: var(--terracotta-light);
+  --color-terracotta-dark: var(--terracotta-dark);
+  --color-moss: var(--moss);
+  --color-moss-light: var(--moss-light);
+  --color-moss-dark: var(--moss-dark);
+  --color-bark: var(--bark);
+  --color-bark-light: var(--bark-light);
+  --color-bark-dark: var(--bark-dark);
+  --color-cream: var(--cream);
+  --color-cream-dark: var(--cream-dark);
+  --color-amber: var(--amber);
+  --color-amber-light: var(--amber-light);
+  --color-sky: var(--sky);
+  --color-sky-light: var(--sky-light);
+  --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --font-sans: var(--font-dm-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}

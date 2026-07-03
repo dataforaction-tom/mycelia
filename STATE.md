@@ -41,6 +41,7 @@ stateDiagram-v2
 | Network interactions | ✅ Done | Pan/zoom, node drag, hover tooltip, click-to-navigate to connection detail, type/strength/unconnected filters, search-and-center (`network-graph.tsx`, `network-controls.tsx`) |
 | Connection story view | ✅ Done | Story section always visible (with empty state), moment stream now reuses `MomentList`/`MomentCard` |
 | Quality spectrum UI | ✅ Done | 5 hardcoded spectrums (depth/reciprocity/formality/activity/maturity), manual position-setting via `POST /api/connections/[connectionId]/qualities`, sparkline history, wired into connection detail page |
+| AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config, no feature wired to it yet — that's the next task |
 | DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
 | Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |
@@ -81,12 +82,14 @@ flowchart LR
 | AUTH_SECRET | Set in .env.example | Run `npx auth secret` to set in .env.local |
 | Resend (email) | Not set up | Need AUTH_RESEND_KEY |
 | Stripe | Not set up | Need STRIPE_SECRET_KEY + price IDs |
+| OpenRouter | Not set up | Need OPENROUTER_API_KEY — falls back to local Ollama automatically if unset |
+| Ollama (local) | Optional | `OLLAMA_BASE_URL` defaults to `http://localhost:11434/v1`, `OLLAMA_MODEL` defaults to `llama3.2` — used as fallback when OpenRouter fails or is unconfigured |
 
 ## Build Status
 
 - `npm run build` — passes (26 routes, 0 errors)
 - `npx tsc --noEmit` — passes
-- `npm test` — 25 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6)
+- `npm test` — 28 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6, AI fallback: 3)
 - `npm run lint` — 1 pre-existing error unrelated to network work (`settings/members/page.tsx` setState-in-effect)
 - Dev server smoke test: boots cleanly against the real Neon DB, `/api/network` correctly 401s unauthenticated, `/` returns 200
 

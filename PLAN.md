@@ -48,7 +48,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Connection story view — thread display, quality indicators, moment stream
 - [x] Quality spectrum UI — visual spectrum positions, quality arc over time
 - [ ] AI moment understanding — parse NL input, extract entities, infer qualities
-- [ ] AI provider registry — Vercel AI SDK, task-to-provider config, failover
+- [x] AI provider registry — Vercel AI SDK, task-to-provider config, failover (OpenRouter primary, local Ollama fallback)
 - [ ] Search — full-text + semantic search with pgvector, moment_embeddings table
 
 **Deliverable:** Network view as primary interface. Connections have stories and visible qualities.
@@ -120,6 +120,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 | Zod v3 compat layer (`zod/v3`) | Zod 4 breaking changes (enum args, no z.email), v3 API is stable | 2026-02-22 |
 | Centralized relations.ts | Avoids circular imports between schema files | 2026-02-22 |
 | `force-dynamic` on all DB-querying pages | Prevents prerender crashes without DATABASE_URL | 2026-02-22 |
+| OpenRouter + local Ollama fallback (not separate anthropic/openai/google clients) | One hosted gateway to hundreds of models, plus a free/offline local option; simpler than juggling per-vendor API keys | 2026-07-03 |
 
 ## Open Questions
 

@@ -24,6 +24,11 @@ Things that went wrong and what to do instead. This file is the most important f
 **Why it was wrong:** The Node engine mismatch was already flagged in STATE.md's Known Issues as "cosmetic only" — it isn't. It fully breaks the jsdom test environment, not just some peer-dependency install warnings.
 **Rule:** Before assuming an unused-but-configured test environment (jsdom, a DB test harness, etc.) actually works, run one trivial test in it first rather than building the real test on top of an unverified assumption. If it's broken, don't leave a permanently-failing test file in the repo — drop it and note the environment limitation in STATE.md instead.
 
+### 2026-07-03
+**What happened:** `.env.example` contained real, live secrets — an actual Neon `DATABASE_URL` with a working password and a real `AUTH_SECRET` — instead of placeholder values. Initially reported this as "committed to git history" and treated it as a git-history risk; on closer check, `.gitignore` has a blanket `.env*` rule, so `.env.example` was never actually tracked — it only ever existed on disk. The risk was overstated.
+**Why it was wrong:** Two mistakes stacked: (1) `.env.example` shouldn't hold real secrets regardless of git tracking — it's meant to be shareable, and the whole point is placeholder values; (2) I asserted "committed since e21576a" without first checking `git ls-files`/`git log -- .env.example`, i.e. stated a git-history claim without verifying it.
+**Rule:** Never state a git-history claim ("this is committed", "this went out in commit X") without first running the check (`git log --oneline -- <path>` or `git ls-files | grep <path>`) — verify before asserting, especially when the claim is being used to justify urgency to the user.
+
 ---
 
 ## Patterns That Didn't Work

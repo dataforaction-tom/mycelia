@@ -41,7 +41,8 @@ stateDiagram-v2
 | Network interactions | ✅ Done | Pan/zoom, node drag, hover tooltip, click-to-navigate to connection detail, type/strength/unconnected filters, search-and-center (`network-graph.tsx`, `network-controls.tsx`) |
 | Connection story view | ✅ Done | Story section always visible (with empty state), moment stream now reuses `MomentList`/`MomentCard` |
 | Quality spectrum UI | ✅ Done | 5 hardcoded spectrums (depth/reciprocity/formality/activity/maturity), manual position-setting via `POST /api/connections/[connectionId]/qualities`, sparkline history, wired into connection detail page |
-| AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config, no feature wired to it yet — that's the next task |
+| AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config |
+| AI moment understanding | ✅ Done | `POST /api/moments/understand` (read-only, no DB writes), structured output via `generateObject` (`run-object-task.ts`, `moment-understanding.ts`). Moment form now has an "Understand with AI" panel — matches existing connections (checkbox to add), lists unmatched entities (informational only, no auto-create), suggests quality signals (Apply button → existing qualities route), detects event date (prefills new date field). Moment form also gained its first-ever event date input |
 | DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
 | Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |
@@ -89,7 +90,7 @@ flowchart LR
 
 - `npm run build` — passes (26 routes, 0 errors)
 - `npx tsc --noEmit` — passes
-- `npm test` — 28 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6, AI fallback: 3)
+- `npm test` — 28 tests pass (slugify: 6, permissions: 6, network strength: 7, clusters: 6, AI fallback: 3). No new tests for the moment-understanding feature — it's thin wiring around already-tested fallback logic, no new branching to exercise
 - `npm run lint` — 1 pre-existing error unrelated to network work (`settings/members/page.tsx` setState-in-effect)
 - Dev server smoke test: boots cleanly against the real Neon DB, `/api/network` correctly 401s unauthenticated, `/` returns 200
 

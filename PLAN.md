@@ -47,7 +47,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [ ] WebGL rendering — for networks >500 nodes
 - [x] Connection story view — thread display, quality indicators, moment stream
 - [x] Quality spectrum UI — visual spectrum positions, quality arc over time
-- [ ] AI moment understanding — parse NL input, extract entities, infer qualities
+- [x] AI moment understanding — parse NL input, extract entities, infer qualities
 - [x] AI provider registry — Vercel AI SDK, task-to-provider config, failover (OpenRouter primary, local Ollama fallback)
 - [ ] Search — full-text + semantic search with pgvector, moment_embeddings table
 

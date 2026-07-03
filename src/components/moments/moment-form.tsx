@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectionPicker } from "@/components/connections/connection-picker";
+import { MomentUnderstandingPanel } from "@/components/moments/moment-understanding-panel";
 
 interface Connection {
   id: string;
@@ -29,6 +30,7 @@ export function MomentForm({
   const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
     preselectedConnectionId ? [preselectedConnectionId] : []
   );
+  const [eventDate, setEventDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +60,7 @@ export function MomentForm({
         body: JSON.stringify({
           content,
           connectionIds: selectedConnectionIds,
+          eventDate: eventDate || undefined,
         }),
       });
 
@@ -122,6 +125,22 @@ export function MomentForm({
         </p>
       </div>
 
+      <MomentUnderstandingPanel
+        content={content}
+        organisationId={organisationId}
+        existingConnections={connections}
+        onConnectionsMatched={(ids) =>
+          setSelectedConnectionIds((prev) => [
+            ...new Set([...prev, ...ids]),
+          ])
+        }
+        onEventDateDetected={(date) =>
+          setEventDate((prev) =>
+            prev || (date ? date.toISOString().slice(0, 10) : prev)
+          )
+        }
+      />
+
       <div>
         <label className="block text-sm font-medium text-bark">
           Who was involved?
@@ -133,6 +152,25 @@ export function MomentForm({
             onChange={setSelectedConnectionIds}
           />
         </div>
+      </div>
+
+      <div>
+        <label
+          htmlFor="eventDate"
+          className="block text-sm font-medium text-bark"
+        >
+          When did this happen?
+        </label>
+        <input
+          id="eventDate"
+          type="date"
+          value={eventDate}
+          onChange={(e) => setEventDate(e.target.value)}
+          className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+        />
+        <p className="mt-1 text-xs text-muted">
+          Defaults to when you record it, if left blank.
+        </p>
       </div>
 
       <button

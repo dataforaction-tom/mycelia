@@ -11,6 +11,7 @@ import {
 import { and, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { MomentList } from "@/components/moments/moment-list";
 
 export default async function ConnectionDetailPage({
   params,
@@ -88,51 +89,32 @@ export default async function ConnectionDetailPage({
         </Link>
       </div>
 
-      {connection.threadSummary && (
-        <div className="rounded-xl border border-border bg-white p-6">
-          <h2 className="text-sm font-semibold text-muted">Story</h2>
+      <div className="rounded-xl border border-border bg-white p-6">
+        <h2 className="text-sm font-semibold text-muted">Story</h2>
+        {connection.threadSummary ? (
           <p className="mt-2 font-serif text-bark leading-relaxed">
             {connection.threadSummary}
           </p>
-        </div>
-      )}
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            No story yet — as moments build up, a narrative summary of this
+            relationship will appear here.
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-white p-6">
+        <h2 className="text-sm font-semibold text-muted">Qualities</h2>
+        <p className="mt-2 text-sm text-muted">
+          Qualities help capture how this relationship feels — coming soon.
+        </p>
+      </div>
 
       <div>
         <h2 className="text-lg font-semibold text-bark">Moments</h2>
-        {connectionMoments.length === 0 ? (
-          <p className="mt-4 text-muted">
-            No moments recorded yet. Start by sharing what&apos;s happening in
-            this relationship.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {connectionMoments.map((moment) => (
-              <div
-                key={moment.id}
-                className="rounded-lg border border-border bg-white p-4"
-              >
-                <p className="text-sm text-bark">{moment.content}</p>
-                <div className="mt-2 flex items-center gap-2 text-xs text-muted">
-                  <span>
-                    {(moment.eventDate ?? moment.createdAt).toLocaleDateString(
-                      "en-GB",
-                      {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
-                  </span>
-                  {moment.source !== "manual" && (
-                    <span className="rounded bg-cream-dark px-1.5 py-0.5">
-                      {moment.source}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="mt-4">
+          <MomentList moments={connectionMoments} orgSlug={orgSlug} />
+        </div>
       </div>
     </div>
   );

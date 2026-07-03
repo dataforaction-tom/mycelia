@@ -43,6 +43,7 @@ stateDiagram-v2
 | Quality spectrum UI | ✅ Done | 5 hardcoded spectrums (depth/reciprocity/formality/activity/maturity), manual position-setting via `POST /api/connections/[connectionId]/qualities`, sparkline history, wired into connection detail page |
 | AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config |
 | AI moment understanding | ✅ Done | `POST /api/moments/understand` (read-only, no DB writes), structured output via `generateObject` (`run-object-task.ts`, `moment-understanding.ts`). Moment form now has an "Understand with AI" panel — matches existing connections (checkbox to add), lists unmatched entities (informational only, no auto-create), suggests quality signals (Apply button → existing qualities route), detects event date (prefills new date field). Moment form also gained its first-ever event date input |
+| Search | ✅ Done | Full-text search on moment content (Postgres `to_tsvector`/`plainto_tsquery` + GIN expression index), connection name search via `ilike`. `/{orgSlug}/search` server component, no new API route. Semantic/pgvector search deferred |
 | DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
 | Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |

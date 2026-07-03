@@ -1,0 +1,1 @@
+CREATE INDEX "moments_content_fts_idx" ON "moments" USING gin (to_tsvector('english', "content"));

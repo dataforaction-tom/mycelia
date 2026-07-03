@@ -49,7 +49,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Quality spectrum UI — visual spectrum positions, quality arc over time
 - [x] AI moment understanding — parse NL input, extract entities, infer qualities
 - [x] AI provider registry — Vercel AI SDK, task-to-provider config, failover (OpenRouter primary, local Ollama fallback)
-- [ ] Search — full-text + semantic search with pgvector, moment_embeddings table
+- [x] Search — full-text search across moment content (pgvector/semantic search deferred to a later item)
 
 **Deliverable:** Network view as primary interface. Connections have stories and visible qualities.
 

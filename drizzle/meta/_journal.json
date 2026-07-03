@@ -8,6 +8,13 @@
       "when": 1782999750447,
       "tag": "0000_cloudy_morlocks",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783100614759,
+      "tag": "0001_outstanding_bishop",
+      "breakpoints": true
     }
   ]
 }

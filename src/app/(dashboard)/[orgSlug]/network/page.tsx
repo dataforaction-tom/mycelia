@@ -28,7 +28,7 @@ export default async function NetworkPage({
           A force-directed view of your relational ecosystem.
         </p>
       </div>
-      <NetworkGraph organisationId={org.id} />
+      <NetworkGraph organisationId={org.id} orgSlug={orgSlug} />
     </div>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import * as d3 from "d3";
 import { CONNECTION_TYPE_COLORS, type ConnectionType } from "@/lib/config/theme";
+import { NetworkControls } from "./network-controls";
 
 interface NetworkNode {
   id: string;
@@ -24,18 +26,83 @@ interface NetworkData {
   edges: NetworkEdge[];
 }
 
+interface Tooltip {
+  x: number;
+  y: number;
+  name: string;
+  type: ConnectionType;
+  strength: number;
+}
+
 type SimNode = NetworkNode & d3.SimulationNodeDatum;
 type SimLink = d3.SimulationLinkDatum<SimNode> & { strength: number };
 
 const WIDTH = 800;
 const HEIGHT = 560;
+const ALL_TYPES: ConnectionType[] = [
+  "person",
+  "organisation",
+  "group",
+  "community",
+];
+const LABEL_ZOOM_THRESHOLD = 0.6;
 
-export function NetworkGraph({ organisationId }: { organisationId: string }) {
+export function NetworkGraph({
+  organisationId,
+  orgSlug,
+}: {
+  organisationId: string;
+  orgSlug: string;
+}) {
+  const router = useRouter();
   const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const nodeSelRef = useRef<d3.Selection<
+    SVGCircleElement,
+    SimNode,
+    SVGGElement,
+    unknown
+  > | null>(null);
+  const linkSelRef = useRef<d3.Selection<
+    SVGLineElement,
+    SimLink,
+    SVGGElement,
+    unknown
+  > | null>(null);
+  const labelSelRef = useRef<d3.Selection<
+    SVGTextElement,
+    SimNode,
+    SVGGElement,
+    unknown
+  > | null>(null);
+  const simNodesRef = useRef<SimNode[] | null>(null);
+  const strengthByIdRef = useRef<Map<string, number> | null>(null);
+  const zoomKRef = useRef(1);
+  const applyVisibilityRef = useRef<(() => void) | null>(null);
+
   const [data, setData] = useState<NetworkData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<Tooltip | null>(null);
 
+  const [minStrength, setMinStrength] = useState(0);
+  const [activeTypes, setActiveTypes] = useState<Set<ConnectionType>>(
+    () => new Set(ALL_TYPES)
+  );
+  const [hideUnconnected, setHideUnconnected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  function toggleType(type: ConnectionType) {
+    setActiveTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }
+
+  // Effect 1: fetch. Only organisationId/minStrength changes trigger a
+  // refetch, since minStrength is the only filter the server applies.
   useEffect(() => {
     let cancelled = false;
 
@@ -43,7 +110,7 @@ export function NetworkGraph({ organisationId }: { organisationId: string }) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/network", {
+        const res = await fetch(`/api/network?minStrength=${minStrength}`, {
           headers: { "x-organisation-id": organisationId },
         });
         const json = await res.json();
@@ -64,18 +131,20 @@ export function NetworkGraph({ organisationId }: { organisationId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [organisationId]);
+  }, [organisationId, minStrength]);
 
+  // Effect 2: D3 setup (simulation, zoom, drag, click, hover). Runs once
+  // per fetched dataset — filtering (Effect 3) never re-runs this.
   useEffect(() => {
     if (!data || !svgRef.current || data.nodes.length === 0) return;
 
-    // Degree-weighted "strength" proxy: sum of incident edge strengths per node.
     const strengthById = new Map<string, number>();
     for (const n of data.nodes) strengthById.set(n.id, 0);
     for (const e of data.edges) {
       strengthById.set(e.source, (strengthById.get(e.source) ?? 0) + e.strength);
       strengthById.set(e.target, (strengthById.get(e.target) ?? 0) + e.strength);
     }
+    strengthByIdRef.current = strengthById;
 
     const radiusScale = d3
       .scaleSqrt()
@@ -85,47 +154,53 @@ export function NetworkGraph({ organisationId }: { organisationId: string }) {
     const strokeWidthScale = d3.scaleLinear().domain([0, 1]).range([1, 5]);
     const strokeOpacityScale = d3.scaleLinear().domain([0, 1]).range([0.25, 0.85]);
 
-    // Simulation mutates node/link objects in place — copy to avoid touching props.
     const nodes: SimNode[] = data.nodes.map((n) => ({ ...n }));
     const links: SimLink[] = data.edges.map((e) => ({
       source: e.source,
       target: e.target,
       strength: e.strength,
     }));
+    simNodesRef.current = nodes;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const linkGroup = svg.append("g").attr("stroke-linecap", "round");
-    const nodeGroup = svg.append("g");
-    const labelGroup = svg.append("g");
+    const container = svg.append("g");
+    const linkGroup = container.append("g").attr("stroke-linecap", "round");
+    const nodeGroup = container.append("g");
+    const labelGroup = container.append("g");
 
     const link = linkGroup
-      .selectAll("line")
+      .selectAll<SVGLineElement, SimLink>("line")
       .data(links)
-      .join("line")
+      .join<SVGLineElement>("line")
       .attr("stroke", "#9c8b7a")
       .attr("stroke-width", (d) => strokeWidthScale(d.strength))
       .attr("stroke-opacity", (d) => strokeOpacityScale(d.strength));
 
     const node = nodeGroup
-      .selectAll("circle")
+      .selectAll<SVGCircleElement, SimNode>("circle")
       .data(nodes)
-      .join("circle")
+      .join<SVGCircleElement>("circle")
       .attr("r", (d) => radiusScale(strengthById.get(d.id) ?? 0))
       .attr("fill", (d) => CONNECTION_TYPE_COLORS[d.type])
       .attr("stroke", "#faf6f1")
-      .attr("stroke-width", 1.5);
+      .attr("stroke-width", 1.5)
+      .style("cursor", "pointer");
 
     const label = labelGroup
-      .selectAll("text")
+      .selectAll<SVGTextElement, SimNode>("text")
       .data(nodes)
-      .join("text")
+      .join<SVGTextElement>("text")
       .text((d) => d.name)
       .attr("font-size", 10)
       .attr("fill", "#5c4332")
       .attr("text-anchor", "middle")
       .attr("dy", (d) => -(radiusScale(strengthById.get(d.id) ?? 0) + 6));
+
+    nodeSelRef.current = node;
+    linkSelRef.current = link;
+    labelSelRef.current = label;
 
     function paint() {
       link
@@ -154,19 +229,134 @@ export function NetworkGraph({ organisationId }: { organisationId: string }) {
         d3.forceCollide<SimNode>(
           (d) => radiusScale(strengthById.get(d.id) ?? 0) + 4
         )
-      );
+      )
+      .on("tick", paint);
 
-    // Static render: settle the layout synchronously, then paint once.
-    // No drag/zoom/click interactivity — that belongs to a later task.
+    // Settle synchronously once for a static initial layout, then stop the
+    // auto-started timer — dragging later reheats it via alphaTarget.
     simulation.tick(300);
     simulation.stop();
     paint();
 
+    // Pan/zoom the whole graph. Label visibility is re-applied on zoom via
+    // applyVisibilityRef so filter state (set by Effect 3) is respected.
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.3, 6])
+      .on("zoom", (event) => {
+        container.attr("transform", event.transform.toString());
+        zoomKRef.current = event.transform.k;
+        applyVisibilityRef.current?.();
+      });
+    svg.call(zoom);
+    zoomRef.current = zoom;
+
+    // Drag to reposition. Pin released on drag end — the layout is meant
+    // for exploring, not manually arranging (no saved-position feature).
+    const drag = d3
+      .drag<SVGCircleElement, SimNode>()
+      .on("start", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on("drag", (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on("end", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      });
+    node.call(drag);
+
+    node.on("click", (event, d) => {
+      event.stopPropagation();
+      router.push(`/${orgSlug}/connections/${d.id}`);
+    });
+
+    node
+      .on("mouseenter", (event, d) => {
+        setTooltip({
+          x: event.clientX,
+          y: event.clientY,
+          name: d.name,
+          type: d.type,
+          strength: strengthById.get(d.id) ?? 0,
+        });
+      })
+      .on("mousemove", (event) => {
+        setTooltip((t) =>
+          t ? { ...t, x: event.clientX, y: event.clientY } : t
+        );
+      })
+      .on("mouseleave", () => setTooltip(null));
+
     return () => {
       simulation.stop();
       svg.selectAll("*").remove();
+      zoomRef.current = null;
+      nodeSelRef.current = null;
+      linkSelRef.current = null;
+      labelSelRef.current = null;
+      simNodesRef.current = null;
+      strengthByIdRef.current = null;
+      applyVisibilityRef.current = null;
+      setTooltip(null);
     };
-  }, [data]);
+  }, [data, orgSlug, router]);
+
+  // Effect 3: filter/search overlay. Only toggles display/highlight on
+  // already-rendered elements — never restarts the simulation, so the
+  // user's current pan/zoom and any dragged node positions are preserved.
+  useEffect(() => {
+    const nodeSel = nodeSelRef.current;
+    const linkSel = linkSelRef.current;
+    const labelSel = labelSelRef.current;
+    const nodes = simNodesRef.current;
+    const strengthById = strengthByIdRef.current;
+    if (!nodeSel || !linkSel || !labelSel || !nodes || !strengthById) return;
+
+    function nodeVisible(d: SimNode) {
+      const connected = (strengthById!.get(d.id) ?? 0) > 0;
+      return activeTypes.has(d.type) && (!hideUnconnected || connected);
+    }
+
+    const term = searchTerm.trim().toLowerCase();
+    const matched = term
+      ? nodes.find((n) => n.name.toLowerCase().includes(term))
+      : undefined;
+
+    nodeSel
+      .style("display", (d) => (nodeVisible(d) ? null : "none"))
+      .attr("stroke", (d) =>
+        matched && d.id === matched.id ? "#d4953a" : "#faf6f1"
+      )
+      .attr("stroke-width", (d) => (matched && d.id === matched.id ? 3 : 1.5));
+
+    linkSel.style("display", (d) => {
+      const source = d.source as SimNode;
+      const target = d.target as SimNode;
+      return nodeVisible(source) && nodeVisible(target) ? null : "none";
+    });
+
+    applyVisibilityRef.current = () => {
+      labelSel.style("display", (d) =>
+        nodeVisible(d) && zoomKRef.current >= LABEL_ZOOM_THRESHOLD ? null : "none"
+      );
+    };
+    applyVisibilityRef.current();
+
+    if (matched && zoomRef.current && svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      const transform = d3.zoomIdentity
+        .translate(WIDTH / 2, HEIGHT / 2)
+        .scale(2)
+        .translate(-(matched.x ?? 0), -(matched.y ?? 0));
+      svg.transition().duration(500).call(zoomRef.current.transform, transform);
+    }
+  }, [activeTypes, hideUnconnected, searchTerm, data]);
 
   if (isLoading) {
     return (
@@ -212,13 +402,38 @@ export function NetworkGraph({ organisationId }: { organisationId: string }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-white p-4">
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="w-full"
-        style={{ minWidth: WIDTH, height: HEIGHT }}
+    <div className="space-y-4">
+      <NetworkControls
+        activeTypes={activeTypes}
+        onToggleType={toggleType}
+        minStrength={minStrength}
+        onMinStrengthChange={setMinStrength}
+        hideUnconnected={hideUnconnected}
+        onHideUnconnectedChange={setHideUnconnected}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
       />
+
+      <div className="overflow-x-auto rounded-xl border border-border bg-white p-4">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          className="w-full"
+          style={{ minWidth: WIDTH, height: HEIGHT }}
+        />
+      </div>
+
+      {tooltip && (
+        <div
+          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-white px-3 py-2 text-xs shadow-lg"
+          style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
+        >
+          <p className="font-semibold text-bark">{tooltip.name}</p>
+          <p className="mt-0.5 capitalize text-muted">
+            {tooltip.type} · strength {tooltip.strength.toFixed(1)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

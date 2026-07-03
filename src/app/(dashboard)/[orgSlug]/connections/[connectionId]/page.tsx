@@ -7,11 +7,13 @@ import {
   connections,
   momentConnections,
   moments,
+  qualities,
 } from "@/lib/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, asc } from "drizzle-orm";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { MomentList } from "@/components/moments/moment-list";
+import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
 
 export default async function ConnectionDetailPage({
   params,
@@ -54,6 +56,16 @@ export default async function ConnectionDetailPage({
     .innerJoin(moments, eq(momentConnections.momentId, moments.id))
     .where(eq(momentConnections.connectionId, connectionId))
     .orderBy(desc(moments.createdAt));
+
+  const qualityRows = await db
+    .select({
+      spectrum: qualities.spectrum,
+      position: qualities.position,
+      createdAt: qualities.createdAt,
+    })
+    .from(qualities)
+    .where(eq(qualities.connectionId, connectionId))
+    .orderBy(asc(qualities.createdAt));
 
   const typeColors: Record<string, string> = {
     person: "bg-sky/10 text-sky",
@@ -105,9 +117,13 @@ export default async function ConnectionDetailPage({
 
       <div className="rounded-xl border border-border bg-white p-6">
         <h2 className="text-sm font-semibold text-muted">Qualities</h2>
-        <p className="mt-2 text-sm text-muted">
-          Qualities help capture how this relationship feels — coming soon.
-        </p>
+        <div className="mt-4">
+          <QualitySpectrums
+            qualities={qualityRows}
+            connectionId={connectionId}
+            organisationId={org.id}
+          />
+        </div>
       </div>
 
       <div>

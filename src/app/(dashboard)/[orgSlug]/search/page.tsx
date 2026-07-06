@@ -7,7 +7,7 @@ import {
   moments,
   momentConnections,
 } from "@/lib/db/schema";
-import { and, desc, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, max, sql } from "drizzle-orm";
 import { ConnectionCard } from "@/components/connections/connection-card";
 import { MomentList } from "@/components/moments/moment-list";
 
@@ -56,8 +56,8 @@ export default async function SearchPage({
     ? await db
         .select({
           connectionId: momentConnections.connectionId,
-          momentCount: sql<number>`count(${momentConnections.momentId})`,
-          lastMomentDate: sql<Date | null>`max(${moments.createdAt})`,
+          momentCount: count(momentConnections.momentId),
+          lastMomentDate: max(moments.createdAt),
         })
         .from(momentConnections)
         .innerJoin(moments, eq(momentConnections.momentId, moments.id))

@@ -44,8 +44,8 @@ stateDiagram-v2
 | AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config |
 | AI moment understanding | ✅ Done | `POST /api/moments/understand` (read-only, no DB writes), structured output via `generateObject` (`run-object-task.ts`, `moment-understanding.ts`). Moment form now has an "Understand with AI" panel — matches existing connections (checkbox to add), lists unmatched entities (informational only, no auto-create), suggests quality signals (Apply button → existing qualities route), detects event date (prefills new date field). Moment form also gained its first-ever event date input |
 | Search | ✅ Done | Full-text search on moment content (Postgres `to_tsvector`/`plainto_tsquery` + GIN expression index), connection name search via `ilike`. `/{orgSlug}/search` server component, no new API route. Semantic/pgvector search deferred |
-| DB migration | ⏳ Not started | Migration SQL generated (`drizzle/0000_cloudy_morlocks.sql`); need to run `db:push` against Neon once credentials work |
-| Runtime testing | ⏳ Not started | Needs Google OAuth + Neon credentials configured |
+| DB migration | ✅ Done | `db:push` applied to Neon 2026-07-06 (`drizzle-kit` needs `DATABASE_URL` passed explicitly — it doesn't read `.env.local` on its own) — all tables/indexes through the FTS index are live |
+| Runtime testing | ✅ Done | End-to-end smoke pass via the dev-login credentials flow, driven with `curl` (no browser tool available): sign-in → org → connections → moment with linked connections → network inference → cluster detection → qualities → search, all verified against the real DB. Found and fixed 2 real bugs (see MISTAKES.md 2026-07-06). Google OAuth/Resend still not configured — only the dev-only credentials provider was exercised |
 | Git init + first commit | ✅ Done | Initial commit `e21576a` |
 
 ## Architecture

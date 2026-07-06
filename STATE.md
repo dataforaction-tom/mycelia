@@ -25,7 +25,7 @@ stateDiagram-v2
 | Auth (NextAuth v5) | ✅ Done | Google + Resend providers, JWT, lazy adapter Proxy |
 | Middleware | ✅ Done | Protects org routes, allows /sign-in, /new-org, /api |
 | API routes | ✅ Done | 12 route files — orgs, members, connections, moments, stripe |
-| Dashboard pages | ✅ Done | 8 pages — dashboard, connections (list/new/detail), moments/new, settings, billing, members |
+| Dashboard pages | ✅ Done | 9 pages — dashboard, connections (list/new/detail), moments (list/new), settings, billing, members. `moments` index page added 2026-07-06 — sidebar had linked to it since Phase 1 but the page never existed (404), found via manual testing |
 | Auth pages | ✅ Done | Sign-in (Google + magic link), new-org creation |
 | UI components | ✅ Done | 12 primitives (button, input, card, badge, dialog, etc.) |
 | Layout (sidebar/header/mobile) | ✅ Done | Responsive sidebar, mobile drawer, dynamic org-slug nav |

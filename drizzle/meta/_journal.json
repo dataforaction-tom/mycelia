@@ -15,6 +15,13 @@
       "when": 1783100614759,
       "tag": "0001_outstanding_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783329614953,
+      "tag": "0002_opposite_vapor",
+      "breakpoints": true
     }
   ]
 }

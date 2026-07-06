@@ -8,12 +8,15 @@ import {
   momentConnections,
   moments,
   qualities,
+  connectionSpaces,
+  spaces,
 } from "@/lib/db/schema";
 import { and, eq, desc, asc } from "drizzle-orm";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { MomentList } from "@/components/moments/moment-list";
 import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
+import { SpacePicker } from "@/components/spaces/space-picker";
 
 export default async function ConnectionDetailPage({
   params,
@@ -67,6 +70,19 @@ export default async function ConnectionDetailPage({
     .from(qualities)
     .where(eq(qualities.connectionId, connectionId))
     .orderBy(asc(qualities.createdAt));
+
+  const allSpaces = await db
+    .select({ id: spaces.id, name: spaces.name })
+    .from(spaces)
+    .where(eq(spaces.organisationId, org.id))
+    .orderBy(asc(spaces.name));
+
+  const linkedSpaceIds = (
+    await db
+      .select({ spaceId: connectionSpaces.spaceId })
+      .from(connectionSpaces)
+      .where(eq(connectionSpaces.connectionId, connectionId))
+  ).map((row) => row.spaceId);
 
   const typeColors: Record<string, string> = {
     person: "bg-sky/10 text-sky",
@@ -123,6 +139,18 @@ export default async function ConnectionDetailPage({
             qualities={qualityRows}
             connectionId={connectionId}
             organisationId={org.id}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-white p-6">
+        <h2 className="text-sm font-semibold text-muted">Spaces</h2>
+        <div className="mt-4">
+          <SpacePicker
+            connectionId={connectionId}
+            organisationId={org.id}
+            allSpaces={allSpaces}
+            initialSelected={linkedSpaceIds}
           />
         </div>
       </div>

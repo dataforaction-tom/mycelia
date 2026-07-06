@@ -59,11 +59,11 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [ ] Pattern recognition engine — dormant connections, dependencies, gaps, themes
 - [ ] Observation generation — gentle insights delivered to users
 - [ ] Observation UI — display, respond, dismiss, learn from engagement
-- [ ] Quality inference from moments — auto-suggest spectrum position changes
+- [x] Quality inference from moments — auto-suggest spectrum position changes (built automatic, not suggest-then-confirm — see Decisions Made)
 - [ ] Dashboard view — ecosystem pulse, attention list, quality shifts, gap alerts
 - [ ] River view — chronological moment stream across org
 - [ ] Constellation view — cluster-based alternative network visualisation
-- [ ] Spaces — create, assign connections, filter views by space
+- [x] Spaces — create, assign connections, filter views by space (network-view overlay deferred to a follow-up task)
 - [ ] Full permission matrix — owner/admin/contributor/viewer with bitmask overrides
 
 **Deliverable:** Active AI observations and insights. Multiple views. Full permissions.
@@ -121,6 +121,12 @@ Build Mycelium — a relationship management system for social purpose organisat
 | Centralized relations.ts | Avoids circular imports between schema files | 2026-02-22 |
 | `force-dynamic` on all DB-querying pages | Prevents prerender crashes without DATABASE_URL | 2026-02-22 |
 | OpenRouter + local Ollama fallback (not separate anthropic/openai/google clients) | One hosted gateway to hundreds of models, plus a free/offline local option; simpler than juggling per-vendor API keys | 2026-07-03 |
+| Automatic quality inference on moment save (source: "inferred") | User explicitly requested qualities update automatically rather than suggest-then-confirm; qualitySourceEnum already anticipated this exact case | 2026-07-06 |
+| Spaces reused for projects/ideas (no new connection type) | User's instinct — a project isn't a relationship with the qualities spectrums people/orgs have; spaces already model "shared context tagging" | 2026-07-06 |
+
+## Follow-up Tasks
+
+- Network view overlay for spaces (show spaces as nodes, distinct shape/color, dashed edges to tagged connections) — deferred from the Spaces task above, reviewable independently since it needs visual iteration
 
 ## Open Questions
 

@@ -63,10 +63,7 @@ export async function GET(request: NextRequest) {
           eq(moments.id, momentConnections.momentId)
         )
         .where(
-          and(
-            eq(moments.organisationId, organisationId),
-            eq(momentConnections.connectionId, connectionId)
-          )
+          and(...conditions, eq(momentConnections.connectionId, connectionId))
         )
         .orderBy(orderFn(orderCol))
         .limit(limit)

@@ -29,7 +29,9 @@ export const moments = pgTable(
     aiExtraction: jsonb("ai_extraction")
       .$type<Record<string, unknown>>()
       .default({}),
-    spaceId: uuid("space_id").references(() => spaces.id),
+    spaceId: uuid("space_id").references(() => spaces.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
       .notNull()
       .defaultNow(),

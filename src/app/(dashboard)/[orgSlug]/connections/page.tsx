@@ -6,17 +6,23 @@ import {
   connections,
   momentConnections,
   moments,
+  connectionSpaces,
+  spaces,
 } from "@/lib/db/schema";
-import { eq, desc, count, max } from "drizzle-orm";
+import { and, eq, desc, count, max, asc } from "drizzle-orm";
 import Link from "next/link";
 import { ConnectionList } from "@/components/connections/connection-list";
+import { SpaceFilterSelect } from "@/components/spaces/space-filter-select";
 
 export default async function ConnectionsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ spaceId?: string }>;
 }) {
   const { orgSlug } = await params;
+  const { spaceId } = await searchParams;
 
   const [org] = await db
     .select()
@@ -26,11 +32,42 @@ export default async function ConnectionsPage({
 
   if (!org) return null;
 
-  const rows = await db
-    .select()
-    .from(connections)
-    .where(eq(connections.organisationId, org.id))
-    .orderBy(desc(connections.updatedAt));
+  const allSpaces = await db
+    .select({ id: spaces.id, name: spaces.name })
+    .from(spaces)
+    .where(eq(spaces.organisationId, org.id))
+    .orderBy(asc(spaces.name));
+
+  const rows = spaceId
+    ? await db
+        .select({
+          id: connections.id,
+          organisationId: connections.organisationId,
+          name: connections.name,
+          type: connections.type,
+          threadSummary: connections.threadSummary,
+          threadUpdatedAt: connections.threadUpdatedAt,
+          metadata: connections.metadata,
+          createdAt: connections.createdAt,
+          updatedAt: connections.updatedAt,
+        })
+        .from(connections)
+        .innerJoin(
+          connectionSpaces,
+          eq(connectionSpaces.connectionId, connections.id)
+        )
+        .where(
+          and(
+            eq(connections.organisationId, org.id),
+            eq(connectionSpaces.spaceId, spaceId)
+          )
+        )
+        .orderBy(desc(connections.updatedAt))
+    : await db
+        .select()
+        .from(connections)
+        .where(eq(connections.organisationId, org.id))
+        .orderBy(desc(connections.updatedAt));
 
   // Get last moment date and count for each connection
   const momentStats = await db
@@ -73,6 +110,10 @@ export default async function ConnectionsPage({
           Add connection
         </Link>
       </div>
+
+      {allSpaces.length > 0 && (
+        <SpaceFilterSelect spaces={allSpaces} selected={spaceId} />
+      )}
 
       <ConnectionList
         connections={connectionsWithStats}

@@ -11,10 +11,16 @@ interface Connection {
   type: string;
 }
 
+interface Space {
+  id: string;
+  name: string;
+}
+
 interface MomentFormProps {
   organisationId: string;
   orgSlug: string;
   connections: Connection[];
+  spaces: Space[];
   preselectedConnectionId?: string;
 }
 
@@ -22,6 +28,7 @@ export function MomentForm({
   organisationId,
   orgSlug,
   connections,
+  spaces,
   preselectedConnectionId,
 }: MomentFormProps) {
   const router = useRouter();
@@ -31,6 +38,7 @@ export function MomentForm({
     preselectedConnectionId ? [preselectedConnectionId] : []
   );
   const [eventDate, setEventDate] = useState("");
+  const [spaceId, setSpaceId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +69,7 @@ export function MomentForm({
           content,
           connectionIds: selectedConnectionIds,
           eventDate: eventDate || undefined,
+          spaceId: spaceId || undefined,
         }),
       });
 
@@ -171,6 +180,30 @@ export function MomentForm({
           Defaults to when you record it, if left blank.
         </p>
       </div>
+
+      {spaces.length > 0 && (
+        <div>
+          <label
+            htmlFor="spaceId"
+            className="block text-sm font-medium text-bark"
+          >
+            Space
+          </label>
+          <select
+            id="spaceId"
+            value={spaceId}
+            onChange={(e) => setSpaceId(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          >
+            <option value="">No space</option>
+            {spaces.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <button
         type="submit"

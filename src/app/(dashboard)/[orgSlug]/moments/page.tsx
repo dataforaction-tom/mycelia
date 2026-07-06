@@ -6,17 +6,22 @@ import {
   moments,
   momentConnections,
   connections,
+  spaces,
 } from "@/lib/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { and, eq, desc, inArray, asc } from "drizzle-orm";
 import Link from "next/link";
 import { MomentList } from "@/components/moments/moment-list";
+import { SpaceFilterSelect } from "@/components/spaces/space-filter-select";
 
 export default async function MomentsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ spaceId?: string }>;
 }) {
   const { orgSlug } = await params;
+  const { spaceId } = await searchParams;
 
   const [org] = await db
     .select()
@@ -25,6 +30,15 @@ export default async function MomentsPage({
     .limit(1);
 
   if (!org) return null;
+
+  const allSpaces = await db
+    .select({ id: spaces.id, name: spaces.name })
+    .from(spaces)
+    .where(eq(spaces.organisationId, org.id))
+    .orderBy(asc(spaces.name));
+
+  const conditions = [eq(moments.organisationId, org.id)];
+  if (spaceId) conditions.push(eq(moments.spaceId, spaceId));
 
   const rows = await db
     .select({
@@ -35,7 +49,7 @@ export default async function MomentsPage({
       eventDate: moments.eventDate,
     })
     .from(moments)
-    .where(eq(moments.organisationId, org.id))
+    .where(and(...conditions))
     .orderBy(desc(moments.createdAt));
 
   const links = rows.length
@@ -87,6 +101,10 @@ export default async function MomentsPage({
           Record a moment
         </Link>
       </div>
+
+      {allSpaces.length > 0 && (
+        <SpaceFilterSelect spaces={allSpaces} selected={spaceId} />
+      )}
 
       <MomentList moments={momentsWithConnections} orgSlug={orgSlug} />
     </div>

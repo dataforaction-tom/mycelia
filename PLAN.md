@@ -60,7 +60,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Observation generation — gentle insights delivered to users (plain templated content; AI-authored gentle phrasing + real dedup deferred to a follow-up)
 - [x] Observation UI — display, respond, dismiss (learn-from-engagement scoring is a non-goal for now — no accumulated data to learn from)
 - [x] Quality inference from moments — auto-suggest spectrum position changes (built automatic, not suggest-then-confirm — see Decisions Made)
-- [ ] Dashboard view — ecosystem pulse, attention list, quality shifts, gap alerts
+- [x] Dashboard view — ecosystem pulse, attention list, quality shifts (folded into attention list; gap alerts deferred, no data model — see Follow-up Tasks)
 - [ ] River view — chronological moment stream across org
 - [ ] Constellation view — cluster-based alternative network visualisation
 - [x] Spaces — create, assign connections, filter views by space (network-view overlay deferred to a follow-up task)
@@ -128,7 +128,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 
 - Network view overlay for spaces (show spaces as nodes, distinct shape/color, dashed edges to tagged connections) — deferred from the Spaces task above, reviewable independently since it needs visual iteration
 - Theme detection (cross-connection topic clustering from moment text) — deferred from the pattern recognition engine, needs AI/NLP batch analysis; natural fit alongside "Observation generation" since that task already needs AI for gentle-language wrapping
-- Gap detection (weak/absent community/geography coverage) — deferred from the pattern recognition engine; no data model exists for this at all yet, needs a data-model decision before it can be built
+- Gap detection (weak/absent community/geography coverage) — deferred from the pattern recognition engine and the Dashboard's "gap alerts"; no data model exists for this at all yet, needs a data-model decision before it can be built
 - AI-authored gentle phrasing + real dedup for observations — content is plain templated strings today, and the dedup guard is a naive existence check, not the described "learn from engagement" scoring
 
 ## Open Questions

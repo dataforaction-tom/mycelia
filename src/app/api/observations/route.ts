@@ -4,7 +4,7 @@ import { observations } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { listObservationsSchema } from "@/lib/validators/observations";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, inArray } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,6 +35,30 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(observations.createdAt))
       .limit(limit)
       .offset(offset);
+
+    // "seen" isn't a user decision, it's a read receipt — showing an
+    // observation to someone counts as seeing it, so this GET has the
+    // side effect of flushing "new" rows to "seen" rather than requiring
+    // a separate PATCH call per card on mount.
+    const newIds = rows
+      .filter((r) => r.status === "new")
+      .map((r) => r.id);
+
+    if (newIds.length) {
+      await db
+        .update(observations)
+        .set({ status: "seen" })
+        .where(
+          and(
+            eq(observations.organisationId, organisationId),
+            inArray(observations.id, newIds)
+          )
+        );
+
+      for (const row of rows) {
+        if (newIds.includes(row.id)) row.status = "seen";
+      }
+    }
 
     return successResponse({ items: rows });
   } catch (error) {

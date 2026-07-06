@@ -56,7 +56,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 ### Phase 3: Intelligence (Weeks 13-18)
 
 - [x] AI thread synthesis — generate narrative summaries from moments
-- [ ] Pattern recognition engine — dormant connections, dependencies, gaps, themes
+- [x] Pattern recognition engine — dormant connections, dependencies (themes/gaps deferred, see Follow-up Tasks)
 - [ ] Observation generation — gentle insights delivered to users
 - [ ] Observation UI — display, respond, dismiss, learn from engagement
 - [x] Quality inference from moments — auto-suggest spectrum position changes (built automatic, not suggest-then-confirm — see Decisions Made)
@@ -127,6 +127,8 @@ Build Mycelium — a relationship management system for social purpose organisat
 ## Follow-up Tasks
 
 - Network view overlay for spaces (show spaces as nodes, distinct shape/color, dashed edges to tagged connections) — deferred from the Spaces task above, reviewable independently since it needs visual iteration
+- Theme detection (cross-connection topic clustering from moment text) — deferred from the pattern recognition engine, needs AI/NLP batch analysis; natural fit alongside "Observation generation" since that task already needs AI for gentle-language wrapping
+- Gap detection (weak/absent community/geography coverage) — deferred from the pattern recognition engine; no data model exists for this at all yet, needs a data-model decision before it can be built
 
 ## Open Questions
 

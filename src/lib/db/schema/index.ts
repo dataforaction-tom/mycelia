@@ -6,4 +6,5 @@ export * from "./connections";
 export * from "./moments";
 export * from "./qualities";
 export * from "./network-links";
+export * from "./observations";
 export * from "./relations";

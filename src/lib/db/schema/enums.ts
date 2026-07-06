@@ -45,3 +45,25 @@ export const linkSourceEnum = pgEnum("link_source", [
   "confirmed",
   "manual",
 ]);
+
+export const observationTypeEnum = pgEnum("observation_type", [
+  "dormant",
+  "dependency",
+  "gap",
+  "theme",
+  "quality_shift",
+  "bridge_risk",
+]);
+
+export const observationSeverityEnum = pgEnum("observation_severity", [
+  "gentle",
+  "noteworthy",
+  "important",
+]);
+
+export const observationStatusEnum = pgEnum("observation_status", [
+  "new",
+  "seen",
+  "acted_on",
+  "dismissed",
+]);

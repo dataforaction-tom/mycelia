@@ -12,6 +12,7 @@ import { hasMinRole } from "@/lib/auth/permissions";
 import { createMomentSchema, listMomentsSchema } from "@/lib/validators/moments";
 import { strengthenLinksForMoment } from "@/lib/network/infer-links";
 import { inferQualitiesForMoment } from "@/lib/ai/quality-inference";
+import { synthesizeThread } from "@/lib/ai/thread-synthesis";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { and, eq, asc, desc, count, gte, inArray } from "drizzle-orm";
 
@@ -195,6 +196,55 @@ export async function POST(request: NextRequest) {
           moment.id,
           aiError
         );
+      }
+
+      // Best-effort, independent of the quality-inference call above —
+      // one connection's thread-synthesis failure shouldn't skip
+      // synthesis for the moment's other linked connections either.
+      for (const connectionId of parsed.data.connectionIds) {
+        try {
+          const [connectionRow] = await db
+            .select({
+              name: connections.name,
+              threadSummary: connections.threadSummary,
+            })
+            .from(connections)
+            .where(eq(connections.id, connectionId))
+            .limit(1);
+
+          if (!connectionRow) continue;
+
+          const recentMomentsDesc = await db
+            .select({
+              content: moments.content,
+              eventDate: moments.eventDate,
+              createdAt: moments.createdAt,
+            })
+            .from(momentConnections)
+            .innerJoin(moments, eq(momentConnections.momentId, moments.id))
+            .where(eq(momentConnections.connectionId, connectionId))
+            .orderBy(desc(moments.createdAt))
+            .limit(20);
+
+          if (recentMomentsDesc.length < 2) continue;
+
+          const threadSummary = await synthesizeThread(
+            connectionRow.name,
+            connectionRow.threadSummary,
+            recentMomentsDesc.slice().reverse()
+          );
+
+          await db
+            .update(connections)
+            .set({ threadSummary, threadUpdatedAt: new Date() })
+            .where(eq(connections.id, connectionId));
+        } catch (aiError) {
+          console.error(
+            "Thread synthesis failed for connection",
+            connectionId,
+            aiError
+          );
+        }
       }
     }
 

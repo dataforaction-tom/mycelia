@@ -55,7 +55,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 
 ### Phase 3: Intelligence (Weeks 13-18)
 
-- [ ] AI thread synthesis — generate narrative summaries from moments
+- [x] AI thread synthesis — generate narrative summaries from moments
 - [ ] Pattern recognition engine — dormant connections, dependencies, gaps, themes
 - [ ] Observation generation — gentle insights delivered to users
 - [ ] Observation UI — display, respond, dismiss, learn from engagement

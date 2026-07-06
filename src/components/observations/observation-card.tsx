@@ -28,6 +28,14 @@ const severityColors: Record<string, string> = {
   important: "bg-terracotta/10 text-terracotta",
 };
 
+// A soft severity accent along the card's left edge — colour does the
+// signalling so the actions can stay quiet
+const severityAccents: Record<string, string> = {
+  gentle: "border-l-sky/60",
+  noteworthy: "border-l-amber/70",
+  important: "border-l-terracotta/70",
+};
+
 const connectionTypeColors: Record<string, string> = {
   person: "bg-sky/10 text-sky",
   organisation: "bg-terracotta/10 text-terracotta",
@@ -90,7 +98,9 @@ export function ObservationCard({
   const isResolved = status === "acted_on" || status === "dismissed";
 
   return (
-    <div className="rounded-lg border border-border bg-white p-4">
+    <div
+      className={`rounded-xl border border-border bg-surface p-4 shadow-lift border-l-2 ${severityAccents[severity] ?? "border-l-border"}`}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-bark">{content}</p>
         <Badge className={severityColors[severity] ?? ""}>{severity}</Badge>
@@ -130,13 +140,13 @@ export function ObservationCard({
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="What did you do about this? (optional)"
-                className="flex-1 rounded-lg border border-border bg-white px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
               />
               <button
                 type="button"
                 onClick={() => updateStatus("acted_on", response || undefined)}
                 disabled={isSubmitting}
-                className="shrink-0 rounded-lg bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+                className="shrink-0 rounded-full bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
               >
                 {isSubmitting ? "Saving…" : "Save"}
               </button>
@@ -147,7 +157,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => setShowResponseInput(true)}
                 disabled={isSubmitting}
-                className="rounded-lg bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+                className="rounded-full border border-moss/40 px-3 py-1.5 text-xs font-medium text-moss-dark transition-colors hover:bg-moss/10 disabled:opacity-50"
               >
                 Mark as acted on
               </button>
@@ -155,7 +165,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => updateStatus("dismissed")}
                 disabled={isSubmitting}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-bark transition-colors hover:bg-cream-dark disabled:opacity-50"
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-cream-dark hover:text-bark disabled:opacity-50"
               >
                 Dismiss
               </button>

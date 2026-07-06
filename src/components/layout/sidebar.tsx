@@ -64,6 +64,7 @@ function getNavItems(orgSlug: string): NavItem[] {
   {
     label: "Moments",
     href: `/${orgSlug}/moments`,
+    // A ripple, not a clock — moments are disturbances on the surface
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -76,8 +77,10 @@ function getNavItems(orgSlug: string): NavItem[] {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+        <path d="M12 6.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5" />
+        <path d="M12 2.5A9.5 9.5 0 0 1 21.5 12 9.5 9.5 0 0 1 12 21.5" />
+        <path d="M6.5 8.2A5.5 5.5 0 0 0 6.5 15.8" />
       </svg>
     ),
   },
@@ -193,7 +196,7 @@ function Sidebar({
   const navItems = getNavItems(orgSlug);
 
   return (
-    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-border bg-cream md:flex">
+    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-border bg-surface-sunken md:flex">
       <OrgSwitcher organisations={organisations} currentSlug={orgSlug} />
 
       {/* Navigation */}
@@ -208,15 +211,15 @@ function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 isActive
-                  ? "bg-terracotta/10 text-terracotta"
-                  : "text-bark-light hover:bg-cream-dark hover:text-bark",
+                  ? "bg-surface text-terracotta-dark shadow-lift"
+                  : "text-bark-light hover:bg-surface/60 hover:text-bark",
               )}
             >
               <span
                 className={cn(
-                  "shrink-0",
+                  "shrink-0 transition-colors",
                   isActive ? "text-terracotta" : "text-muted",
                 )}
               >
@@ -232,7 +235,7 @@ function Sidebar({
       <div className="border-t border-border p-3">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cream-dark focus:outline-none">
+            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface/70 focus:outline-none">
               <Avatar className="h-8 w-8">
                 {userImage && (
                   <AvatarImage src={userImage} alt={userName ?? ""} />
@@ -268,7 +271,7 @@ function Sidebar({
               align="start"
               side="top"
               sideOffset={8}
-              className="z-50 min-w-[200px] rounded-lg border border-border bg-white p-1.5 shadow-md"
+              className="z-50 min-w-[200px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
             >
               <DropdownMenu.Item
                 onSelect={() => signOut({ callbackUrl: "/" })}

@@ -21,11 +21,12 @@ export default async function NetworkPage({
   if (!org) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="stagger-children space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-bark">Network</h1>
-        <p className="mt-1 text-sm text-muted">
-          A force-directed view of your relational ecosystem.
+        <h1 className="font-display text-4xl text-bark">The network</h1>
+        <p className="mt-2 text-muted">
+          Beneath the day-to-day, your relationships form a living web. This
+          is what it looks like right now.
         </p>
       </div>
       <NetworkViewToggle organisationId={org.id} orgSlug={orgSlug} />

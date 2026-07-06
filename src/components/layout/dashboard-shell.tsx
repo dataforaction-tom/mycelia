@@ -40,7 +40,9 @@ export function DashboardShell({
           userEmail={userEmail}
           userImage={userImage}
         />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        </main>
       </div>
     </div>
   );

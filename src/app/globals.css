@@ -1,32 +1,54 @@
 @import "tailwindcss";
 
+/*
+ * Mycelium design tokens.
+ *
+ * Two worlds share one system: the forest floor (warm, lit surfaces for
+ * daily work) and the underground (deep humus darkness for the network
+ * views, where connections glow). Components never hardcode hex values —
+ * they reach for these tokens so both worlds stay coherent.
+ */
 :root {
-  --background: #faf6f1;
-  --foreground: #3d2c1e;
-  --terracotta: #c67a4a;
-  --terracotta-light: #d49a76;
-  --terracotta-dark: #a85d30;
-  --moss: #6b8f5e;
-  --moss-light: #8aad7e;
-  --moss-dark: #4e6d43;
+  /* The forest floor — daily working surfaces */
+  --background: #faf6ef;
+  --foreground: #33261a;
+  --surface: #fffdf9;
+  --surface-sunken: #f3ecdf;
+  --terracotta: #c2683b;
+  --terracotta-light: #d69368;
+  --terracotta-dark: #a1522a;
+  --moss: #66845a;
+  --moss-light: #8aa87e;
+  --moss-dark: #4a6540;
   --bark: #5c4332;
   --bark-light: #7a5d4a;
-  --bark-dark: #3d2c1e;
-  --cream: #faf6f1;
-  --cream-dark: #f0e8dd;
-  --amber: #d4953a;
-  --amber-light: #e8b96a;
+  --bark-dark: #33261a;
+  --cream: #faf6ef;
+  --cream-dark: #f0e8da;
+  --amber: #d0912f;
+  --amber-light: #e6b866;
   --sky: #6ba3be;
   --sky-light: #8ebfd4;
-  --muted: #9c8b7a;
-  --muted-light: #c4b8ab;
-  --border: #e2d8cc;
-  --destructive: #c44a4a;
+  --muted: #96826f;
+  --muted-light: #c3b6a6;
+  --border: #e6dccb;
+  --destructive: #c04b3d;
+
+  /* The underground — where the network lives */
+  --soil: #141009;
+  --soil-raised: #1f1811;
+  --soil-line: #322718;
+  --spore: #e8c97d; /* bioluminescent amber — primary glow */
+  --hypha: #a8dfc2; /* pale fungal green — secondary glow */
+  --soil-ink: #ede4d3;
+  --soil-ink-soft: #a3937a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
   --color-terracotta: var(--terracotta);
   --color-terracotta-light: var(--terracotta-light);
   --color-terracotta-dark: var(--terracotta-dark);
@@ -46,11 +68,164 @@
   --color-muted-light: var(--muted-light);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-soil: var(--soil);
+  --color-soil-raised: var(--soil-raised);
+  --color-soil-line: var(--soil-line);
+  --color-spore: var(--spore);
+  --color-hypha: var(--hypha);
+  --color-soil-ink: var(--soil-ink);
+  --color-soil-ink-soft: var(--soil-ink-soft);
+
   --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-fraunces);
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-dm-mono);
+
+  --shadow-lift: 0 1px 2px rgb(51 38 26 / 0.04), 0 4px 16px rgb(51 38 26 / 0.05);
+  --shadow-hover: 0 2px 4px rgb(51 38 26 / 0.05), 0 8px 28px rgb(51 38 26 / 0.09);
+
+  --animate-rise: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-breathe: breathe 5s ease-in-out infinite;
+  --animate-drift: drift 14s ease-in-out infinite alternate;
+  --animate-glow: glow 4s ease-in-out infinite;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--amber) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 2px;
+}
+
+/* Display type: Fraunces at high softness reads grown, not typeset */
+.font-display {
+  font-variation-settings:
+    "SOFT" 60,
+    "WONK" 0;
+  letter-spacing: -0.02em;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(10px, -18px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Orchestrated page entrance: give a container `stagger-children` and its
+ * direct children grow in one after another. Gated on motion preference.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .stagger-children > * {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger-children > :nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-children > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .stagger-children > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .stagger-children > :nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .stagger-children > :nth-child(5) {
+    animation-delay: 240ms;
+  }
+  .stagger-children > :nth-child(6) {
+    animation-delay: 300ms;
+  }
+  .stagger-children > :nth-child(7) {
+    animation-delay: 360ms;
+  }
+  .stagger-children > :nth-child(8) {
+    animation-delay: 420ms;
+  }
+  .stagger-children > :nth-child(n + 9) {
+    animation-delay: 480ms;
+  }
+
+  .thread-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-breathe,
+  .animate-drift,
+  .animate-glow {
+    animation: none;
+  }
+}
+
+/*
+ * The underground: scope for the network and constellation views.
+ * Swaps the working tokens so shared components keep reading correctly
+ * against deep soil.
+ */
+.underground {
+  --background: var(--soil);
+  --foreground: var(--soil-ink);
+  --surface: var(--soil-raised);
+  --border: var(--soil-line);
+  --muted: var(--soil-ink-soft);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #241b10 0%, transparent 55%),
+    var(--soil);
+  color: var(--soil-ink);
 }

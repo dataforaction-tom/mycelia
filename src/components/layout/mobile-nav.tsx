@@ -44,7 +44,7 @@ function MobileNav({
         />
         <DialogPrimitive.Content
           className={cn(
-            "fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col bg-cream shadow-xl shadow-bark/10 md:hidden",
+            "fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col bg-surface-sunken shadow-xl shadow-bark/10 md:hidden",
             "data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
             "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left",
             "duration-300",
@@ -92,10 +92,10 @@ function MobileNav({
                   href={item.href}
                   onClick={() => onOpenChange(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                     isActive
-                      ? "bg-terracotta/10 text-terracotta"
-                      : "text-bark-light hover:bg-cream-dark hover:text-bark",
+                      ? "bg-surface text-terracotta-dark shadow-lift"
+                      : "text-bark-light hover:bg-surface/60 hover:text-bark",
                   )}
                 >
                   <span
@@ -116,7 +116,7 @@ function MobileNav({
           <div className="border-t border-border p-3">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cream-dark focus:outline-none">
+                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface/70 focus:outline-none">
                   <Avatar className="h-8 w-8">
                     {userImage && (
                       <AvatarImage src={userImage} alt={userName ?? ""} />
@@ -152,7 +152,7 @@ function MobileNav({
                   align="start"
                   side="top"
                   sideOffset={8}
-                  className="z-50 min-w-[200px] rounded-lg border border-border bg-white p-1.5 shadow-md"
+                  className="z-50 min-w-[200px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
                 >
                   <DropdownMenu.Item
                     onSelect={() => signOut({ callbackUrl: "/" })}

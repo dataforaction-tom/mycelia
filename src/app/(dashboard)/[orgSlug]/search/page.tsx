@@ -139,30 +139,30 @@ export default async function SearchPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-bark">Search</h1>
-        <form method="GET" className="mt-4">
+        <h1 className="font-display text-4xl text-bark">Search</h1>
+        <form method="GET" className="mt-5">
           <input
             type="text"
             name="q"
             defaultValue={term}
-            placeholder="Search connections and moments…"
-            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+            placeholder="A name, a place, a conversation…"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-bark shadow-lift placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
           />
         </form>
       </div>
 
       {!hasQuery ? (
         <p className="text-sm text-muted">
-          Type at least 2 characters to search.
+          Type at least 2 characters to search across connections and moments.
         </p>
       ) : (
         <>
           <div>
-            <h2 className="text-lg font-semibold text-bark">Connections</h2>
+            <h2 className="font-display text-xl text-bark">Connections</h2>
             {connectionsWithStats.length === 0 ? (
-              <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-white p-8 text-center">
+              <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-surface/60 p-8 text-center">
                 <p className="text-sm text-muted">
-                  No connections match your search.
+                  No connections match &ldquo;{term}&rdquo;.
                 </p>
               </div>
             ) : (
@@ -179,11 +179,11 @@ export default async function SearchPage({
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-bark">Moments</h2>
+            <h2 className="font-display text-xl text-bark">Moments</h2>
             {momentsWithConnections.length === 0 ? (
-              <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-white p-8 text-center">
+              <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-surface/60 p-8 text-center">
                 <p className="text-sm text-muted">
-                  No moments match your search.
+                  No moments mention &ldquo;{term}&rdquo;.
                 </p>
               </div>
             ) : (

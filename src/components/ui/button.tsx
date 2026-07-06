@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils/cn";
 const buttonVariants = {
   variant: {
     default:
-      "bg-terracotta text-white hover:bg-terracotta-dark shadow-sm",
+      "bg-terracotta text-white hover:bg-terracotta-dark shadow-lift hover:shadow-hover",
     secondary:
       "bg-cream-dark text-bark hover:bg-border shadow-sm",
     outline:
-      "border border-border bg-transparent text-bark hover:bg-cream-dark",
+      "border border-border bg-surface text-bark hover:bg-cream-dark",
     ghost: "text-bark hover:bg-cream-dark",
     destructive:
       "bg-destructive text-white hover:bg-destructive/90 shadow-sm",

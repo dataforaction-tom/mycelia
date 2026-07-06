@@ -53,12 +53,12 @@ export default async function ObservationsPage({
   const connectionById = new Map(linkedConnections.map((c) => [c.id, c]));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="stagger-children space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-bark">Observations</h1>
-          <p className="mt-1 text-sm text-muted">
-            Gentle patterns noticed across your network
+          <h1 className="font-display text-4xl text-bark">Observations</h1>
+          <p className="mt-2 text-muted">
+            Patterns the network has noticed, offered gently.
           </p>
         </div>
         <GeneratePatternsButton organisationId={org.id} />
@@ -67,11 +67,12 @@ export default async function ObservationsPage({
       <ObservationStatusFilter selected={status} />
 
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-white p-8 text-center">
-          <p className="text-sm text-muted">
-            No observations yet. Click &ldquo;Check for patterns&rdquo; to
-            look for dormant connections, quality shifts, and structural
-            dependencies across your network.
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface/60 p-10 text-center">
+          <p className="font-display text-lg text-bark">All quiet for now</p>
+          <p className="mt-1.5 max-w-md text-sm text-muted">
+            Choose &ldquo;Check for patterns&rdquo; to look for dormant
+            connections, quality shifts, and relationships your network
+            depends on.
           </p>
         </div>
       ) : (

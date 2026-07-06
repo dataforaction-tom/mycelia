@@ -125,17 +125,18 @@ export default async function MomentsPage({
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="stagger-children space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-bark">Moments</h1>
-          <p className="mt-1 text-sm text-muted">
-            {rows.length} {rows.length === 1 ? "moment" : "moments"} recorded
+          <h1 className="font-display text-4xl text-bark">The river</h1>
+          <p className="mt-2 text-muted">
+            Everything flowing through your organisation —{" "}
+            {rows.length === 1 ? "1 moment" : `${rows.length} moments`} so far.
           </p>
         </div>
         <Link
           href={`/${orgSlug}/moments/new`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
+          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
         >
           Record a moment
         </Link>

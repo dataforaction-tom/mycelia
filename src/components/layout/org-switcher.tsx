@@ -21,8 +21,9 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className="flex h-16 w-full items-center gap-2 border-b border-border px-6 text-left transition-colors hover:bg-cream-dark focus:outline-none">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-terracotta text-white">
+        <button className="flex h-16 w-full items-center gap-2.5 border-b border-border px-5 text-left transition-colors hover:bg-surface/70 focus:outline-none">
+          {/* Hyphae mark: threads branching upward from a shared root */}
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta to-amber text-white shadow-lift">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -30,13 +31,17 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-              <path d="M2 12h20" />
+              <path d="M12 21v-7" />
+              <path d="M12 14c0-4-5-3.5-6-8" />
+              <path d="M12 14c0-4 5-3.5 6-8" />
+              <path d="M12 14V5" />
+              <circle cx="6" cy="4" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="18" cy="4" r="1.4" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="3" r="1.4" fill="currentColor" stroke="none" />
             </svg>
           </div>
           <span className="flex-1 truncate text-base font-semibold text-bark">
@@ -63,7 +68,7 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
         <DropdownMenu.Content
           align="start"
           sideOffset={4}
-          className="z-50 min-w-[220px] rounded-lg border border-border bg-white p-1.5 shadow-md"
+          className="z-50 min-w-[220px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
         >
           {organisations.map((org) => (
             <DropdownMenu.Item key={org.id} asChild>

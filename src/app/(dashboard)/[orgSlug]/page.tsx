@@ -12,6 +12,7 @@ import { and, eq, count, desc, gte, lt, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { MomentList } from "@/components/moments/moment-list";
 import { ObservationCard } from "@/components/observations/observation-card";
+import { EcosystemCanvas } from "@/components/network/ecosystem-canvas";
 
 const SEVERITY_RANK: Record<string, number> = {
   important: 0,
@@ -141,69 +142,119 @@ export default async function OrgDashboard({
     .groupBy(moments.authorId, users.name, users.email)
     .orderBy(desc(count(moments.id)));
 
+  // The pulse: one human sentence about how the ecosystem is moving
+  const resting = thisWeek.value === 0;
+  const pulseHeadline = resting
+    ? "The network is resting"
+    : trend === "up"
+      ? "The network is growing"
+      : trend === "down"
+        ? "A quieter week"
+        : "A steady rhythm";
+  const pulseDetail = resting
+    ? "No moments recorded this week. What conversations are waiting?"
+    : `${thisWeek.value} ${thisWeek.value === 1 ? "moment" : "moments"} this week · ${lastWeek.value} the week before`;
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-bark">{org.name}</h1>
-        <p className="mt-1 text-muted">
-          Your relational ecosystem at a glance
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-white p-6">
-          <p className="text-sm text-muted">Connections</p>
-          <p className="mt-1 text-3xl font-bold text-bark">
-            {connectionCount.value}
+    <div className="stagger-children space-y-10">
+      {/* Title row */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-4xl text-bark">{org.name}</h1>
+            <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-medium capitalize text-muted">
+              {org.plan}
+            </span>
+          </div>
+          <p className="mt-2 text-muted">
+            What do your relationships need from you today?
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-white p-6">
-          <p className="text-sm text-muted">Moments</p>
-          <p className="mt-1 text-3xl font-bold text-bark">
-            {momentCount.value}
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            {thisWeek.value} this week &middot;{" "}
-            {trend === "up" ? "↑" : trend === "down" ? "↓" : "→"} {trend}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-white p-6">
-          <p className="text-sm text-muted">Plan</p>
-          <p className="mt-1 text-3xl font-bold capitalize text-bark">
-            {org.plan}
-          </p>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/${orgSlug}/moments/new`}
+            className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
+          >
+            Record a moment
+          </Link>
+          <Link
+            href={`/${orgSlug}/connections/new`}
+            className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-bark transition-colors hover:bg-cream-dark"
+          >
+            Add connection
+          </Link>
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href={`/${orgSlug}/connections/new`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
-        >
-          Add connection
-        </Link>
-        <Link
-          href={`/${orgSlug}/moments/new`}
-          className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-bark transition-colors hover:bg-cream-dark"
-        >
-          Record a moment
-        </Link>
-      </div>
+      {connectionCount.value === 0 ? (
+        /* First-run invitation: an empty ecosystem is a beginning, not a blank */
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-8 shadow-lift sm:p-12">
+          <div className="relative z-10 max-w-lg">
+            <h2 className="font-display text-3xl text-bark">
+              Every ecosystem starts with a single thread
+            </h2>
+            <p className="mt-3 text-muted">
+              Add the people, organisations, and communities you&apos;re in
+              relationship with. Then record moments — conversations, meetings,
+              messages — and Mycelium will grow the living network between
+              them.
+            </p>
+            <Link
+              href={`/${orgSlug}/connections/new`}
+              className="mt-6 inline-flex rounded-lg bg-terracotta px-5 py-2.5 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
+            >
+              Add your first connection
+            </Link>
+          </div>
+          <svg
+            className="pointer-events-none absolute -right-8 bottom-0 h-56 w-72 text-moss/15"
+            viewBox="0 0 280 200"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
+            <path d="M140 200 C140 140, 60 150, 40 60" />
+            <path d="M140 200 C140 130, 220 140, 240 40" />
+            <path d="M140 200 C140 120, 140 100, 130 30" />
+            <path d="M40 60 C36 42, 30 30, 34 14" />
+            <path d="M240 40 C250 30, 254 22, 250 10" />
+            <circle cx="34" cy="12" r="4" fill="currentColor" stroke="none" />
+            <circle cx="250" cy="8" r="4" fill="currentColor" stroke="none" />
+            <circle cx="129" cy="26" r="4" fill="currentColor" stroke="none" />
+          </svg>
+        </section>
+      ) : (
+        /* The ecosystem itself: the living network, breathing behind the
+           day's pulse. Every node is a door. */
+        <EcosystemCanvas
+          organisationId={org.id}
+          orgSlug={orgSlug}
+          headline={pulseHeadline}
+          detail={pulseDetail}
+          stats={{
+            connections: connectionCount.value,
+            moments: momentCount.value,
+            thisWeek: thisWeek.value,
+          }}
+        />
+      )}
 
       {/* Attention list */}
       {attentionList.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-bark">Attention</h2>
+        <section>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-xl text-bark">Attention</h2>
             <Link
               href={`/${orgSlug}/observations`}
-              className="text-sm text-terracotta hover:text-terracotta-dark"
+              className="text-sm font-medium text-terracotta transition-colors hover:text-terracotta-dark"
             >
-              View all
+              View all observations
             </Link>
           </div>
+          <p className="mt-1 text-sm text-muted">
+            Things the network has noticed, gently.
+          </p>
           <div className="mt-4 space-y-3">
             {attentionList.map((observation) => (
               <ObservationCard
@@ -221,41 +272,59 @@ export default async function OrgDashboard({
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Recent moments */}
-      <div>
-        <h2 className="text-lg font-semibold text-bark">Recent moments</h2>
-        <div className="mt-4">
-          <MomentList moments={recentMoments} orgSlug={orgSlug} />
-        </div>
-      </div>
-
-      {/* Team activity */}
-      {teamActivity.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-bark">
-            Team activity (last 30 days)
-          </h2>
-          <div className="mt-4 space-y-2">
-            {teamActivity.map((member) => (
-              <div
-                key={member.authorId}
-                className="flex items-center justify-between rounded-lg border border-border bg-white p-3 text-sm"
-              >
-                <span className="text-bark">
-                  {member.name ?? member.email}
-                </span>
-                <span className="text-muted">
-                  {member.momentCount}{" "}
-                  {member.momentCount === 1 ? "moment" : "moments"}
-                </span>
-              </div>
-            ))}
+      {/* Recent moments + team activity */}
+      <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+        <section>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-xl text-bark">Recent moments</h2>
+            <Link
+              href={`/${orgSlug}/moments`}
+              className="text-sm font-medium text-terracotta transition-colors hover:text-terracotta-dark"
+            >
+              View the river
+            </Link>
           </div>
-        </div>
-      )}
+          <div className="mt-4">
+            <MomentList moments={recentMoments} orgSlug={orgSlug} />
+          </div>
+        </section>
+
+        {teamActivity.length > 0 && (
+          <section>
+            <h2 className="font-display text-xl text-bark">Team activity</h2>
+            <p className="mt-1 text-sm text-muted">Last 30 days</p>
+            <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-surface shadow-lift">
+              {teamActivity.map((member) => (
+                <div
+                  key={member.authorId}
+                  className="flex items-center justify-between gap-3 p-3.5 text-sm"
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-moss/15 text-xs font-semibold text-moss-dark">
+                      {(member.name ?? member.email ?? "?")
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </span>
+                    <span className="truncate text-bark">
+                      {member.name ?? member.email}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-mono text-xs text-muted">
+                    {member.momentCount}{" "}
+                    {member.momentCount === 1 ? "moment" : "moments"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

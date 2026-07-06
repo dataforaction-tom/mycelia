@@ -31,13 +31,13 @@ export function NetworkControls({
   onSearchChange,
 }: NetworkControlsProps) {
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-white p-4 text-sm">
+    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4 text-sm shadow-lift">
       <input
         type="text"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Search connections…"
-        className="w-48 rounded-lg border border-border bg-white px-3 py-1.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+        placeholder="Find someone…"
+        className="w-48 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
       />
 
       <div className="flex items-center gap-3">

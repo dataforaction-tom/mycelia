@@ -27,9 +27,9 @@ export function ConnectionCard({
   return (
     <Link
       href={`/${orgSlug}/connections/${connection.id}`}
-      className="block rounded-xl border border-border bg-white p-4 transition-colors hover:border-terracotta/30 hover:bg-cream"
+      className="block rounded-xl border border-border bg-surface p-4 shadow-lift transition-all hover:-translate-y-0.5 hover:border-terracotta/30 hover:shadow-hover"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-bark">{connection.name}</h3>
         <Badge className={typeColors[connection.type] ?? ""}>
           {connection.type}

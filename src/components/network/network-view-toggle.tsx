@@ -15,35 +15,35 @@ export function NetworkViewToggle({
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-lg border border-border bg-white p-1">
+      <div className="inline-flex rounded-full border border-border bg-surface p-1 shadow-lift">
         <button
           type="button"
           onClick={() => setView("force")}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
             view === "force"
-              ? "bg-terracotta text-white"
+              ? "bg-bark text-cream shadow-sm"
               : "text-bark-light hover:bg-cream-dark"
           }`}
         >
-          Force-directed
+          Threads
         </button>
         <button
           type="button"
           onClick={() => setView("constellation")}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
             view === "constellation"
-              ? "bg-terracotta text-white"
+              ? "bg-bark text-cream shadow-sm"
               : "text-bark-light hover:bg-cream-dark"
           }`}
         >
-          Constellation
+          Constellations
         </button>
       </div>
 
       {view === "force" ? (
         <NetworkGraph organisationId={organisationId} orgSlug={orgSlug} />
       ) : (
-        <ConstellationView organisationId={organisationId} />
+        <ConstellationView organisationId={organisationId} orgSlug={orgSlug} />
       )}
     </div>
   );

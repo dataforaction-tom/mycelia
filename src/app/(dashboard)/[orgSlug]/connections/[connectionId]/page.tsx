@@ -92,17 +92,19 @@ export default async function ConnectionDetailPage({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between">
+    <div className="stagger-children space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-bark">{connection.name}</h1>
+            <h1 className="font-display text-4xl text-bark">
+              {connection.name}
+            </h1>
             <Badge className={typeColors[connection.type] ?? ""}>
               {connection.type}
             </Badge>
           </div>
-          <p className="mt-1 text-sm text-muted">
-            Added{" "}
+          <p className="mt-2 text-sm text-muted">
+            In your network since{" "}
             {connection.createdAt.toLocaleDateString("en-GB", {
               day: "numeric",
               month: "long",
@@ -112,51 +114,61 @@ export default async function ConnectionDetailPage({
         </div>
         <Link
           href={`/${orgSlug}/moments/new?connectionId=${connectionId}`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
+          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
         >
           Add moment
         </Link>
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Story</h2>
+      {/* The story leads: relationships are narratives, not records */}
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-lift sm:p-8">
+        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+          The story so far
+        </h2>
         {connection.threadSummary ? (
-          <p className="mt-2 font-serif text-bark leading-relaxed">
+          <p className="mt-3 font-serif text-lg leading-relaxed text-bark">
             {connection.threadSummary}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-muted">
-            No story yet — as moments build up, a narrative summary of this
-            relationship will appear here.
+          <p className="mt-3 text-sm text-muted">
+            No story yet. As you record moments with{" "}
+            {connection.name}, Mycelium will write and keep a living narrative
+            of this relationship here.
           </p>
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Qualities</h2>
-        <div className="mt-4">
-          <QualitySpectrums
-            qualities={qualityRows}
-            connectionId={connectionId}
-            organisationId={org.id}
-          />
+      <div className="grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-lift">
+          <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+            Qualities
+          </h2>
+          <div className="mt-4">
+            <QualitySpectrums
+              qualities={qualityRows}
+              connectionId={connectionId}
+              organisationId={org.id}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Spaces</h2>
-        <div className="mt-4">
-          <SpacePicker
-            connectionId={connectionId}
-            organisationId={org.id}
-            allSpaces={allSpaces}
-            initialSelected={linkedSpaceIds}
-          />
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-lift">
+          <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+            Spaces
+          </h2>
+          <div className="mt-4">
+            <SpacePicker
+              connectionId={connectionId}
+              organisationId={org.id}
+              allSpaces={allSpaces}
+              initialSelected={linkedSpaceIds}
+            />
+          </div>
         </div>
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-bark">Moments</h2>
+        <h2 className="font-display text-xl text-bark">Moments together</h2>
         <div className="mt-4">
           <MomentList moments={connectionMoments} orgSlug={orgSlug} />
         </div>

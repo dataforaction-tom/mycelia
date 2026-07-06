@@ -39,28 +39,9 @@ export function addGlowFilter(
   merge.append("feMergeNode").attr("in", "SourceGraphic");
 }
 
-/**
- * Vitality: how alive a connection is, from its most recent moment.
- * Fresh relationships flare; neglected ones visibly fade toward the dark.
- */
-export type Vitality = "fresh" | "active" | "fading" | "dormant";
-
-export function vitalityOf(lastMomentAt: string | Date | null): Vitality {
-  if (!lastMomentAt) return "dormant";
-  const then = new Date(lastMomentAt).getTime();
-  const days = (Date.now() - then) / (24 * 60 * 60 * 1000);
-  if (days <= 7) return "fresh";
-  if (days <= 30) return "active";
-  if (days <= 90) return "fading";
-  return "dormant";
-}
-
-export const VITALITY_OPACITY: Record<Vitality, number> = {
-  fresh: 1,
-  active: 0.95,
-  fading: 0.6,
-  dormant: 0.35,
-};
+// Vitality lives in its own d3-free module so server components can share
+// it; re-exported here for the canvas components' convenience.
+export { vitalityOf, VITALITY_OPACITY, type Vitality } from "./vitality";
 
 /**
  * Attach a slow breathing animation to circles. Each node gets a slightly

@@ -12,6 +12,7 @@ interface Connection {
   updatedAt: Date;
   momentCount: number;
   lastMomentDate: Date | null;
+  threadSummary?: string | null;
 }
 
 interface ConnectionListProps {
@@ -32,7 +33,7 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
 
   if (connections.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-white p-12 text-center">
+      <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface/60 p-12 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10">
           <svg
             className="h-6 w-6 text-terracotta"
@@ -73,13 +74,13 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search connections..."
-          className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          placeholder="Find someone…"
+          className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
         />
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
         >
           <option value="">All types</option>
           <option value="person">Person</option>

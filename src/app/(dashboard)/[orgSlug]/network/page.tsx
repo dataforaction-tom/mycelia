@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { organisations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { NetworkGraph } from "@/components/network/network-graph";
+import { NetworkViewToggle } from "@/components/network/network-view-toggle";
 
 export default async function NetworkPage({
   params,
@@ -28,7 +28,7 @@ export default async function NetworkPage({
           A force-directed view of your relational ecosystem.
         </p>
       </div>
-      <NetworkGraph organisationId={org.id} orgSlug={orgSlug} />
+      <NetworkViewToggle organisationId={org.id} orgSlug={orgSlug} />
     </div>
   );
 }

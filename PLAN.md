@@ -62,7 +62,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Quality inference from moments — auto-suggest spectrum position changes (built automatic, not suggest-then-confirm — see Decisions Made)
 - [x] Dashboard view — ecosystem pulse, attention list, quality shifts (folded into attention list; gap alerts deferred, no data model — see Follow-up Tasks)
 - [x] River view — chronological moment stream across org (enhanced the existing Moments page rather than a duplicate page — see Decisions Made; pattern highlights deferred, no moment-to-observation data link exists)
-- [ ] Constellation view — cluster-based alternative network visualisation
+- [x] Constellation view — cluster-based alternative network visualisation
 - [x] Spaces — create, assign connections, filter views by space (network-view overlay deferred to a follow-up task)
 - [ ] Full permission matrix — owner/admin/contributor/viewer with bitmask overrides
 

@@ -62,6 +62,7 @@ export default async function ConnectionDetailPage({
       spectrum: qualities.spectrum,
       position: qualities.position,
       createdAt: qualities.createdAt,
+      source: qualities.source,
     })
     .from(qualities)
     .where(eq(qualities.connectionId, connectionId))

@@ -42,7 +42,8 @@ stateDiagram-v2
 | Connection story view | ✅ Done | Story section always visible (with empty state), moment stream now reuses `MomentList`/`MomentCard` |
 | Quality spectrum UI | ✅ Done | 5 hardcoded spectrums (depth/reciprocity/formality/activity/maturity), manual position-setting via `POST /api/connections/[connectionId]/qualities`, sparkline history, wired into connection detail page |
 | AI provider registry | ✅ Done | OpenRouter primary + local Ollama fallback via `withFallback()` (`src/lib/ai/`). Task→model config |
-| AI moment understanding | ✅ Done | `POST /api/moments/understand` (read-only, no DB writes), structured output via `generateObject` (`run-object-task.ts`, `moment-understanding.ts`). Moment form now has an "Understand with AI" panel — matches existing connections (checkbox to add), lists unmatched entities (informational only, no auto-create), suggests quality signals (Apply button → existing qualities route), detects event date (prefills new date field). Moment form also gained its first-ever event date input |
+| AI moment understanding | ✅ Done | `POST /api/moments/understand` (read-only, no DB writes), structured output via `generateObject` (`run-object-task.ts`, `moment-understanding.ts`). Moment form now has an "Understand with AI" panel — matches existing connections (checkbox to add), lists unmatched entities (informational only, no auto-create), detects event date (prefills new date field). Moment form also gained its first-ever event date input |
+| Automatic quality inference | ✅ Done | Every moment save now auto-infers quality signals for its linked connections (`src/lib/ai/quality-inference.ts`, the `"quality-inference"` task/cheap model), writing `source: "inferred"` rows with real `momentId`/`confidence` — best-effort, wrapped in its own try/catch so a failed AI call never blocks moment creation. Replaced the old manual "Apply" quality flow in the moment-understanding panel (would have double-written). Quality display now shows an "AI-suggested" badge for inferred rows. Verified live 2026-07-06 with a real OpenRouter key — one sentence of moment text produced two real inferred quality rows |
 | Search | ✅ Done | Full-text search on moment content (Postgres `to_tsvector`/`plainto_tsquery` + GIN expression index), connection name search via `ilike`. `/{orgSlug}/search` server component, no new API route. Semantic/pgvector search deferred |
 | DB migration | ✅ Done | `db:push` applied to Neon 2026-07-06 (`drizzle-kit` needs `DATABASE_URL` passed explicitly — it doesn't read `.env.local` on its own) — all tables/indexes through the FTS index are live |
 | Runtime testing | ✅ Done | End-to-end smoke pass via the dev-login credentials flow, driven with `curl` (no browser tool available): sign-in → org → connections → moment with linked connections → network inference → cluster detection → qualities → search, all verified against the real DB. Found and fixed 2 real bugs (see MISTAKES.md 2026-07-06). Google OAuth/Resend still not configured — only the dev-only credentials provider was exercised |
@@ -84,7 +85,7 @@ flowchart LR
 | AUTH_SECRET | Set in .env.example | Run `npx auth secret` to set in .env.local |
 | Resend (email) | Not set up | Need AUTH_RESEND_KEY |
 | Stripe | Not set up | Need STRIPE_SECRET_KEY + price IDs |
-| OpenRouter | Not set up | Need OPENROUTER_API_KEY — falls back to local Ollama automatically if unset |
+| OpenRouter | Configured | `OPENROUTER_API_KEY` set in `.env.local` 2026-07-06 — verified working live |
 | Ollama (local) | Optional | `OLLAMA_BASE_URL` defaults to `http://localhost:11434/v1`, `OLLAMA_MODEL` defaults to `llama3.2` — used as fallback when OpenRouter fails or is unconfigured |
 
 ## Build Status

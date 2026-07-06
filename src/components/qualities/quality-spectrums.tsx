@@ -6,6 +6,7 @@ interface QualityRow {
   spectrum: string;
   position: number;
   createdAt: Date;
+  source: string;
 }
 
 interface QualitySpectrumsProps {
@@ -29,8 +30,13 @@ export function QualitySpectrums({
         return (
           <div key={key}>
             <div className="flex items-center justify-between text-xs text-muted">
-              <span className="font-medium text-bark-light">
+              <span className="flex items-center gap-1.5 font-medium text-bark-light">
                 {config.label}
+                {current?.source === "inferred" && (
+                  <span className="rounded-full bg-amber/10 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+                    AI-suggested
+                  </span>
+                )}
               </span>
               {history.length >= 2 && <QualitySparkline points={history} />}
             </div>

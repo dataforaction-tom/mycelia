@@ -128,7 +128,6 @@ export function MomentForm({
       <MomentUnderstandingPanel
         content={content}
         organisationId={organisationId}
-        existingConnections={connections}
         onConnectionsMatched={(ids) =>
           setSelectedConnectionIds((prev) => [
             ...new Set([...prev, ...ids]),

@@ -1,12 +1,19 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { moments, momentConnections, organisations } from "@/lib/db/schema";
+import {
+  moments,
+  momentConnections,
+  organisations,
+  connections,
+  qualities,
+} from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { createMomentSchema, listMomentsSchema } from "@/lib/validators/moments";
 import { strengthenLinksForMoment } from "@/lib/network/infer-links";
+import { inferQualitiesForMoment } from "@/lib/ai/quality-inference";
 import { PLAN_LIMITS } from "@/lib/config/plans";
-import { and, eq, asc, desc, count, gte } from "drizzle-orm";
+import { and, eq, asc, desc, count, gte, inArray } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -150,10 +157,46 @@ export async function POST(request: NextRequest) {
         }))
       );
 
+      // Deterministic, no external dependency — allowed to fail the
+      // whole request like any other DB write.
       if (parsed.data.connectionIds.length >= 2) {
         await strengthenLinksForMoment(
           organisationId,
           parsed.data.connectionIds
+        );
+      }
+
+      // Best-effort — depends on an optional external AI service that
+      // predictably has no credentials in many dev/test environments,
+      // so it gets its own try/catch and must never fail moment creation.
+      try {
+        const linkedConnections = await db
+          .select({ id: connections.id, name: connections.name })
+          .from(connections)
+          .where(inArray(connections.id, parsed.data.connectionIds));
+
+        const { qualitySignals } = await inferQualitiesForMoment(
+          parsed.data.content,
+          linkedConnections
+        );
+
+        if (qualitySignals.length) {
+          await db.insert(qualities).values(
+            qualitySignals.map((s) => ({
+              connectionId: s.connectionId,
+              spectrum: s.spectrum,
+              position: s.position,
+              confidence: s.confidence,
+              source: "inferred" as const,
+              momentId: moment.id,
+            }))
+          );
+        }
+      } catch (aiError) {
+        console.error(
+          "Quality inference failed for moment",
+          moment.id,
+          aiError
         );
       }
     }

@@ -6,7 +6,7 @@ import {
   errorResponse,
   getAuthenticatedUser,
 } from "@/lib/utils/api";
-import { requireMembership } from "@/lib/auth/permissions";
+import { requireMembership, requirePermission } from "@/lib/auth/permissions";
 import { inviteMemberSchema } from "@/lib/validators/auth";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { organisations } from "@/lib/db/schema";
@@ -53,7 +53,7 @@ export async function POST(
     const user = await getAuthenticatedUser();
     const { orgId } = await params;
 
-    await requireMembership(user.id, orgId, "admin");
+    await requirePermission(user.id, orgId, "MANAGE_MEMBERS", "admin");
 
     const body = await request.json();
     const parsed = inviteMemberSchema.safeParse(body);

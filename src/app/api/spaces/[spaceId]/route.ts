@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { spaces } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
-import { hasMinRole } from "@/lib/auth/permissions";
+import { hasMinRole, canPerform } from "@/lib/auth/permissions";
 import { updateSpaceSchema } from "@/lib/validators/spaces";
 import { and, eq } from "drizzle-orm";
 
@@ -77,7 +77,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { membership, organisationId } = await getOrgContext(request);
     const { spaceId } = await params;
 
-    if (!hasMinRole(membership.role, "admin")) {
+    if (!canPerform(membership, "DELETE_SPACES", "admin")) {
       return errorResponse("Forbidden", 403);
     }
 

@@ -64,7 +64,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] River view — chronological moment stream across org (enhanced the existing Moments page rather than a duplicate page — see Decisions Made; pattern highlights deferred, no moment-to-observation data link exists)
 - [x] Constellation view — cluster-based alternative network visualisation
 - [x] Spaces — create, assign connections, filter views by space (network-view overlay deferred to a follow-up task)
-- [ ] Full permission matrix — owner/admin/contributor/viewer with bitmask overrides
+- [x] Full permission matrix — owner/admin/contributor/viewer with bitmask overrides
 
 **Deliverable:** Active AI observations and insights. Multiple views. Full permissions.
 
@@ -124,6 +124,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 | Automatic quality inference on moment save (source: "inferred") | User explicitly requested qualities update automatically rather than suggest-then-confirm; qualitySourceEnum already anticipated this exact case | 2026-07-06 |
 | Spaces reused for projects/ideas (no new connection type) | User's instinct — a project isn't a relationship with the qualities spectrums people/orgs have; spaces already model "shared context tagging" | 2026-07-06 |
 | River view = enhanced Moments page, not a new route | Avoids duplicating the same chronological moment data in two places; asked the user to confirm, no response within the wait window, proceeded with the lower-duplication default (reversible later if a visually distinct page is wanted) | 2026-07-06 |
+| Bitmask permissions: one bit per capability area (DELETE_CONNECTIONS/DELETE_MOMENTS/DELETE_SPACES/MANAGE_MEMBERS), not per route | Matches the spec's "elevated access to X" granularity; avoids fragmenting into permissions nobody asked for | 2026-07-06 |
 
 ## Follow-up Tasks
 
@@ -131,6 +132,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - Theme detection (cross-connection topic clustering from moment text) — deferred from the pattern recognition engine, needs AI/NLP batch analysis; natural fit alongside "Observation generation" since that task already needs AI for gentle-language wrapping
 - Gap detection (weak/absent community/geography coverage) — deferred from the pattern recognition engine and the Dashboard's "gap alerts"; no data model exists for this at all yet, needs a data-model decision before it can be built
 - AI-authored gentle phrasing + real dedup for observations — content is plain templated strings today, and the dedup guard is a naive existence check, not the described "learn from engagement" scoring
+- Members settings page — still a pre-existing stub (no real data fetching); needs building out to actually let an admin assign bitmask permission overrides through a form instead of the raw API
 
 ## Open Questions
 

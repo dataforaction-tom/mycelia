@@ -6,7 +6,7 @@ import {
   errorResponse,
   getAuthenticatedUser,
 } from "@/lib/utils/api";
-import { requireMembership } from "@/lib/auth/permissions";
+import { requirePermission, PERMISSIONS } from "@/lib/auth/permissions";
 import { updateMemberRoleSchema } from "@/lib/validators/auth";
 import { and, eq } from "drizzle-orm";
 
@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const user = await getAuthenticatedUser();
     const { orgId, memberId } = await params;
 
-    const currentMembership = await requireMembership(user.id, orgId, "admin");
+    await requirePermission(user.id, orgId, "MANAGE_MEMBERS", "admin");
 
     const body = await request.json();
     const parsed = updateMemberRoleSchema.safeParse(body);
@@ -26,19 +26,24 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return errorResponse(parsed.error.issues[0].message, 422);
     }
 
-    // Cannot change owner role unless you are owner
-    if (currentMembership.role !== "owner" && parsed.data.role === "admin") {
-      // Admins can set contributor/viewer only; owner needed for admin
-    }
-
     // Cannot change your own role
     if (memberId === user.id) {
       return errorResponse("Cannot change your own role", 400);
     }
 
+    const permissions = parsed.data.permissionOverrides
+      ? parsed.data.permissionOverrides.reduce(
+          (mask, flag) => mask | PERMISSIONS[flag],
+          0
+        )
+      : undefined;
+
     const [updated] = await db
       .update(organisationMemberships)
-      .set({ role: parsed.data.role })
+      .set({
+        role: parsed.data.role,
+        ...(permissions !== undefined ? { permissions } : {}),
+      })
       .where(
         and(
           eq(organisationMemberships.userId, memberId),
@@ -64,7 +69,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     const user = await getAuthenticatedUser();
     const { orgId, memberId } = await params;
 
-    await requireMembership(user.id, orgId, "admin");
+    await requirePermission(user.id, orgId, "MANAGE_MEMBERS", "admin");
 
     // Cannot remove yourself
     if (memberId === user.id) {

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { moments } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
-import { hasMinRole } from "@/lib/auth/permissions";
+import { hasMinRole, canPerform } from "@/lib/auth/permissions";
 import { updateMomentSchema } from "@/lib/validators/moments";
 import { and, eq } from "drizzle-orm";
 
@@ -82,7 +82,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { membership, organisationId } = await getOrgContext(request);
     const { momentId } = await params;
 
-    if (!hasMinRole(membership.role, "admin")) {
+    if (!canPerform(membership, "DELETE_MOMENTS", "admin")) {
       return errorResponse("Forbidden", 403);
     }
 

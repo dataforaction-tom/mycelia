@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { connections } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
-import { hasMinRole } from "@/lib/auth/permissions";
+import { hasMinRole, canPerform } from "@/lib/auth/permissions";
 import { updateConnectionSchema } from "@/lib/validators/connections";
 import { and, eq } from "drizzle-orm";
 
@@ -83,7 +83,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { membership, organisationId } = await getOrgContext(request);
     const { connectionId } = await params;
 
-    if (!hasMinRole(membership.role, "admin")) {
+    if (!canPerform(membership, "DELETE_CONNECTIONS", "admin")) {
       return errorResponse("Forbidden", 403);
     }
 

@@ -7,6 +7,16 @@ export const inviteMemberSchema = z.object({
 
 export const updateMemberRoleSchema = z.object({
   role: z.enum(["admin", "contributor", "viewer"]),
+  permissionOverrides: z
+    .array(
+      z.enum([
+        "DELETE_CONNECTIONS",
+        "DELETE_MOMENTS",
+        "DELETE_SPACES",
+        "MANAGE_MEMBERS",
+      ])
+    )
+    .optional(),
 });
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;

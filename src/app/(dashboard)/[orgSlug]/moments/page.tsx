@@ -7,21 +7,28 @@ import {
   momentConnections,
   connections,
   spaces,
+  users,
 } from "@/lib/db/schema";
-import { and, eq, desc, inArray, asc } from "drizzle-orm";
+import { and, eq, desc, inArray, asc, gte, lte } from "drizzle-orm";
 import Link from "next/link";
 import { MomentList } from "@/components/moments/moment-list";
-import { SpaceFilterSelect } from "@/components/spaces/space-filter-select";
+import { MomentFilters } from "@/components/moments/moment-filters";
 
 export default async function MomentsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ orgSlug: string }>;
-  searchParams: Promise<{ spaceId?: string }>;
+  searchParams: Promise<{
+    spaceId?: string;
+    authorId?: string;
+    connectionType?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const { orgSlug } = await params;
-  const { spaceId } = await searchParams;
+  const { spaceId, authorId, connectionType, from, to } = await searchParams;
 
   const [org] = await db
     .select()
@@ -37,8 +44,34 @@ export default async function MomentsPage({
     .where(eq(spaces.organisationId, org.id))
     .orderBy(asc(spaces.name));
 
+  const orgAuthors = await db
+    .selectDistinct({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+    })
+    .from(moments)
+    .innerJoin(users, eq(users.id, moments.authorId))
+    .where(eq(moments.organisationId, org.id));
+
   const conditions = [eq(moments.organisationId, org.id)];
   if (spaceId) conditions.push(eq(moments.spaceId, spaceId));
+  if (authorId) conditions.push(eq(moments.authorId, authorId));
+  if (from) conditions.push(gte(moments.createdAt, new Date(from)));
+  if (to) conditions.push(lte(moments.createdAt, new Date(to)));
+
+  // A moment doesn't have its own type — filter by whether any of its
+  // linked connections match the selected connection type.
+  if (connectionType) {
+    const matchingMomentIds = await db
+      .selectDistinct({ momentId: momentConnections.momentId })
+      .from(momentConnections)
+      .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
+      .where(eq(connections.type, connectionType as "person" | "organisation" | "group" | "community"));
+
+    const ids = matchingMomentIds.map((m) => m.momentId);
+    conditions.push(ids.length ? inArray(moments.id, ids) : inArray(moments.id, ["__none__"]));
+  }
 
   const rows = await db
     .select({
@@ -47,6 +80,7 @@ export default async function MomentsPage({
       source: moments.source,
       createdAt: moments.createdAt,
       eventDate: moments.eventDate,
+      authorId: moments.authorId,
     })
     .from(moments)
     .where(and(...conditions))
@@ -80,9 +114,14 @@ export default async function MomentsPage({
     connectionsByMoment.set(link.momentId, list);
   }
 
+  const authorById = new Map(
+    orgAuthors.map((a) => [a.id, { name: a.name, email: a.email }])
+  );
+
   const momentsWithConnections = rows.map((m) => ({
     ...m,
     connections: connectionsByMoment.get(m.id) ?? [],
+    author: m.authorId ? authorById.get(m.authorId) ?? null : null,
   }));
 
   return (
@@ -102,9 +141,18 @@ export default async function MomentsPage({
         </Link>
       </div>
 
-      {allSpaces.length > 0 && (
-        <SpaceFilterSelect spaces={allSpaces} selected={spaceId} />
-      )}
+      <MomentFilters
+        spaces={allSpaces.map((s) => ({ value: s.id, label: s.name }))}
+        authors={orgAuthors.map((a) => ({
+          value: a.id,
+          label: a.name ?? a.email,
+        }))}
+        spaceId={spaceId}
+        authorId={authorId}
+        connectionType={connectionType}
+        from={from}
+        to={to}
+      />
 
       <MomentList moments={momentsWithConnections} orgSlug={orgSlug} />
     </div>

@@ -61,7 +61,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 - [x] Observation UI — display, respond, dismiss (learn-from-engagement scoring is a non-goal for now — no accumulated data to learn from)
 - [x] Quality inference from moments — auto-suggest spectrum position changes (built automatic, not suggest-then-confirm — see Decisions Made)
 - [x] Dashboard view — ecosystem pulse, attention list, quality shifts (folded into attention list; gap alerts deferred, no data model — see Follow-up Tasks)
-- [ ] River view — chronological moment stream across org
+- [x] River view — chronological moment stream across org (enhanced the existing Moments page rather than a duplicate page — see Decisions Made; pattern highlights deferred, no moment-to-observation data link exists)
 - [ ] Constellation view — cluster-based alternative network visualisation
 - [x] Spaces — create, assign connections, filter views by space (network-view overlay deferred to a follow-up task)
 - [ ] Full permission matrix — owner/admin/contributor/viewer with bitmask overrides
@@ -123,6 +123,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 | OpenRouter + local Ollama fallback (not separate anthropic/openai/google clients) | One hosted gateway to hundreds of models, plus a free/offline local option; simpler than juggling per-vendor API keys | 2026-07-03 |
 | Automatic quality inference on moment save (source: "inferred") | User explicitly requested qualities update automatically rather than suggest-then-confirm; qualitySourceEnum already anticipated this exact case | 2026-07-06 |
 | Spaces reused for projects/ideas (no new connection type) | User's instinct — a project isn't a relationship with the qualities spectrums people/orgs have; spaces already model "shared context tagging" | 2026-07-06 |
+| River view = enhanced Moments page, not a new route | Avoids duplicating the same chronological moment data in two places; asked the user to confirm, no response within the wait window, proceeded with the lower-duplication default (reversible later if a visually distinct page is wanted) | 2026-07-06 |
 
 ## Follow-up Tasks
 

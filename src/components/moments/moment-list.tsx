@@ -6,6 +6,11 @@ interface MomentConnection {
   type: string;
 }
 
+interface MomentAuthor {
+  name: string | null;
+  email: string;
+}
+
 interface Moment {
   id: string;
   content: string;
@@ -13,6 +18,7 @@ interface Moment {
   createdAt: Date;
   eventDate: Date | null;
   connections?: MomentConnection[];
+  author?: MomentAuthor | null;
 }
 
 interface MomentListProps {

@@ -7,6 +7,11 @@ interface MomentConnection {
   type: string;
 }
 
+interface MomentAuthor {
+  name: string | null;
+  email: string;
+}
+
 interface MomentCardProps {
   moment: {
     id: string;
@@ -14,6 +19,7 @@ interface MomentCardProps {
     source: string;
     createdAt: Date;
     eventDate: Date | null;
+    author?: MomentAuthor | null;
   };
   connections?: MomentConnection[];
   orgSlug: string;
@@ -63,6 +69,9 @@ export function MomentCard({
           <span className="rounded bg-cream-dark px-1.5 py-0.5">
             {moment.source}
           </span>
+        )}
+        {moment.author && (
+          <span>&middot; {moment.author.name ?? moment.author.email}</span>
         )}
       </div>
     </div>

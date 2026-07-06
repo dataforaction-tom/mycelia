@@ -125,6 +125,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 | Spaces reused for projects/ideas (no new connection type) | User's instinct — a project isn't a relationship with the qualities spectrums people/orgs have; spaces already model "shared context tagging" | 2026-07-06 |
 | River view = enhanced Moments page, not a new route | Avoids duplicating the same chronological moment data in two places; asked the user to confirm, no response within the wait window, proceeded with the lower-duplication default (reversible later if a visually distinct page is wanted) | 2026-07-06 |
 | Bitmask permissions: one bit per capability area (DELETE_CONNECTIONS/DELETE_MOMENTS/DELETE_SPACES/MANAGE_MEMBERS), not per route | Matches the spec's "elevated access to X" granularity; avoids fragmenting into permissions nobody asked for | 2026-07-06 |
+| Sign-out/org-switcher inlined into Sidebar/MobileNav rather than reusing user-menu.tsx as-is | That file was dead code, never imported; its signOut() pattern was correct but needed to live alongside the new OrgSwitcher trigger in the same dropdown-menu structure | 2026-07-06 |
 
 ## Follow-up Tasks
 

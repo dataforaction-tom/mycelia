@@ -4,14 +4,17 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils/cn";
-import { getNavItems } from "./sidebar";
+import { getNavItems, type SidebarOrg } from "./sidebar";
+import { OrgSwitcher } from "./org-switcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MobileNavProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  orgName?: string;
+  organisations?: SidebarOrg[];
   userName?: string;
   userEmail?: string;
   userImage?: string;
@@ -20,7 +23,7 @@ interface MobileNavProps {
 function MobileNav({
   open,
   onOpenChange,
-  orgName = "Mycelium",
+  organisations = [],
   userName,
   userEmail,
   userImage,
@@ -55,27 +58,7 @@ function MobileNav({
           </DialogPrimitive.Description>
 
           {/* Header */}
-          <div className="flex h-14 items-center justify-between border-b border-border px-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-terracotta text-white">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                  <path d="M2 12h20" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-bark">{orgName}</span>
-            </div>
+          <div className="flex h-12 items-center justify-end border-b border-border px-4">
             <DialogPrimitive.Close className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-bark transition-colors hover:bg-cream-dark">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -94,6 +77,8 @@ function MobileNav({
               <span className="sr-only">Close navigation</span>
             </DialogPrimitive.Close>
           </div>
+
+          <OrgSwitcher organisations={organisations} currentSlug={orgSlug} />
 
           {/* Navigation links */}
           <nav className="flex-1 space-y-1 px-3 py-4">
@@ -129,35 +114,55 @@ function MobileNav({
 
           {/* User section */}
           <div className="border-t border-border p-3">
-            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-              <Avatar className="h-8 w-8">
-                {userImage && (
-                  <AvatarImage src={userImage} alt={userName ?? ""} />
-                )}
-                <AvatarFallback className="text-xs">
-                  {userName
-                    ? userName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)
-                    : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-col">
-                {userName && (
-                  <span className="truncate text-sm font-medium text-bark">
-                    {userName}
-                  </span>
-                )}
-                {userEmail && (
-                  <span className="truncate text-xs text-muted">
-                    {userEmail}
-                  </span>
-                )}
-              </div>
-            </div>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cream-dark focus:outline-none">
+                  <Avatar className="h-8 w-8">
+                    {userImage && (
+                      <AvatarImage src={userImage} alt={userName ?? ""} />
+                    )}
+                    <AvatarFallback className="text-xs">
+                      {userName
+                        ? userName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-col">
+                    {userName && (
+                      <span className="truncate text-sm font-medium text-bark">
+                        {userName}
+                      </span>
+                    )}
+                    {userEmail && (
+                      <span className="truncate text-xs text-muted">
+                        {userEmail}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </DropdownMenu.Trigger>
+
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="start"
+                  side="top"
+                  sideOffset={8}
+                  className="z-50 min-w-[200px] rounded-lg border border-border bg-white p-1.5 shadow-md"
+                >
+                  <DropdownMenu.Item
+                    onSelect={() => signOut({ callbackUrl: "/" })}
+                    className="cursor-pointer rounded-md px-3 py-2 text-sm text-bark outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+                  >
+                    Sign out
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

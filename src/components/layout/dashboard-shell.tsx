@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar } from "./sidebar";
+import { Sidebar, type SidebarOrg } from "./sidebar";
 import { Header } from "./header";
 import { MobileNav } from "./mobile-nav";
 
 interface DashboardShellProps {
   children: React.ReactNode;
+  organisations?: SidebarOrg[];
   userName?: string;
   userEmail?: string;
   userImage?: string;
@@ -14,6 +15,7 @@ interface DashboardShellProps {
 
 export function DashboardShell({
   children,
+  organisations,
   userName,
   userEmail,
   userImage,
@@ -23,6 +25,7 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-cream">
       <Sidebar
+        organisations={organisations}
         userName={userName}
         userEmail={userEmail}
         userImage={userImage}
@@ -32,6 +35,7 @@ export function DashboardShell({
         <MobileNav
           open={mobileNavOpen}
           onOpenChange={setMobileNavOpen}
+          organisations={organisations}
           userName={userName}
           userEmail={userEmail}
           userImage={userImage}

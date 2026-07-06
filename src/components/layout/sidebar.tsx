@@ -3,8 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/utils/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OrgSwitcher } from "./org-switcher";
 
 interface NavItem {
   label: string;
@@ -166,15 +169,21 @@ function getNavItems(orgSlug: string): NavItem[] {
   ];
 }
 
+interface SidebarOrg {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface SidebarProps {
-  orgName?: string;
+  organisations?: SidebarOrg[];
   userName?: string;
   userEmail?: string;
   userImage?: string;
 }
 
 function Sidebar({
-  orgName = "Mycelium",
+  organisations = [],
   userName,
   userEmail,
   userImage,
@@ -185,27 +194,7 @@ function Sidebar({
 
   return (
     <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-border bg-cream md:flex">
-      {/* Org name */}
-      <Link href={`/${orgSlug}`} className="flex h-16 items-center gap-2 border-b border-border px-6 transition-colors hover:bg-cream-dark">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-terracotta text-white">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-            <path d="M2 12h20" />
-          </svg>
-        </div>
-        <span className="text-base font-semibold text-bark">{orgName}</span>
-      </Link>
+      <OrgSwitcher organisations={organisations} currentSlug={orgSlug} />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -241,35 +230,59 @@ function Sidebar({
 
       {/* User menu */}
       <div className="border-t border-border p-3">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-          <Avatar className="h-8 w-8">
-            {userImage && <AvatarImage src={userImage} alt={userName ?? ""} />}
-            <AvatarFallback className="text-xs">
-              {userName
-                ? userName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)
-                : "?"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-col">
-            {userName && (
-              <span className="truncate text-sm font-medium text-bark">
-                {userName}
-              </span>
-            )}
-            {userEmail && (
-              <span className="truncate text-xs text-muted">{userEmail}</span>
-            )}
-          </div>
-        </div>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cream-dark focus:outline-none">
+              <Avatar className="h-8 w-8">
+                {userImage && (
+                  <AvatarImage src={userImage} alt={userName ?? ""} />
+                )}
+                <AvatarFallback className="text-xs">
+                  {userName
+                    ? userName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-col">
+                {userName && (
+                  <span className="truncate text-sm font-medium text-bark">
+                    {userName}
+                  </span>
+                )}
+                {userEmail && (
+                  <span className="truncate text-xs text-muted">
+                    {userEmail}
+                  </span>
+                )}
+              </div>
+            </button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="start"
+              side="top"
+              sideOffset={8}
+              className="z-50 min-w-[200px] rounded-lg border border-border bg-white p-1.5 shadow-md"
+            >
+              <DropdownMenu.Item
+                onSelect={() => signOut({ callbackUrl: "/" })}
+                className="cursor-pointer rounded-md px-3 py-2 text-sm text-bark outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+              >
+                Sign out
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     </aside>
   );
 }
 
 export { Sidebar, getNavItems };
-export type { SidebarProps, NavItem };
+export type { SidebarProps, SidebarOrg, NavItem };

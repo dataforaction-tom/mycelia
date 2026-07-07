@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
     if (msg.includes("Both providers failed")) {
       return errorResponse("AI understanding is unavailable right now", 502);
     }
+    if (msg.includes("Subscription required"))
+      return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }

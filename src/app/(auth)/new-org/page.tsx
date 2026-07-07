@@ -14,8 +14,10 @@ export default async function NewOrgPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-bark">Create your organisation</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="font-display text-3xl text-bark">
+          Create your organisation
+        </h1>
+        <p className="mt-2 text-sm text-muted">
           Give your team a home for their relationships.
         </p>
       </div>

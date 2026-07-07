@@ -28,7 +28,7 @@ export default async function SpacesSettingsPage({
     .orderBy(desc(spaces.createdAt));
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-bark">Spaces</h1>

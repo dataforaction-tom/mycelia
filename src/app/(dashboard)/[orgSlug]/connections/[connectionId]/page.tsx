@@ -11,9 +11,10 @@ import {
   connectionSpaces,
   spaces,
 } from "@/lib/db/schema";
-import { and, eq, desc, asc } from "drizzle-orm";
+import { and, eq, desc, asc, inArray, ne, sql } from "drizzle-orm";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { ConnectionTypeBadge } from "@/components/ui/connection-type-badge";
+import { AddMomentButton } from "@/components/moments/add-moment-button";
 import { MomentList } from "@/components/moments/moment-list";
 import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
 import { SpacePicker } from "@/components/spaces/space-picker";
@@ -84,56 +85,98 @@ export default async function ConnectionDetailPage({
       .where(eq(connectionSpaces.connectionId, connectionId))
   ).map((row) => row.spaceId);
 
-  const typeColors: Record<string, string> = {
-    person: "bg-sky/10 text-sky",
-    organisation: "bg-terracotta/10 text-terracotta",
-    group: "bg-moss/10 text-moss",
-    community: "bg-amber/10 text-amber",
-  };
+  // Shared threads: other connections who co-appear in this connection's
+  // moments, ranked by how many moments they share.
+  const sharedMomentIds = connectionMoments.map((m) => m.id);
+  const sharedThreads = sharedMomentIds.length
+    ? await db
+        .select({
+          id: connections.id,
+          name: connections.name,
+          sharedCount: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(momentConnections)
+        .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
+        .where(
+          and(
+            inArray(momentConnections.momentId, sharedMomentIds),
+            ne(momentConnections.connectionId, connectionId)
+          )
+        )
+        .groupBy(connections.id, connections.name)
+        .orderBy(desc(sql`count(*)`))
+        .limit(3)
+    : [];
+
+  // A quiet status read: latest "depth" quality signal, if one has been set.
+  const latestDepth = [...qualityRows]
+    .reverse()
+    .find((q) => q.spectrum === "depth");
+  const depthLabel = latestDepth
+    ? latestDepth.position > 0.25
+      ? "Deepening"
+      : latestDepth.position < -0.25
+        ? "Cooling"
+        : "Steady"
+    : null;
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-bark">{connection.name}</h1>
-            <Badge className={typeColors[connection.type] ?? ""}>
-              {connection.type}
-            </Badge>
+    <div className="stagger-children space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div
+            className="animate-breathe-soft h-16 w-16 shrink-0 rounded-full bg-gradient-to-br from-terracotta-light to-moss-dark shadow-[0_0_24px_rgba(138,154,86,0.35)]"
+            aria-hidden="true"
+          />
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="font-display text-4xl text-bark">
+                {connection.name}
+              </h1>
+              <ConnectionTypeBadge type={connection.type}>
+                {connection.type}
+              </ConnectionTypeBadge>
+              {depthLabel && (
+                <span className="rounded-full border border-green/35 bg-gradient-to-r from-green/15 to-moss/10 px-3 py-1 text-xs font-semibold text-green-dark">
+                  {depthLabel}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-sm text-muted">
+              In your network since{" "}
+              {connection.createdAt.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-muted">
-            Added{" "}
-            {connection.createdAt.toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
         </div>
-        <Link
-          href={`/${orgSlug}/moments/new?connectionId=${connectionId}`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
-        >
-          Add moment
-        </Link>
+        <AddMomentButton seedText={connection.name} />
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Story</h2>
+      {/* The story leads: relationships are narratives, not records */}
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-lift sm:p-8">
+        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+          The story so far
+        </h2>
         {connection.threadSummary ? (
-          <p className="mt-2 font-serif text-bark leading-relaxed">
+          <p className="mt-3 font-serif text-lg leading-relaxed text-bark">
             {connection.threadSummary}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-muted">
-            No story yet — as moments build up, a narrative summary of this
-            relationship will appear here.
+          <p className="mt-3 text-sm text-muted">
+            No story yet. As you record moments with{" "}
+            {connection.name}, Tending will write and keep a living narrative
+            of this relationship here.
           </p>
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Qualities</h2>
+      <div>
+        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+          Qualities
+        </h2>
         <div className="mt-4">
           <QualitySpectrums
             qualities={qualityRows}
@@ -143,22 +186,55 @@ export default async function ConnectionDetailPage({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
-        <h2 className="text-sm font-semibold text-muted">Spaces</h2>
-        <div className="mt-4">
-          <SpacePicker
-            connectionId={connectionId}
-            organisationId={org.id}
-            allSpaces={allSpaces}
-            initialSelected={linkedSpaceIds}
-          />
+      <div className="grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
+        <div>
+          <h2 className="font-display text-xl text-bark">Moments together</h2>
+          <div className="mt-4">
+            <MomentList moments={connectionMoments} orgSlug={orgSlug} />
+          </div>
         </div>
-      </div>
 
-      <div>
-        <h2 className="text-lg font-semibold text-bark">Moments</h2>
-        <div className="mt-4">
-          <MomentList moments={connectionMoments} orgSlug={orgSlug} />
+        <div className="flex flex-col gap-6">
+          {sharedThreads.length > 0 && (
+            <div className="underground relative overflow-hidden rounded-xl p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-soil-ink-soft">
+                Shared threads
+              </p>
+              <p className="mt-2.5 text-sm leading-relaxed text-soil-ink">
+                Connected to{" "}
+                {sharedThreads.map((t, i) => (
+                  <span key={t.id}>
+                    <Link
+                      href={`/${orgSlug}/connections/${t.id}`}
+                      className="text-spore underline decoration-spore/30 underline-offset-2 hover:decoration-spore"
+                    >
+                      {t.name}
+                    </Link>
+                    {i < sharedThreads.length - 2
+                      ? ", "
+                      : i === sharedThreads.length - 2
+                        ? " and "
+                        : ""}
+                  </span>
+                ))}{" "}
+                through shared moments.
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-lift">
+            <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              Spaces
+            </h2>
+            <div className="mt-4">
+              <SpacePicker
+                connectionId={connectionId}
+                organisationId={org.id}
+                allSpaces={allSpaces}
+                initialSelected={linkedSpaceIds}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

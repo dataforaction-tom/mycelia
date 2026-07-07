@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright MCP artifacts
+.playwright-mcp/
+
+# Design handoff references (not app code)
+*.zip
+Mycelia App (standalone).html
+design_handoff_mycelia_redesign_extract/

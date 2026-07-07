@@ -60,15 +60,15 @@ export function QualitySetControl({
         step={0.1}
         value={position}
         onChange={(e) => setPosition(Number(e.target.value))}
-        className="w-full"
+        className="quality-slider h-1.5 w-full cursor-pointer accent-green"
       />
       <button
         type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="shrink-0 rounded-lg bg-terracotta px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+        className="shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-bark transition-colors hover:border-terracotta/40 hover:text-terracotta-dark disabled:opacity-50"
       >
-        {isSubmitting ? "Saving…" : "Set"}
+        {isSubmitting ? "Saving…" : "Save"}
       </button>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

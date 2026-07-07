@@ -1,7 +1,7 @@
 # Plan
 
-> Last updated: 2026-02-22
-> Status: Phase 1 in progress — core build complete, needs credentials + runtime testing
+> Last updated: 2026-07-06
+> Status: Phase 3 complete. End-user documentation (guide + changelog) now exists and is kept current alongside feature work.
 
 ## Objective
 
@@ -100,7 +100,7 @@ Build Mycelium — a relationship management system for social purpose organisat
 ### Phase 6: Launch (Weeks 31-34)
 
 - [ ] Landing page — interactive demos of network view
-- [ ] Public documentation
+- [x] Public documentation — initial user guide + changelog drafted 2026-07-06 (`docs/`, mkdocs-ready); kept current as features ship rather than deferred to launch
 - [ ] Onboarding refinement from beta feedback
 - [ ] Performance benchmarking — <2s network load for 500 connections
 - [ ] Public launch
@@ -126,6 +126,9 @@ Build Mycelium — a relationship management system for social purpose organisat
 | River view = enhanced Moments page, not a new route | Avoids duplicating the same chronological moment data in two places; asked the user to confirm, no response within the wait window, proceeded with the lower-duplication default (reversible later if a visually distinct page is wanted) | 2026-07-06 |
 | Bitmask permissions: one bit per capability area (DELETE_CONNECTIONS/DELETE_MOMENTS/DELETE_SPACES/MANAGE_MEMBERS), not per route | Matches the spec's "elevated access to X" granularity; avoids fragmenting into permissions nobody asked for | 2026-07-06 |
 | Sign-out/org-switcher inlined into Sidebar/MobileNav rather than reusing user-menu.tsx as-is | That file was dead code, never imported; its signOut() pattern was correct but needed to live alongside the new OrgSwitcher trigger in the same dropdown-menu structure | 2026-07-06 |
+| Generated comprehensive initial end-user docs (mkdocs structure) rather than waiting for a formal release | No `docs/` folder existed despite Phase 1-3 being feature-complete; better to document what's already built and keep it current incrementally than let documentation debt accumulate until launch | 2026-07-06 |
+| "Two worlds" visual identity: warm lit surfaces for daily work, dark "underground" canvas (glowing nodes) for network views | The mycelium metaphor is the product's core idea — the network views literally go beneath the surface; also gives the D3 views a distinctive, non-templated look. Fraunces (variable SOFT axis) chosen as display face for organic letterforms; DM Sans kept per project standard | 2026-07-06 |
+| Network toggle labels renamed "Force-directed"/"Constellation" → "Threads"/"Constellations" | Name things by what people recognise, not by the layout engine; docs/user-guide.md still uses the old names and needs a follow-up docs pass | 2026-07-06 |
 
 ## Follow-up Tasks
 

@@ -3,14 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as d3 from "d3";
-import { CONNECTION_TYPE_COLORS, type ConnectionType } from "@/lib/config/theme";
-import { NetworkControls } from "./network-controls";
+import {
+  CONNECTION_TYPE_COLORS_GLOW,
+  UNDERGROUND,
+  type ConnectionType,
+} from "@/lib/config/theme";
+import {
+  addGlowFilter,
+  attachBreathing,
+  attachDashFlow,
+  keepDrifting,
+  prefersReducedMotion,
+  vitalityOf,
+  IDLE_ALPHA_TARGET,
+  VITALITY_OPACITY,
+} from "@/lib/network/living";
+import { vitalityLabel } from "@/lib/network/vitality";
+import { ToggleChip } from "@/components/ui/chip";
+import { Filaments } from "./filaments";
+import { Spores } from "./spores";
 
 interface NetworkNode {
   id: string;
   name: string;
   type: ConnectionType;
   clusterId: string;
+  lastMomentAt: string | null;
 }
 
 interface NetworkEdge {
@@ -26,12 +44,12 @@ interface NetworkData {
   edges: NetworkEdge[];
 }
 
-interface Tooltip {
-  x: number;
-  y: number;
+interface SelectedNode {
+  id: string;
   name: string;
   type: ConnectionType;
   strength: number;
+  lastMomentAt: string | null;
 }
 
 type SimNode = NetworkNode & d3.SimulationNodeDatum;
@@ -39,13 +57,16 @@ type SimLink = d3.SimulationLinkDatum<SimNode> & { strength: number };
 
 const WIDTH = 800;
 const HEIGHT = 560;
-const ALL_TYPES: ConnectionType[] = [
-  "person",
-  "organisation",
-  "group",
-  "community",
-];
 const LABEL_ZOOM_THRESHOLD = 0.6;
+
+type FilterMode = "all" | "people" | "organisations" | "quiet";
+
+const FILTER_CHIPS: { key: FilterMode; label: string }[] = [
+  { key: "all", label: "Everyone" },
+  { key: "people", label: "People" },
+  { key: "organisations", label: "Organisations" },
+  { key: "quiet", label: "Going quiet" },
+];
 
 export function NetworkGraph({
   organisationId,
@@ -75,6 +96,12 @@ export function NetworkGraph({
     SVGGElement,
     unknown
   > | null>(null);
+  const haloSelRef = useRef<d3.Selection<
+    SVGCircleElement,
+    SimNode,
+    SVGGElement,
+    unknown
+  > | null>(null);
   const simNodesRef = useRef<SimNode[] | null>(null);
   const strengthByIdRef = useRef<Map<string, number> | null>(null);
   const zoomKRef = useRef(1);
@@ -83,26 +110,14 @@ export function NetworkGraph({
   const [data, setData] = useState<NetworkData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [selected, setSelected] = useState<SelectedNode | null>(null);
 
-  const [minStrength, setMinStrength] = useState(0);
-  const [activeTypes, setActiveTypes] = useState<Set<ConnectionType>>(
-    () => new Set(ALL_TYPES)
-  );
-  const [hideUnconnected, setHideUnconnected] = useState(false);
+  // Prototype filter chips: one lens at a time. "Going quiet" surfaces the
+  // threads that need tending (fading/dormant vitality).
+  const [mode, setMode] = useState<FilterMode>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  function toggleType(type: ConnectionType) {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
-  }
-
-  // Effect 1: fetch. Only organisationId/minStrength changes trigger a
-  // refetch, since minStrength is the only filter the server applies.
+  // Effect 1: fetch once per org — every filter is applied client-side.
   useEffect(() => {
     let cancelled = false;
 
@@ -110,7 +125,7 @@ export function NetworkGraph({
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/network?minStrength=${minStrength}`, {
+        const res = await fetch("/api/network", {
           headers: { "x-organisation-id": organisationId },
         });
         const json = await res.json();
@@ -131,7 +146,7 @@ export function NetworkGraph({
     return () => {
       cancelled = true;
     };
-  }, [organisationId, minStrength]);
+  }, [organisationId]);
 
   // Effect 2: D3 setup (simulation, zoom, drag, click, hover). Runs once
   // per fetched dataset — filtering (Effect 3) never re-runs this.
@@ -151,8 +166,8 @@ export function NetworkGraph({
       .domain([0, d3.max(strengthById.values()) || 1])
       .range([6, 26]);
 
-    const strokeWidthScale = d3.scaleLinear().domain([0, 1]).range([1, 5]);
-    const strokeOpacityScale = d3.scaleLinear().domain([0, 1]).range([0.25, 0.85]);
+    const strokeWidthScale = d3.scaleLinear().domain([0, 1]).range([1, 4.5]);
+    const strokeOpacityScale = d3.scaleLinear().domain([0, 1]).range([0.14, 0.6]);
 
     const nodes: SimNode[] = data.nodes.map((n) => ({ ...n }));
     const links: SimLink[] = data.edges.map((e) => ({
@@ -165,28 +180,74 @@ export function NetworkGraph({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
+    // Soft bloom around every node — the bioluminescence of the underground
+    addGlowFilter(svg, "node-glow", 3.5);
+
     const container = svg.append("g");
     const linkGroup = container.append("g").attr("stroke-linecap", "round");
-    const nodeGroup = container.append("g");
+    const haloGroup = container.append("g");
+    const nodeGroup = container.append("g").attr("filter", "url(#node-glow)");
     const labelGroup = container.append("g");
 
+    // Threads per the prototype: cream dashes flowing along every join
     const link = linkGroup
       .selectAll<SVGLineElement, SimLink>("line")
       .data(links)
       .join<SVGLineElement>("line")
-      .attr("stroke", "#9c8b7a")
+      .attr("stroke", UNDERGROUND.spore)
       .attr("stroke-width", (d) => strokeWidthScale(d.strength))
       .attr("stroke-opacity", (d) => strokeOpacityScale(d.strength));
+    attachDashFlow(link);
+
+    const nodeRadius = (d: SimNode) =>
+      radiusScale(strengthById.get(d.id) ?? 0);
+
+    // Fresh relationships flare: an expanding, fading ring
+    const freshNodes = nodes.filter((n) => vitalityOf(n.lastMomentAt) === "fresh");
+    const halo = haloGroup
+      .selectAll<SVGCircleElement, SimNode>("circle")
+      .data(freshNodes)
+      .join<SVGCircleElement>("circle")
+      .attr("fill", "none")
+      .attr("stroke", (d) => CONNECTION_TYPE_COLORS_GLOW[d.type])
+      .attr("stroke-width", 1.2)
+      .attr("r", (d) => nodeRadius(d) + 4)
+      .attr("opacity", 0.5);
+    if (!prefersReducedMotion()) {
+      halo.each(function (datum, index) {
+        const startR = nodeRadius(datum) + 3;
+        const sel = d3.select(this);
+        sel
+          .append("animate")
+          .attr("attributeName", "r")
+          .attr("from", `${startR}`)
+          .attr("to", `${startR + 14}`)
+          .attr("dur", "3.2s")
+          .attr("begin", `${(index % 4) * 0.8}s`)
+          .attr("repeatCount", "indefinite");
+        sel
+          .append("animate")
+          .attr("attributeName", "opacity")
+          .attr("from", "0.55")
+          .attr("to", "0")
+          .attr("dur", "3.2s")
+          .attr("begin", `${(index % 4) * 0.8}s`)
+          .attr("repeatCount", "indefinite");
+      });
+    }
 
     const node = nodeGroup
       .selectAll<SVGCircleElement, SimNode>("circle")
       .data(nodes)
       .join<SVGCircleElement>("circle")
-      .attr("r", (d) => radiusScale(strengthById.get(d.id) ?? 0))
-      .attr("fill", (d) => CONNECTION_TYPE_COLORS[d.type])
-      .attr("stroke", "#faf6f1")
+      .attr("r", nodeRadius)
+      .attr("fill", (d) => CONNECTION_TYPE_COLORS_GLOW[d.type])
+      // Vitality: quiet relationships literally fade toward the dark
+      .attr("fill-opacity", (d) => VITALITY_OPACITY[vitalityOf(d.lastMomentAt)])
+      .attr("stroke", UNDERGROUND.soil)
       .attr("stroke-width", 1.5)
       .style("cursor", "pointer");
+    attachBreathing(node, nodeRadius);
 
     const label = labelGroup
       .selectAll<SVGTextElement, SimNode>("text")
@@ -194,13 +255,17 @@ export function NetworkGraph({
       .join<SVGTextElement>("text")
       .text((d) => d.name)
       .attr("font-size", 10)
-      .attr("fill", "#5c4332")
+      .attr("fill", UNDERGROUND.ink)
+      .attr("opacity", (d) =>
+        vitalityOf(d.lastMomentAt) === "dormant" ? 0.45 : 0.85
+      )
       .attr("text-anchor", "middle")
       .attr("dy", (d) => -(radiusScale(strengthById.get(d.id) ?? 0) + 6));
 
     nodeSelRef.current = node;
     linkSelRef.current = link;
     labelSelRef.current = label;
+    haloSelRef.current = halo;
 
     function paint() {
       link
@@ -208,6 +273,7 @@ export function NetworkGraph({
         .attr("y1", (d) => (d.source as SimNode).y ?? 0)
         .attr("x2", (d) => (d.target as SimNode).x ?? 0)
         .attr("y2", (d) => (d.target as SimNode).y ?? 0);
+      halo.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
       node.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
       label.attr("x", (d) => d.x ?? 0).attr("y", (d) => d.y ?? 0);
     }
@@ -232,11 +298,14 @@ export function NetworkGraph({
       )
       .on("tick", paint);
 
-    // Settle synchronously once for a static initial layout, then stop the
-    // auto-started timer — dragging later reheats it via alphaTarget.
+    // Settle synchronously first so the layout appears instantly, then keep
+    // the organism drifting almost imperceptibly (static if the user
+    // prefers reduced motion — dragging still reheats via alphaTarget).
     simulation.tick(300);
     simulation.stop();
     paint();
+    keepDrifting(simulation);
+    const idleAlphaTarget = prefersReducedMotion() ? 0 : IDLE_ALPHA_TARGET;
 
     // Pan/zoom the whole graph. Label visibility is re-applied on zoom via
     // applyVisibilityRef so filter state (set by Effect 3) is respected.
@@ -265,33 +334,25 @@ export function NetworkGraph({
         d.fy = event.y;
       })
       .on("end", (event, d) => {
-        if (!event.active) simulation.alphaTarget(0);
+        if (!event.active) simulation.alphaTarget(idleAlphaTarget);
         d.fx = null;
         d.fy = null;
       });
     node.call(drag);
 
+    // Clicking a node opens its floating detail card (bottom-right); the
+    // card itself navigates. Clicking the background clears the selection.
     node.on("click", (event, d) => {
       event.stopPropagation();
-      router.push(`/${orgSlug}/connections/${d.id}`);
+      setSelected({
+        id: d.id,
+        name: d.name,
+        type: d.type,
+        strength: strengthById.get(d.id) ?? 0,
+        lastMomentAt: d.lastMomentAt,
+      });
     });
-
-    node
-      .on("mouseenter", (event, d) => {
-        setTooltip({
-          x: event.clientX,
-          y: event.clientY,
-          name: d.name,
-          type: d.type,
-          strength: strengthById.get(d.id) ?? 0,
-        });
-      })
-      .on("mousemove", (event) => {
-        setTooltip((t) =>
-          t ? { ...t, x: event.clientX, y: event.clientY } : t
-        );
-      })
-      .on("mouseleave", () => setTooltip(null));
+    svg.on("click", () => setSelected(null));
 
     return () => {
       simulation.stop();
@@ -300,10 +361,11 @@ export function NetworkGraph({
       nodeSelRef.current = null;
       linkSelRef.current = null;
       labelSelRef.current = null;
+      haloSelRef.current = null;
       simNodesRef.current = null;
       strengthByIdRef.current = null;
       applyVisibilityRef.current = null;
-      setTooltip(null);
+      setSelected(null);
     };
   }, [data, orgSlug, router]);
 
@@ -319,8 +381,13 @@ export function NetworkGraph({
     if (!nodeSel || !linkSel || !labelSel || !nodes || !strengthById) return;
 
     function nodeVisible(d: SimNode) {
-      const connected = (strengthById!.get(d.id) ?? 0) > 0;
-      return activeTypes.has(d.type) && (!hideUnconnected || connected);
+      if (mode === "people") return d.type === "person";
+      if (mode === "organisations") return d.type !== "person";
+      if (mode === "quiet") {
+        const vitality = vitalityOf(d.lastMomentAt);
+        return vitality === "fading" || vitality === "dormant";
+      }
+      return true;
     }
 
     const term = searchTerm.trim().toLowerCase();
@@ -331,7 +398,7 @@ export function NetworkGraph({
     nodeSel
       .style("display", (d) => (nodeVisible(d) ? null : "none"))
       .attr("stroke", (d) =>
-        matched && d.id === matched.id ? "#d4953a" : "#faf6f1"
+        matched && d.id === matched.id ? "#ffffff" : UNDERGROUND.soil
       )
       .attr("stroke-width", (d) => (matched && d.id === matched.id ? 3 : 1.5));
 
@@ -340,6 +407,10 @@ export function NetworkGraph({
       const target = d.target as SimNode;
       return nodeVisible(source) && nodeVisible(target) ? null : "none";
     });
+
+    haloSelRef.current?.style("display", (d) =>
+      nodeVisible(d) ? null : "none"
+    );
 
     applyVisibilityRef.current = () => {
       labelSel.style("display", (d) =>
@@ -356,12 +427,17 @@ export function NetworkGraph({
         .translate(-(matched.x ?? 0), -(matched.y ?? 0));
       svg.transition().duration(500).call(zoomRef.current.transform, transform);
     }
-  }, [activeTypes, hideUnconnected, searchTerm, data]);
+  }, [mode, searchTerm, data]);
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-xl border border-border bg-white">
-        <p className="text-sm text-muted">Loading network…</p>
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 animate-glow rounded-full bg-spore" />
+          <p className="text-sm text-soil-ink-soft">
+            Listening for the network…
+          </p>
+        </div>
       </div>
     );
   }
@@ -376,26 +452,22 @@ export function NetworkGraph({
 
   if (!data || data.nodes.length < 2 || data.edges.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-white p-12 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10">
-          <svg
-            className="h-6 w-6 text-terracotta"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"
-            />
-          </svg>
+      <div className="flex flex-col items-center p-12 text-center">
+        <div
+          className="relative mb-5 flex h-14 w-14 items-center justify-center"
+          aria-hidden="true"
+        >
+          <span className="absolute inset-0 animate-breathe rounded-full bg-spore/10" />
+          <span className="absolute inset-3 animate-breathe rounded-full bg-spore/20 [animation-delay:700ms]" />
+          <span className="relative h-3 w-3 rounded-full bg-spore shadow-[0_0_16px] shadow-spore/60" />
         </div>
-        <h3 className="text-lg font-semibold text-bark">No network yet</h3>
-        <p className="mt-2 max-w-sm text-sm text-muted">
-          Add more connections and moments to start seeing relationships
-          form.
+        <h3 className="font-display text-xl text-soil-ink">
+          Nothing has surfaced yet
+        </h3>
+        <p className="mt-2 max-w-sm text-sm text-soil-ink-soft">
+          The network draws itself from your moments. Record conversations
+          that mention more than one connection, and threads will begin to
+          form here.
         </p>
       </div>
     );
@@ -403,37 +475,74 @@ export function NetworkGraph({
 
   return (
     <div className="space-y-4">
-      <NetworkControls
-        activeTypes={activeTypes}
-        onToggleType={toggleType}
-        minStrength={minStrength}
-        onMinStrengthChange={setMinStrength}
-        hideUnconnected={hideUnconnected}
-        onHideUnconnectedChange={setHideUnconnected}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Find someone…"
+          className="w-44 rounded-full border border-soil-line bg-transparent px-4 py-1.5 text-sm text-soil-ink placeholder:text-soil-ink-soft/70 focus:border-spore/50 focus:outline-none"
+        />
+        <div className="flex flex-wrap gap-2">
+          {FILTER_CHIPS.map((chip) => (
+            <ToggleChip
+              key={chip.key}
+              variant="dark"
+              pressed={mode === chip.key}
+              onPressedChange={() => setMode(chip.key)}
+            >
+              {chip.label}
+            </ToggleChip>
+          ))}
+        </div>
+      </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-white p-4">
+      <div className="relative overflow-x-auto">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="w-full"
           style={{ minWidth: WIDTH, height: HEIGHT }}
         />
-      </div>
+        <Filaments width={WIDTH} height={130} count={9} seed={23} />
+        <Spores count={6} seed={23} />
 
-      {tooltip && (
-        <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-white px-3 py-2 text-xs shadow-lg"
-          style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
-        >
-          <p className="font-semibold text-bark">{tooltip.name}</p>
-          <p className="mt-0.5 capitalize text-muted">
-            {tooltip.type} · strength {tooltip.strength.toFixed(1)}
-          </p>
-        </div>
-      )}
+        {selected && (
+          <button
+            type="button"
+            onClick={() => router.push(`/${orgSlug}/connections/${selected.id}`)}
+            className="absolute bottom-6 right-6 z-20 w-72 rounded-2xl border border-soil-line bg-soil-raised p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="h-8 w-8 shrink-0 rounded-full"
+                style={{
+                  background: `radial-gradient(circle at 35% 30%, var(--node-tan), ${CONNECTION_TYPE_COLORS_GLOW[selected.type]})`,
+                }}
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-soil-ink">
+                  {selected.name}
+                </p>
+                <p className="truncate text-xs capitalize text-soil-ink-soft">
+                  {selected.type} · strength {selected.strength.toFixed(1)}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2.5 text-xs text-soil-ink-soft">
+              {vitalityLabel(selected.lastMomentAt)}
+            </p>
+            <p className="mt-2.5 text-xs font-medium text-spore">
+              Read the story →
+            </p>
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-soil-ink-soft/80">
+        Bright nodes have recent moments; fading ones are going quiet. Light
+        pulses travel along your strongest threads, and fresh relationships
+        ripple.
+      </p>
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getMembership } from "@/lib/auth/permissions";
+import { db } from "@/lib/db";
+import { organisations } from "@/lib/db/schema";
+import { subscriptionState } from "@/lib/billing/subscription";
+import { eq } from "drizzle-orm";
+
+const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 /**
  * Return a success JSON response.
@@ -47,6 +53,24 @@ export async function getOrgContext(request: Request) {
 
   if (!membership) {
     throw new Error("Not a member of this organisation");
+  }
+
+  // Payment gate: expired trials go read-only. Every content route (and
+  // only content routes) flows through here, so this one check gates all
+  // writes while leaving reads, settings and billing untouched.
+  if (MUTATING_METHODS.has(request.method)) {
+    const [org] = await db
+      .select({
+        plan: organisations.plan,
+        trialEndsAt: organisations.trialEndsAt,
+      })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
+      .limit(1);
+
+    if (org && subscriptionState(org) === "expired") {
+      throw new Error("Subscription required — your free trial has ended");
+    }
   }
 
   return { user, membership, organisationId };

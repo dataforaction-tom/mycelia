@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils/api";
 import { createOrganisationSchema } from "@/lib/validators/organisations";
 import { slugify } from "@/lib/utils/slugify";
+import { seedDemoData } from "@/lib/demo/seed-demo-data";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
@@ -54,6 +55,17 @@ export async function POST(request: NextRequest) {
       role: "owner",
       acceptedAt: new Date(),
     });
+
+    // Optionally seed a demo world so the first dashboard is alive. The
+    // created ids are recorded on settings so "clear demo data" removes
+    // exactly these rows; tourPending triggers the guided tour once.
+    if (parsed.data.withDemoData) {
+      const demo = await seedDemoData(org.id, user.id);
+      await db
+        .update(organisations)
+        .set({ settings: { demo, tourPending: true } })
+        .where(eq(organisations.id, org.id));
+    }
 
     return successResponse(org, 201);
   } catch (error) {

@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ConnectionTypeBadge } from "@/components/ui/connection-type-badge";
+import { Filaments } from "@/components/network/filaments";
+import { Spores } from "@/components/network/spores";
 
 interface LinkedConnection {
   id: string;
@@ -20,6 +23,8 @@ interface ObservationCardProps {
   connections: LinkedConnection[];
   organisationId: string;
   orgSlug: string;
+  /** The single most-severe/recent unresolved observation, shown large and dark. */
+  featured?: boolean;
 }
 
 const severityColors: Record<string, string> = {
@@ -28,11 +33,12 @@ const severityColors: Record<string, string> = {
   important: "bg-terracotta/10 text-terracotta",
 };
 
-const connectionTypeColors: Record<string, string> = {
-  person: "bg-sky/10 text-sky",
-  organisation: "bg-terracotta/10 text-terracotta",
-  group: "bg-moss/10 text-moss",
-  community: "bg-amber/10 text-amber",
+// A soft severity accent along the card's left edge — colour does the
+// signalling so the actions can stay quiet
+const severityAccents: Record<string, string> = {
+  gentle: "border-l-sky/60",
+  noteworthy: "border-l-amber/70",
+  important: "border-l-terracotta/70",
 };
 
 export function ObservationCard({
@@ -44,6 +50,7 @@ export function ObservationCard({
   connections,
   organisationId,
   orgSlug,
+  featured = false,
 }: ObservationCardProps) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
@@ -89,8 +96,71 @@ export function ObservationCard({
 
   const isResolved = status === "acted_on" || status === "dismissed";
 
+  if (featured) {
+    return (
+      <div className="underground relative overflow-hidden rounded-2xl p-6 sm:p-8">
+        <Filaments width={400} height={70} count={5} seed={id.length} />
+        <Spores count={3} seed={id.length} />
+        <div className="relative">
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-soil-ink-soft">
+            Emerging pattern
+          </p>
+          <p className="mt-2 font-display text-2xl leading-snug text-soil-ink">
+            {content}
+          </p>
+
+          {connections.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {connections.map((c) => (
+                <Link key={c.id} href={`/${orgSlug}/connections/${c.id}`}>
+                  <span className="inline-flex cursor-pointer items-center rounded-full border border-spore/25 bg-spore/10 px-2.5 py-0.5 text-xs text-soil-ink transition-colors hover:bg-spore/20">
+                    {c.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center gap-2 text-xs text-soil-ink-soft">
+            <span className="capitalize">{type.replace("_", " ")}</span>
+            {isResolved && (
+              <span className="capitalize">
+                &middot; {status.replace("_", " ")}
+              </span>
+            )}
+          </div>
+
+          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+
+          {!isResolved && (
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => updateStatus("acted_on")}
+                disabled={isSubmitting}
+                className="rounded-full border border-spore/35 px-3 py-1.5 text-xs font-medium text-spore transition-colors hover:bg-spore/10 disabled:opacity-50"
+              >
+                Mark as acted on
+              </button>
+              <button
+                type="button"
+                onClick={() => updateStatus("dismissed")}
+                disabled={isSubmitting}
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-soil-ink-soft transition-colors hover:text-soil-ink disabled:opacity-50"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-lg border border-border bg-white p-4">
+    <div
+      className={`rounded-xl border border-border bg-white/85 p-4 shadow-lift border-l-2 ${severityAccents[severity] ?? "border-l-border"}`}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-bark">{content}</p>
         <Badge className={severityColors[severity] ?? ""}>{severity}</Badge>
@@ -100,11 +170,12 @@ export function ObservationCard({
         <div className="mt-3 flex flex-wrap gap-1.5">
           {connections.map((c) => (
             <Link key={c.id} href={`/${orgSlug}/connections/${c.id}`}>
-              <Badge
-                className={`cursor-pointer transition-opacity hover:opacity-80 ${connectionTypeColors[c.type] ?? ""}`}
+              <ConnectionTypeBadge
+                type={c.type}
+                className="cursor-pointer transition-opacity hover:opacity-80"
               >
                 {c.name}
-              </Badge>
+              </ConnectionTypeBadge>
             </Link>
           ))}
         </div>
@@ -130,13 +201,13 @@ export function ObservationCard({
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="What did you do about this? (optional)"
-                className="flex-1 rounded-lg border border-border bg-white px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
               />
               <button
                 type="button"
                 onClick={() => updateStatus("acted_on", response || undefined)}
                 disabled={isSubmitting}
-                className="shrink-0 rounded-lg bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+                className="shrink-0 rounded-full bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
               >
                 {isSubmitting ? "Saving…" : "Save"}
               </button>
@@ -147,7 +218,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => setShowResponseInput(true)}
                 disabled={isSubmitting}
-                className="rounded-lg bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+                className="rounded-full border border-moss/40 px-3 py-1.5 text-xs font-medium text-moss-dark transition-colors hover:bg-moss/10 disabled:opacity-50"
               >
                 Mark as acted on
               </button>
@@ -155,7 +226,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => updateStatus("dismissed")}
                 disabled={isSubmitting}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-bark transition-colors hover:bg-cream-dark disabled:opacity-50"
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-cream-dark hover:text-bark disabled:opacity-50"
               >
                 Dismiss
               </button>

@@ -1,38 +1,75 @@
 @import "tailwindcss";
 
+/*
+ * Mycelium design tokens.
+ *
+ * Two worlds share one system: the forest floor (warm, lit surfaces for
+ * daily work) and the underground (deep humus darkness for the network
+ * views, where connections glow). Components never hardcode hex values —
+ * they reach for these tokens so both worlds stay coherent.
+ */
 :root {
-  --background: #faf6f1;
-  --foreground: #3d2c1e;
-  --terracotta: #c67a4a;
-  --terracotta-light: #d49a76;
-  --terracotta-dark: #a85d30;
-  --moss: #6b8f5e;
-  --moss-light: #8aad7e;
-  --moss-dark: #4e6d43;
-  --bark: #5c4332;
-  --bark-light: #7a5d4a;
-  --bark-dark: #3d2c1e;
-  --cream: #faf6f1;
-  --cream-dark: #f0e8dd;
-  --amber: #d4953a;
-  --amber-light: #e8b96a;
+  /* The forest floor — daily working surfaces (parchment shell) */
+  --background: #e6dcc4; /* the desk the app sits on */
+  --foreground: #33291a;
+  --foreground-secondary: #4c4028;
+  --surface: #f6efdf;
+  --surface-sunken: #f0e8da;
+  --terracotta: #c97b47;
+  --terracotta-light: #d9986c;
+  --terracotta-dark: #b06034;
+  --moss: #8a9a56;
+  --moss-light: #adb878;
+  --moss-dark: #6d7c42;
+  --green: #6f9a4f; /* growth/deepening accent, distinct from moss */
+  --green-light: #8aad6f;
+  --green-dark: #5c7f3f;
+  --bark: #4c4028;
+  --bark-light: #786a4c;
+  --bark-dark: #33291a;
+  --cream: #f6efdf;
+  --cream-dark: #ecdcae;
+  --amber: #c9962e;
+  --amber-light: #e0b563;
+  --amber-dark: #b07c1c;
   --sky: #6ba3be;
   --sky-light: #8ebfd4;
-  --muted: #9c8b7a;
-  --muted-light: #c4b8ab;
-  --border: #e2d8cc;
-  --destructive: #c44a4a;
+  --muted: #988a66;
+  --muted-light: #a3966f;
+  --border: rgba(62, 50, 30, 0.07);
+  --border-strong: rgba(62, 50, 30, 0.12);
+  --destructive: #c04b3d;
+
+  /* The underground — where the network lives */
+  --soil: #1b130a;
+  --soil-mid: #271d11;
+  --soil-light: #3d2f1f;
+  --soil-raised: rgba(41, 30, 18, 0.85);
+  --soil-line: rgba(232, 213, 163, 0.25);
+  --spore: #e8d5a3; /* bioluminescent cream — primary glow */
+  --hypha: #adb878; /* pale mycelium green — secondary glow */
+  --node-tan: #c4a184;
+  --node-clay: #cd8b57;
+  --node-ochre: #c9ad6e;
+  --soil-ink: #f0eedd;
+  --soil-ink-soft: #bfad8e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
   --color-terracotta: var(--terracotta);
   --color-terracotta-light: var(--terracotta-light);
   --color-terracotta-dark: var(--terracotta-dark);
   --color-moss: var(--moss);
   --color-moss-light: var(--moss-light);
   --color-moss-dark: var(--moss-dark);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-green-dark: var(--green-dark);
   --color-bark: var(--bark);
   --color-bark-light: var(--bark-light);
   --color-bark-dark: var(--bark-dark);
@@ -40,17 +77,251 @@
   --color-cream-dark: var(--cream-dark);
   --color-amber: var(--amber);
   --color-amber-light: var(--amber-light);
+  --color-amber-dark: var(--amber-dark);
   --color-sky: var(--sky);
   --color-sky-light: var(--sky-light);
   --color-muted: var(--muted);
   --color-muted-light: var(--muted-light);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
-  --font-sans: var(--font-dm-sans);
+  --color-soil: var(--soil);
+  --color-soil-mid: var(--soil-mid);
+  --color-soil-light: var(--soil-light);
+  --color-soil-raised: var(--soil-raised);
+  --color-soil-line: var(--soil-line);
+  --color-spore: var(--spore);
+  --color-hypha: var(--hypha);
+  --color-node-tan: var(--node-tan);
+  --color-node-clay: var(--node-clay);
+  --color-node-ochre: var(--node-ochre);
+  --color-soil-ink: var(--soil-ink);
+  --color-soil-ink-soft: var(--soil-ink-soft);
+
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-gloock);
+  --font-serif: var(--font-gloock), Georgia, serif;
+  --font-mono: var(--font-dm-mono);
+
+  --shadow-frame: 0 40px 90px rgb(44 36 64 / 0.28);
+  --shadow-lift: 0 1px 2px rgb(51 41 26 / 0.04), 0 4px 16px rgb(51 41 26 / 0.05);
+  --shadow-hover: 0 2px 4px rgb(51 41 26 / 0.05), 0 8px 28px rgb(51 41 26 / 0.09);
+
+  --animate-rise: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-breathe: breathe 5s ease-in-out infinite;
+  --animate-breathe-soft: breatheSoft 5s ease-in-out infinite;
+  --animate-drift: drift 14s ease-in-out infinite alternate;
+  --animate-fade-drift: fadeDrift 14s linear infinite;
+  --animate-glow: glow 4s ease-in-out infinite;
+  --animate-hue: hue 10s ease-in-out infinite alternate;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--amber) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 2px;
+}
+
+/* Display type: Gloock's high-contrast serif carries the "grown, not typeset" voice */
+.font-display {
+  letter-spacing: -0.01em;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Softer breathing for avatars, the brand mark and spectrum thumbs */
+@keyframes breatheSoft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(10px, -18px);
+  }
+}
+
+/* Spores: drift up and fade in/out across the loop, distinct from the
+   network's idle `drift` (which stays position-only, no opacity change). */
+@keyframes fadeDrift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(34px, -110px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Ambient hue drift for light-shell background washes only — never inside .underground */
+@keyframes hue {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(18deg);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Dashes flowing along a thread — for static SVG marketing surfaces;
+   the live graphs use SMIL for the same effect. */
+@keyframes threadFlow {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+.animate-thread-flow {
+  stroke-dasharray: 5 8;
+  animation: threadFlow 3.5s linear infinite;
+}
+
+/*
+ * Orchestrated page entrance: give a container `stagger-children` and its
+ * direct children grow in one after another. Gated on motion preference.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .stagger-children > * {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger-children > :nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-children > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .stagger-children > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .stagger-children > :nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .stagger-children > :nth-child(5) {
+    animation-delay: 240ms;
+  }
+  .stagger-children > :nth-child(6) {
+    animation-delay: 300ms;
+  }
+  .stagger-children > :nth-child(7) {
+    animation-delay: 360ms;
+  }
+  .stagger-children > :nth-child(8) {
+    animation-delay: 420ms;
+  }
+  .stagger-children > :nth-child(n + 9) {
+    animation-delay: 480ms;
+  }
+
+  .thread-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-breathe,
+  .animate-breathe-soft,
+  .animate-drift,
+  .animate-fade-drift,
+  .animate-glow,
+  .animate-hue,
+  .animate-thread-flow {
+    animation: none;
+  }
+}
+
+/* A glowing thumb on the quality-spectrum range input, echoing the
+   gradient-track display above it. */
+.quality-slider::-webkit-slider-thumb {
+  box-shadow: 0 0 10px 2px rgba(111, 154, 79, 0.5);
+}
+.quality-slider::-moz-range-thumb {
+  box-shadow: 0 0 10px 2px rgba(111, 154, 79, 0.5);
+}
+
+/*
+ * The underground: scope for the network and constellation views.
+ * Swaps the working tokens so shared components keep reading correctly
+ * against deep soil.
+ */
+.underground {
+  --background: var(--soil);
+  --foreground: var(--soil-ink);
+  --surface: var(--soil-raised);
+  --border: var(--soil-line);
+  --muted: var(--soil-ink-soft);
+  background: radial-gradient(
+    120% 100% at 60% 0%,
+    var(--soil-light) 0%,
+    var(--soil-mid) 55%,
+    var(--soil) 100%
+  );
+  border: 1px solid var(--soil-line);
+  box-shadow:
+    inset 0 0 60px rgba(232, 213, 163, 0.06),
+    var(--shadow-hover);
+  color: var(--soil-ink);
 }

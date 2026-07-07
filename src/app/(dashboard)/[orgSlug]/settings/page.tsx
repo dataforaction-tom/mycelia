@@ -5,6 +5,7 @@ import { organisations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { OrgSettingsForm } from "@/components/organisations/org-settings-form";
+import { ClearDemoData } from "@/components/organisations/clear-demo-data";
 
 export default async function SettingsPage({
   params,
@@ -31,6 +32,10 @@ export default async function SettingsPage({
       </div>
 
       <OrgSettingsForm org={org} />
+
+      {Boolean((org.settings as { demo?: unknown } | null)?.demo) && (
+        <ClearDemoData organisationId={org.id} />
+      )}
 
       <div className="flex gap-4 border-t border-border pt-6 text-sm">
         <Link

@@ -10,8 +10,8 @@ import {
   spaces,
 } from "@/lib/db/schema";
 import { and, eq, desc, count, max, asc } from "drizzle-orm";
-import Link from "next/link";
 import { ConnectionList } from "@/components/connections/connection-list";
+import { AddConnectionButton } from "@/components/connections/add-connection-button";
 import { SpaceFilterSelect } from "@/components/spaces/space-filter-select";
 
 export default async function ConnectionsPage({
@@ -94,21 +94,17 @@ export default async function ConnectionsPage({
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="stagger-children space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-bark">Connections</h1>
-          <p className="mt-1 text-sm text-muted">
-            {rows.length} {rows.length === 1 ? "connection" : "connections"} in
-            your network
+          <h1 className="font-display text-4xl text-bark">Connections</h1>
+          <p className="mt-2 text-muted">
+            {rows.length === 1
+              ? "1 relationship you're tending"
+              : `${rows.length} relationships you're tending`}
           </p>
         </div>
-        <Link
-          href={`/${orgSlug}/connections/new`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
-        >
-          Add connection
-        </Link>
+        <AddConnectionButton />
       </div>
 
       {allSpaces.length > 0 && (

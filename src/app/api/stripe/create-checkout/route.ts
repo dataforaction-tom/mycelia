@@ -12,9 +12,10 @@ import { PLAN_PRICES } from "@/lib/config/plans";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v3";
 
+// Flat pricing: "individual" is the only plan on sale.
 const checkoutSchema = z.object({
   organisationId: z.string().uuid(),
-  plan: z.enum(["individual", "organisation", "large"]),
+  plan: z.literal("individual"),
 });
 
 export async function POST(request: NextRequest) {
@@ -69,6 +70,8 @@ export async function POST(request: NextRequest) {
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member") || msg.includes("Insufficient role"))
       return errorResponse(msg, 403);
+    if (msg.includes("Stripe is not configured"))
+      return errorResponse("Billing is not configured yet", 503);
     return errorResponse("Internal server error", 500);
   }
 }

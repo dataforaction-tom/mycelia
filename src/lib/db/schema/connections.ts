@@ -3,6 +3,19 @@ import { connectionTypeEnum } from "./enums";
 import { organisations } from "./organisations";
 import { spaces } from "./spaces";
 
+/**
+ * A light set of standard contact details. Tending isn't a traditional CRM,
+ * so this stays deliberately small and optional — enough to reach someone,
+ * not a full address book. Stored as a single typed JSONB blob so it can be
+ * extended without a migration.
+ */
+export interface ContactDetails {
+  email?: string;
+  phone?: string;
+  website?: string;
+  location?: string;
+}
+
 export const connections = pgTable("connections", {
   id: uuid("id").defaultRandom().primaryKey(),
   organisationId: uuid("organisation_id")
@@ -15,6 +28,7 @@ export const connections = pgTable("connections", {
     mode: "date",
     withTimezone: true,
   }),
+  contactDetails: jsonb("contact_details").$type<ContactDetails>().default({}),
   metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .notNull()

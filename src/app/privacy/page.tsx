@@ -34,8 +34,9 @@ export default function PrivacyPage() {
             <h2 className="font-display text-xl text-bark">What we store</h2>
             <ul className="mt-2 list-disc space-y-1.5 pl-5">
               <li>
-                <strong>Your account</strong> — name, email address and
-                avatar, from Google sign-in or the email magic link you use.
+                <strong>Your account</strong> — your name and email address.
+                Sign-in is passwordless: we email you a one-time link, so we
+                never hold a password for you.
               </li>
               <li>
                 <strong>Your organisation&apos;s data</strong> — the

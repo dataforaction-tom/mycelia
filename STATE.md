@@ -22,11 +22,11 @@ stateDiagram-v2
 |-----------|--------|-------|
 | Project scaffolding | ✅ Done | Next.js 15, Tailwind v4, DM Sans, earth-tone theme |
 | Database schema | ✅ Done | 7 schema files, centralized relations.ts, all enums |
-| Auth (NextAuth v5) | ✅ Done | Google + Resend providers, JWT, lazy adapter Proxy |
+| Auth (NextAuth v5) | ✅ Done | Magic-link only (Resend provider — Google removed 2026-07-07), JWT, lazy adapter Proxy |
 | Middleware | ✅ Done | Protects org routes, allows /sign-in, /new-org, /api |
 | API routes | ✅ Done | 12 route files — orgs, members, connections, moments, stripe |
 | Dashboard pages | ✅ Done | 9 pages — dashboard, connections (list/new/detail), moments (list/new), settings, billing, members. `moments` index page added 2026-07-06 — sidebar had linked to it since Phase 1 but the page never existed (404), found via manual testing |
-| Auth pages | ✅ Done | Sign-in (Google + magic link), new-org creation |
+| Auth pages | ✅ Done | Sign-in (magic link only), new-org creation |
 | UI components | ✅ Done | 12 primitives (button, input, card, badge, dialog, etc.) |
 | Layout (sidebar/header/mobile) | ✅ Done | Responsive sidebar, mobile drawer, dynamic org-slug nav |
 | Feature components | ✅ Done | Connection list/card/form/picker, moment form/card/list, org forms, billing |
@@ -76,7 +76,7 @@ flowchart LR
     Middleware --> AuthPages["Auth Pages\n/sign-in, /new-org"]
     Middleware --> Dashboard["Dashboard\n/{orgSlug}/*"]
     Dashboard --> API["API Routes\n/api/*"]
-    API --> Auth["NextAuth v5\nJWT + Google/Resend"]
+    API --> Auth["NextAuth v5\nJWT + Resend magic link"]
     API --> DB["Neon Postgres\nDrizzle ORM"]
     API --> Stripe["Stripe\nCheckout/Webhooks"]
 ```
@@ -99,8 +99,7 @@ flowchart LR
 
 | Dependency | Status | Notes |
 |------------|--------|-------|
-| Neon Postgres | Configured | `DATABASE_URL` is set in `.env.local`; dev server boots and `/api/network` responds (401 unauthenticated, as expected) — full authenticated flow still needs Google OAuth |
-| Google OAuth | Not set up | Need AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET |
+| Neon Postgres | Configured | `DATABASE_URL` is set in `.env.local`; dev server boots and `/api/network` responds (401 unauthenticated, as expected) — full authenticated flow works via magic link |
 | AUTH_SECRET | Set in .env.example | Run `npx auth secret` to set in .env.local |
 | Resend (email) | Not set up | Need AUTH_RESEND_KEY |
 | Stripe | Not set up | Need STRIPE_SECRET_KEY + price IDs |

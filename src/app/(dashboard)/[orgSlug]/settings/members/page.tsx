@@ -1,7 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Member {
   userId: string;
@@ -13,18 +12,11 @@ interface Member {
 }
 
 export default function MembersPage() {
-  const params = useParams();
-  const orgSlug = params.orgSlug as string;
-  const [members, setMembers] = useState<Member[]>([]);
+  // Placeholder page: the invite form and member list are UI-only for now
+  // (no API calls wired up yet), so members starts empty.
+  const [members] = useState<Member[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // In a real app, we'd resolve the orgSlug to orgId and fetch members
-    // For now, this shows the UI structure
-    setLoading(false);
-  }, [orgSlug]);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -80,16 +72,7 @@ export default function MembersPage() {
       </form>
 
       {/* Members list */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-lg bg-cream-dark"
-            />
-          ))}
-        </div>
-      ) : members.length === 0 ? (
+      {members.length === 0 ? (
         <p className="text-muted">
           No members yet. Invite people to collaborate.
         </p>

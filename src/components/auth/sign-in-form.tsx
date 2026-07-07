@@ -14,7 +14,10 @@ export function SignInForm() {
 
     setIsLoading(true);
     try {
-      await signIn("resend", { email, redirect: false });
+      // Explicit callbackUrl: without it NextAuth defaults to the current
+      // page (/sign-in), so a successful magic link would land users back
+      // on the sign-in form and look like a failure. "/" routes to their org.
+      await signIn("resend", { email, redirect: false, callbackUrl: "/" });
       setEmailSent(true);
     } finally {
       setIsLoading(false);

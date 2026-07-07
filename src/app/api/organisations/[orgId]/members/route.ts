@@ -8,6 +8,7 @@ import {
 } from "@/lib/utils/api";
 import { requireMembership, requirePermission } from "@/lib/auth/permissions";
 import { inviteMemberSchema } from "@/lib/validators/auth";
+import { sendMemberAddedEmail } from "@/lib/email/messages";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { organisations } from "@/lib/db/schema";
 import { and, eq, count } from "drizzle-orm";
@@ -66,7 +67,11 @@ export async function POST(
 
     // Check plan limits
     const [org] = await db
-      .select({ plan: organisations.plan })
+      .select({
+        plan: organisations.plan,
+        name: organisations.name,
+        slug: organisations.slug,
+      })
       .from(organisations)
       .where(eq(organisations.id, orgId))
       .limit(1);
@@ -126,6 +131,18 @@ export async function POST(
         acceptedAt: new Date(),
       })
       .returning();
+
+    // Best-effort notification to the person who was added.
+    try {
+      await sendMemberAddedEmail(
+        email,
+        org.name,
+        org.slug,
+        user.name ?? user.email ?? "A colleague",
+      );
+    } catch {
+      // Membership exists either way.
+    }
 
     return successResponse(membership, 201);
   } catch (error) {

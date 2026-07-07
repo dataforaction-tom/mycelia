@@ -52,6 +52,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     Resend({
       from: process.env.EMAIL_FROM ?? "noreply@tending.network",
+      // Tending-styled magic link instead of NextAuth's default template.
+      // Throws on failure so the sign-in page reports the error rather
+      // than claiming "check your email".
+      async sendVerificationRequest({ identifier, url }) {
+        const { sendMagicLinkEmail } = await import("@/lib/email/messages");
+        await sendMagicLinkEmail(identifier, url);
+      },
     }),
     ...(process.env.NODE_ENV === "development"
       ? [

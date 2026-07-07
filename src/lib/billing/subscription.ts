@@ -27,3 +27,24 @@ export function trialDaysLeft(trialEndsAt: Date | null): number {
   const ms = trialEndsAt.getTime() - Date.now();
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
+
+export interface TrialReminderFlags {
+  d7?: boolean;
+  d1?: boolean;
+}
+
+/**
+ * Which trial-ending reminder (if any) is due right now, given what has
+ * already been sent. The 1-day warning takes precedence and is still sent
+ * even if the 7-day one was somehow missed; each fires at most once.
+ */
+export function dueTrialReminder(
+  org: OrgBillingFields,
+  flags: TrialReminderFlags,
+): "d7" | "d1" | null {
+  if (subscriptionState(org) !== "trialing") return null;
+  const daysLeft = trialDaysLeft(org.trialEndsAt);
+  if (daysLeft <= 1 && !flags.d1) return "d1";
+  if (daysLeft <= 7 && !flags.d7) return "d7";
+  return null;
+}

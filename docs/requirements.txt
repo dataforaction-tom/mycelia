@@ -1,0 +1,2 @@
+# Docs build for docs.tending.network (Cloudflare Pages)
+mkdocs-material==9.5.50

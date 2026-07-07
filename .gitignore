@@ -47,3 +47,6 @@ next-env.d.ts
 *.zip
 Mycelia App (standalone).html
 design_handoff_mycelia_redesign_extract/
+
+# mkdocs build output
+site/

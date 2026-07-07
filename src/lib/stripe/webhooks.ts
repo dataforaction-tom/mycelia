@@ -1,7 +1,37 @@
 import { db } from "@/lib/db";
-import { organisations } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  organisations,
+  organisationMemberships,
+  users,
+} from "@/lib/db/schema";
+import {
+  sendSubscriptionConfirmedEmail,
+  sendSubscriptionEndedEmail,
+} from "@/lib/email/messages";
+import { and, eq } from "drizzle-orm";
 import type Stripe from "stripe";
+
+/** The org (and its owner's email) behind a Stripe customer id. */
+async function orgForCustomer(customerId: string) {
+  const [row] = await db
+    .select({
+      name: organisations.name,
+      slug: organisations.slug,
+      ownerEmail: users.email,
+    })
+    .from(organisations)
+    .innerJoin(
+      organisationMemberships,
+      and(
+        eq(organisationMemberships.organisationId, organisations.id),
+        eq(organisationMemberships.role, "owner"),
+      ),
+    )
+    .innerJoin(users, eq(users.id, organisationMemberships.userId))
+    .where(eq(organisations.stripeCustomerId, customerId))
+    .limit(1);
+  return row;
+}
 
 type PlanType = "trial" | "individual" | "organisation" | "large";
 
@@ -55,6 +85,19 @@ export async function handleSubscriptionCreated(
   subscription: Stripe.Subscription
 ) {
   await applySubscription(subscription);
+
+  // Confirmation only here — subscription.updated fires on every change
+  // and must never trigger repeat emails. Best-effort: webhooks 200 fast.
+  if (!DEAD_STATUSES.includes(subscription.status)) {
+    try {
+      const org = await orgForCustomer(subscription.customer as string);
+      if (org?.ownerEmail) {
+        await sendSubscriptionConfirmedEmail(org.ownerEmail, org.name, org.slug);
+      }
+    } catch {
+      // The plan flip is what matters; the email is a courtesy.
+    }
+  }
 }
 
 export async function handleSubscriptionUpdated(
@@ -76,6 +119,15 @@ export async function handleSubscriptionDeleted(
       updatedAt: new Date(),
     })
     .where(eq(organisations.stripeCustomerId, customerId));
+
+  try {
+    const org = await orgForCustomer(customerId);
+    if (org?.ownerEmail) {
+      await sendSubscriptionEndedEmail(org.ownerEmail, org.name, org.slug);
+    }
+  } catch {
+    // The revert already happened; the email is a courtesy.
+  }
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {

@@ -1,17 +1,32 @@
 import { auth } from "@/lib/auth";
 
+// Marketing pages and metadata assets: crawlers and signed-out visitors
+// must reach these — LinkedIn's bot follows no redirects.
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/pricing",
+  "/privacy",
+  "/terms",
+  "/opengraph-image.png",
+  "/twitter-image.png",
+  "/icon",
+  "/apple-icon",
+  "/manifest.webmanifest",
+  "/llms.txt",
+]);
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // Allow auth routes, API routes, static files, and the home page
+  // Allow public pages, auth routes, API routes and static files
   if (
+    PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/sign-out") ||
     pathname.startsWith("/new-org") ||
     pathname.startsWith("/_next/") ||
-    pathname.startsWith("/favicon") ||
-    pathname === "/"
+    pathname.startsWith("/favicon")
   ) {
     return;
   }

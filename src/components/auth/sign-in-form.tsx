@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
-export function SignInForm() {
+export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +16,9 @@ export function SignInForm() {
     try {
       // Explicit callbackUrl: without it NextAuth defaults to the current
       // page (/sign-in), so a successful magic link would land users back
-      // on the sign-in form and look like a failure. "/" routes to their org.
-      await signIn("resend", { email, redirect: false, callbackUrl: "/" });
+      // on the sign-in form and look like a failure. The page passes the
+      // middleware-preserved destination (validated), defaulting to "/".
+      await signIn("resend", { email, redirect: false, callbackUrl });
       setEmailSent(true);
     } finally {
       setIsLoading(false);
@@ -105,7 +106,7 @@ export function SignInForm() {
             onClick={() =>
               signIn("dev-login", {
                 email: email || "tom@good-ship.co.uk",
-                callbackUrl: "/",
+                callbackUrl,
               })
             }
             className="w-full rounded-lg border border-dashed border-amber bg-amber/5 px-4 py-2.5 text-sm font-medium text-bark transition-colors hover:bg-amber/10"

@@ -63,6 +63,30 @@ export async function sendMemberAddedEmail(
   });
 }
 
+export async function sendMemberInviteEmail(
+  to: string,
+  orgName: string,
+  inviterName: string,
+) {
+  const { html, text } = renderEmail({
+    preheader: `${inviterName} invited you to join ${orgName} on Tending.`,
+    heading: `You're invited to ${orgName}`,
+    paragraphs: [
+      `${inviterName} has invited you to join ${orgName} on Tending — a shared, living map of the relationships your organisation is tending.`,
+      "Tending has no passwords. Sign in with this email address and you'll join the team automatically — no code to enter.",
+    ],
+    cta: { label: "Sign in to join", url: `${siteConfig.url}/sign-in` },
+    footerNote:
+      "This invitation is tied to your email address and stays valid for 30 days. If you weren't expecting it, you can safely ignore this email.",
+  });
+  return sendEmail({
+    to,
+    subject: `${inviterName} invited you to ${orgName} on Tending`,
+    html,
+    text,
+  });
+}
+
 export async function sendTrialEndingEmail(
   to: string,
   orgName: string,

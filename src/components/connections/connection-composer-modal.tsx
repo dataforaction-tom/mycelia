@@ -34,12 +34,21 @@ export function ConnectionComposerModal({
   const router = useRouter();
   const [name, setName] = useState("");
   const [type, setType] = useState("person");
+  const [showContact, setShowContact] = useState(false);
+  const [contact, setContact] = useState({
+    email: "",
+    phone: "",
+    website: "",
+    location: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function resetAndClose() {
     setName("");
     setType("person");
+    setShowContact(false);
+    setContact({ email: "", phone: "", website: "", location: "" });
     setError(null);
     onOpenChange(false);
   }
@@ -56,7 +65,7 @@ export function ConnectionComposerModal({
           "Content-Type": "application/json",
           "x-organisation-id": organisationId,
         },
-        body: JSON.stringify({ name: name.trim(), type }),
+        body: JSON.stringify({ name: name.trim(), type, contactDetails: contact }),
       });
 
       const data = await res.json();
@@ -130,6 +139,48 @@ export function ConnectionComposerModal({
               </button>
             ))}
           </div>
+
+          {/* Optional, light-touch contact details — tucked away until asked for */}
+          {showContact ? (
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input
+                type="email"
+                value={contact.email}
+                onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                placeholder="Email"
+                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+              />
+              <input
+                type="tel"
+                value={contact.phone}
+                onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                placeholder="Phone"
+                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+              />
+              <input
+                type="url"
+                value={contact.website}
+                onChange={(e) => setContact((c) => ({ ...c, website: e.target.value }))}
+                placeholder="Website"
+                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+              />
+              <input
+                type="text"
+                value={contact.location}
+                onChange={(e) => setContact((c) => ({ ...c, location: e.target.value }))}
+                placeholder="Location"
+                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowContact(true)}
+              className="mt-4 text-xs font-medium text-moss-dark hover:underline"
+            >
+              + Add contact details
+            </button>
+          )}
 
           <div className="mt-5 flex items-center justify-between gap-4">
             <p className="text-xs text-muted">

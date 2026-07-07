@@ -1,0 +1,3 @@
+# Cloudflare Pages installs from the repo root by default; the real list
+# lives with the docs. Either path works in the build command.
+-r docs/requirements.txt

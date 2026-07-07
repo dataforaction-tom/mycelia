@@ -67,15 +67,15 @@ export async function sendTrialEndingEmail(
   to: string,
   orgName: string,
   orgSlug: string,
-  daysLeft: number,
+  trialEndsAt: Date,
 ) {
-  const when = daysLeft <= 1 ? "tomorrow" : `in ${daysLeft} days`;
+  // "today" / "tomorrow" / "in N days" by calendar date — a trial ending
+  // this afternoon must never be described as ending tomorrow.
+  const { trialEndDescriptor } = await import("@/lib/billing/subscription");
+  const when = trialEndDescriptor(trialEndsAt);
   const { html, text } = renderEmail({
     preheader: `Your free trial for ${orgName} ends ${when}.`,
-    heading:
-      daysLeft <= 1
-        ? "Your trial ends tomorrow"
-        : `Your trial ends in ${daysLeft} days`,
+    heading: `Your trial ends ${when}`,
     paragraphs: [
       `Your free trial for ${orgName} ends ${when}. After that, Tending goes read-only — everything you've planted stays safe and visible, you just can't add to it.`,
       "Keep tending for £5 a month, everything included, cancel anytime.",
@@ -89,10 +89,7 @@ export async function sendTrialEndingEmail(
   });
   return sendEmail({
     to,
-    subject:
-      daysLeft <= 1
-        ? `Your Tending trial ends tomorrow — ${orgName}`
-        : `Your Tending trial ends in ${daysLeft} days — ${orgName}`,
+    subject: `Your Tending trial ends ${when} — ${orgName}`,
     html,
     text,
   });

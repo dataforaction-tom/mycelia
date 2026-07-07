@@ -3,6 +3,7 @@ import {
   subscriptionState,
   trialDaysLeft,
   dueTrialReminder,
+  trialEndDescriptor,
 } from "./subscription";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -63,6 +64,35 @@ describe("dueTrialReminder", () => {
       dueTrialReminder({ plan: "individual", trialEndsAt: inDays(3) }, {}),
     ).toBeNull();
     expect(dueTrialReminder(trialWith(-1), {})).toBeNull();
+  });
+});
+
+describe("trialEndDescriptor", () => {
+  // Fixed clock: 09:00 on the 10th — the cron hour.
+  const cronMorning = new Date(2026, 6, 10, 9, 0);
+
+  it("says today when the trial ends later the same day", () => {
+    expect(
+      trialEndDescriptor(new Date(2026, 6, 10, 16, 0), cronMorning),
+    ).toBe("today");
+  });
+
+  it("says tomorrow only for the next calendar day", () => {
+    expect(
+      trialEndDescriptor(new Date(2026, 6, 11, 8, 0), cronMorning),
+    ).toBe("tomorrow");
+  });
+
+  it("counts calendar days beyond that", () => {
+    expect(
+      trialEndDescriptor(new Date(2026, 6, 17, 10, 0), cronMorning),
+    ).toBe("in 7 days");
+  });
+
+  it("says today for already-passed times rather than inventing the past", () => {
+    expect(
+      trialEndDescriptor(new Date(2026, 6, 10, 8, 0), cronMorning),
+    ).toBe("today");
   });
 });
 

@@ -8,7 +8,6 @@ import {
 import { successResponse, errorResponse } from "@/lib/utils/api";
 import {
   dueTrialReminder,
-  trialDaysLeft,
   type TrialReminderFlags,
 } from "@/lib/billing/subscription";
 import { sendTrialEndingEmail } from "@/lib/email/messages";
@@ -67,14 +66,14 @@ export async function GET(request: NextRequest) {
     };
     const flags = settings.trialReminders ?? {};
     const due = dueTrialReminder(org, flags);
-    if (!due || !org.ownerEmail) continue;
+    if (!due || !org.ownerEmail || !org.trialEndsAt) continue;
 
     try {
       await sendTrialEndingEmail(
         org.ownerEmail,
         org.name,
         org.slug,
-        trialDaysLeft(org.trialEndsAt),
+        org.trialEndsAt,
       );
       await db
         .update(organisations)

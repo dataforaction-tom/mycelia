@@ -45,12 +45,21 @@ function priceIdToPlan(priceId: string): PlanType {
 }
 
 // Statuses that mean the subscription no longer pays for the plan.
-// `past_due` deliberately stays active — Stripe's dunning retries payment,
-// and a `customer.subscription.deleted` event arrives if it finally fails.
 const DEAD_STATUSES: Stripe.Subscription.Status[] = [
   "canceled",
   "unpaid",
   "incomplete_expired",
+];
+
+// Statuses that pay for the plan. `past_due` deliberately included —
+// Stripe's dunning retries payment, and a deleted event arrives if it
+// finally fails. Everything else (notably `incomplete`, where the customer
+// still has ~23h to pay) is a no-op: the org keeps its current plan until
+// Stripe tells us the subscription is real.
+const PAYING_STATUSES: Stripe.Subscription.Status[] = [
+  "active",
+  "trialing",
+  "past_due",
 ];
 
 async function applySubscription(subscription: Stripe.Subscription) {
@@ -68,6 +77,8 @@ async function applySubscription(subscription: Stripe.Subscription) {
     return;
   }
 
+  if (!PAYING_STATUSES.includes(subscription.status)) return;
+
   const priceId = subscription.items.data[0]?.price?.id;
   const plan = priceId ? priceIdToPlan(priceId) : "individual";
 
@@ -84,20 +95,10 @@ async function applySubscription(subscription: Stripe.Subscription) {
 export async function handleSubscriptionCreated(
   subscription: Stripe.Subscription
 ) {
+  // No email here: created can arrive with status=incomplete (payment
+  // still pending). The confirmation goes out from invoice.paid with
+  // billing_reason=subscription_create — exactly once, after real money.
   await applySubscription(subscription);
-
-  // Confirmation only here — subscription.updated fires on every change
-  // and must never trigger repeat emails. Best-effort: webhooks 200 fast.
-  if (!DEAD_STATUSES.includes(subscription.status)) {
-    try {
-      const org = await orgForCustomer(subscription.customer as string);
-      if (org?.ownerEmail) {
-        await sendSubscriptionConfirmedEmail(org.ownerEmail, org.name, org.slug);
-      }
-    } catch {
-      // The plan flip is what matters; the email is a courtesy.
-    }
-  }
 }
 
 export async function handleSubscriptionUpdated(
@@ -131,7 +132,6 @@ export async function handleSubscriptionDeleted(
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  // Clear any restriction flags on the org when payment succeeds
   const customerId = invoice.customer as string;
   if (!customerId) return;
 
@@ -139,6 +139,20 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
     .update(organisations)
     .set({ updatedAt: new Date() })
     .where(eq(organisations.stripeCustomerId, customerId));
+
+  // The subscription confirmation: sent on the FIRST successful payment
+  // only — billing_reason distinguishes it from monthly renewal invoices,
+  // and unlike subscription.created this can't fire before money moved.
+  if (invoice.billing_reason === "subscription_create") {
+    try {
+      const org = await orgForCustomer(customerId);
+      if (org?.ownerEmail) {
+        await sendSubscriptionConfirmedEmail(org.ownerEmail, org.name, org.slug);
+      }
+    } catch {
+      // The payment is what matters; the email is a courtesy.
+    }
+  }
 }
 
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {

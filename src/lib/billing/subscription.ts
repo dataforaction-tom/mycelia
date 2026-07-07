@@ -28,6 +28,27 @@ export function trialDaysLeft(trialEndsAt: Date | null): number {
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
 }
 
+/**
+ * Human wording for when a trial ends, by calendar day — "today",
+ * "tomorrow", or "in N days". A trial ending at 4pm on cron day is
+ * "today", never "tomorrow": misstating a billing deadline is worse than
+ * any copy awkwardness.
+ */
+export function trialEndDescriptor(
+  trialEndsAt: Date,
+  now: Date = new Date(),
+): string {
+  const startOfDay = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const calendarDays = Math.round(
+    (startOfDay(trialEndsAt) - startOfDay(now)) / DAY_MS,
+  );
+  if (calendarDays <= 0) return "today";
+  if (calendarDays === 1) return "tomorrow";
+  return `in ${calendarDays} days`;
+}
+
 export interface TrialReminderFlags {
   d7?: boolean;
   d1?: boolean;

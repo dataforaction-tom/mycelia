@@ -1,37 +1,86 @@
-"use client";
+export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { notFound } from "next/navigation";
+import { db } from "@/lib/db";
+import {
+  organisations,
+  organisationMemberships,
+  organisationInvitations,
+  users,
+} from "@/lib/db/schema";
+import { auth } from "@/lib/auth";
+import { and, eq, isNull, gt } from "drizzle-orm";
+import { canPerform } from "@/lib/auth/permissions";
+import { PLAN_LIMITS } from "@/lib/config/plans";
+import { MembersManager } from "@/components/organisations/members-manager";
 
-interface Member {
-  userId: string;
-  role: string;
-  userName: string | null;
-  userEmail: string;
-  userImage: string | null;
-  createdAt: string;
-}
+export default async function MembersPage({
+  params,
+}: {
+  params: Promise<{ orgSlug: string }>;
+}) {
+  const { orgSlug } = await params;
 
-export default function MembersPage() {
-  // Placeholder page: the invite form and member list are UI-only for now
-  // (no API calls wired up yet), so members starts empty.
-  const [members] = useState<Member[]>([]);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("viewer");
+  const session = await auth();
+  if (!session?.user?.id) notFound();
 
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
-    if (!inviteEmail) return;
+  const [org] = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.slug, orgSlug))
+    .limit(1);
 
-    // Would call POST /api/organisations/[orgId]/members
-    setInviteEmail("");
-  }
+  if (!org) notFound();
 
-  const roleColors: Record<string, string> = {
-    owner: "bg-amber/10 text-amber",
-    admin: "bg-terracotta/10 text-terracotta",
-    contributor: "bg-moss/10 text-moss",
-    viewer: "bg-sky/10 text-sky",
-  };
+  const [viewer] = await db
+    .select({
+      role: organisationMemberships.role,
+      permissions: organisationMemberships.permissions,
+    })
+    .from(organisationMemberships)
+    .where(
+      and(
+        eq(organisationMemberships.userId, session.user.id),
+        eq(organisationMemberships.organisationId, org.id)
+      )
+    )
+    .limit(1);
+
+  if (!viewer) notFound();
+
+  const members = await db
+    .select({
+      userId: organisationMemberships.userId,
+      role: organisationMemberships.role,
+      userName: users.name,
+      userEmail: users.email,
+      userImage: users.image,
+      createdAt: organisationMemberships.createdAt,
+    })
+    .from(organisationMemberships)
+    .innerJoin(users, eq(organisationMemberships.userId, users.id))
+    .where(eq(organisationMemberships.organisationId, org.id))
+    .orderBy(organisationMemberships.createdAt);
+
+  const invitations = await db
+    .select({
+      id: organisationInvitations.id,
+      email: organisationInvitations.email,
+      role: organisationInvitations.role,
+      createdAt: organisationInvitations.createdAt,
+    })
+    .from(organisationInvitations)
+    .where(
+      and(
+        eq(organisationInvitations.organisationId, org.id),
+        isNull(organisationInvitations.acceptedAt),
+        gt(organisationInvitations.expiresAt, new Date())
+      )
+    )
+    .orderBy(organisationInvitations.createdAt);
+
+  const canManage = canPerform(viewer, "MANAGE_MEMBERS", "admin");
+  const memberLimit = PLAN_LIMITS[org.plan].users;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -42,64 +91,20 @@ export default function MembersPage() {
         </p>
       </div>
 
-      {/* Invite form */}
-      <form
-        onSubmit={handleInvite}
-        className="flex gap-3 rounded-xl border border-border bg-white p-4"
-      >
-        <input
-          type="email"
-          value={inviteEmail}
-          onChange={(e) => setInviteEmail(e.target.value)}
-          placeholder="Email address"
-          className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
-        />
-        <select
-          value={inviteRole}
-          onChange={(e) => setInviteRole(e.target.value)}
-          className="rounded-lg border border-border px-3 py-2 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
-        >
-          <option value="viewer">Viewer</option>
-          <option value="contributor">Contributor</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button
-          type="submit"
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
-        >
-          Invite
-        </button>
-      </form>
-
-      {/* Members list */}
-      {members.length === 0 ? (
-        <p className="text-muted">
-          No members yet. Invite people to collaborate.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {members.map((member) => (
-            <div
-              key={member.userId}
-              className="flex items-center justify-between rounded-lg border border-border bg-white p-4"
-            >
-              <div>
-                <p className="font-medium text-bark">
-                  {member.userName ?? member.userEmail}
-                </p>
-                {member.userName && (
-                  <p className="text-sm text-muted">{member.userEmail}</p>
-                )}
-              </div>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${roleColors[member.role] ?? ""}`}
-              >
-                {member.role}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <MembersManager
+        organisationId={org.id}
+        currentUserId={session.user.id}
+        canManage={canManage}
+        memberLimit={memberLimit}
+        initialMembers={members.map((member) => ({
+          ...member,
+          createdAt: member.createdAt.toISOString(),
+        }))}
+        initialInvitations={invitations.map((invite) => ({
+          ...invite,
+          createdAt: invite.createdAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }

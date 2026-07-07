@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   organisations,
   connections,
+  organisationMemberships,
   momentConnections,
   moments,
   qualities,
@@ -13,11 +14,14 @@ import {
 } from "@/lib/db/schema";
 import { and, eq, desc, asc, inArray, ne, sql } from "drizzle-orm";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { hasMinRole } from "@/lib/auth/permissions";
 import { ConnectionTypeBadge } from "@/components/ui/connection-type-badge";
 import { AddMomentButton } from "@/components/moments/add-moment-button";
 import { MomentList } from "@/components/moments/moment-list";
 import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
 import { SpacePicker } from "@/components/spaces/space-picker";
+import { ContactDetailsCard } from "@/components/connections/contact-details-card";
 
 export default async function ConnectionDetailPage({
   params,
@@ -46,6 +50,25 @@ export default async function ConnectionDetailPage({
     .limit(1);
 
   if (!connection) notFound();
+
+  // The viewer's role decides whether contact details are editable here
+  // (the API enforces the same; this just hides the affordance for viewers).
+  const session = await auth();
+  const [membership] = session?.user?.id
+    ? await db
+        .select({ role: organisationMemberships.role })
+        .from(organisationMemberships)
+        .where(
+          and(
+            eq(organisationMemberships.userId, session.user.id),
+            eq(organisationMemberships.organisationId, org.id)
+          )
+        )
+        .limit(1)
+    : [];
+  const canEdit = membership
+    ? hasMinRole(membership.role, "contributor")
+    : false;
 
   // Get moments for this connection
   const connectionMoments = await db
@@ -221,6 +244,13 @@ export default async function ConnectionDetailPage({
               </p>
             </div>
           )}
+
+          <ContactDetailsCard
+            connectionId={connectionId}
+            organisationId={org.id}
+            initial={connection.contactDetails ?? {}}
+            canEdit={canEdit}
+          />
 
           <div className="rounded-xl border border-border bg-surface p-6 shadow-lift">
             <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">

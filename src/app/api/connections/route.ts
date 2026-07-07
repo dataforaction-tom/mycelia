@@ -6,6 +6,7 @@ import { hasMinRole } from "@/lib/auth/permissions";
 import {
   createConnectionSchema,
   listConnectionsSchema,
+  normaliseContactDetails,
 } from "@/lib/validators/connections";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { organisations } from "@/lib/db/schema";
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
         organisationId,
         name: parsed.data.name,
         type: parsed.data.type,
+        contactDetails: normaliseContactDetails(parsed.data.contactDetails) ?? {},
         metadata: parsed.data.metadata ?? {},
       })
       .returning();

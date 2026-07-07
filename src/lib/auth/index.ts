@@ -79,6 +79,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 .insert(users)
                 .values({ email, name: email.split("@")[0] })
                 .returning();
+              // Dev-login bypasses the adapter, so accept invites here too.
+              const { acceptPendingInvitations } = await import(
+                "@/lib/invitations/accept"
+              );
+              await acceptPendingInvitations(created.id, created.email);
               return created;
             },
           }),
@@ -87,6 +92,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
+  },
+  events: {
+    // When a brand-new user is created (their first magic-link sign-in),
+    // fold in any organisation invitations waiting on their email address.
+    async createUser({ user }) {
+      if (!user.id) return;
+      const { acceptPendingInvitations } = await import(
+        "@/lib/invitations/accept"
+      );
+      await acceptPendingInvitations(user.id, user.email);
+    },
   },
   pages: {
     signIn: "/sign-in",

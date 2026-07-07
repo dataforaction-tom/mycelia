@@ -3,7 +3,10 @@ import { db } from "@/lib/db";
 import { connections } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole, canPerform } from "@/lib/auth/permissions";
-import { updateConnectionSchema } from "@/lib/validators/connections";
+import {
+  updateConnectionSchema,
+  normaliseContactDetails,
+} from "@/lib/validators/connections";
 import { and, eq } from "drizzle-orm";
 
 type Params = { params: Promise<{ connectionId: string }> };
@@ -57,9 +60,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return errorResponse(parsed.error.issues[0].message, 422);
     }
 
+    // Contact details are normalised (blank fields stripped) so we store a
+    // clean object rather than the form's empty strings.
+    const { contactDetails, ...rest } = parsed.data;
     const [updated] = await db
       .update(connections)
-      .set({ ...parsed.data, updatedAt: new Date() })
+      .set({
+        ...rest,
+        ...(contactDetails !== undefined
+          ? { contactDetails: normaliseContactDetails(contactDetails) ?? {} }
+          : {}),
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(connections.id, connectionId),

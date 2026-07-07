@@ -10,6 +10,7 @@ import {
 import { createOrganisationSchema } from "@/lib/validators/organisations";
 import { slugify } from "@/lib/utils/slugify";
 import { seedDemoData } from "@/lib/demo/seed-demo-data";
+import { sendWelcomeEmail } from "@/lib/email/messages";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
@@ -65,6 +66,15 @@ export async function POST(request: NextRequest) {
         .update(organisations)
         .set({ settings: { demo, tourPending: true } })
         .where(eq(organisations.id, org.id));
+    }
+
+    // Best-effort welcome — a failed email never fails org creation.
+    if (user.email) {
+      try {
+        await sendWelcomeEmail(user.email, org.name, org.slug);
+      } catch {
+        // Logged nowhere on purpose: the org exists, that's what matters.
+      }
     }
 
     return successResponse(org, 201);

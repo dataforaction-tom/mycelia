@@ -1,9 +1,55 @@
 site_name: Tending
+site_url: https://docs.tending.network
+site_description: >-
+  Documentation for Tending — relationship management for social purpose
+  organisations. Relationships are living things; tend your network.
+repo_url: https://github.com/dataforaction-tom/mycelia
+repo_name: dataforaction-tom/mycelia
+
 docs_dir: docs
+
 theme:
   name: material
+  language: en
+  font:
+    text: Outfit
+    code: DM Mono
   palette:
-    primary: teal
+    # Daylight: the parchment shell
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Go under the soil
+    # Under the soil
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Back to daylight
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - content.code.copy
+
+extra_css:
+  - stylesheets/tending.css
+
+extra:
+  social:
+    - icon: material/web
+      link: https://tending.network
+      name: tending.network
+
+copyright: tending · relationships are living things
+
 nav:
   - Home: index.md
   - User Guide: user-guide.md

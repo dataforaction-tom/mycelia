@@ -1,0 +1,42 @@
+/* Tending's two-worlds palette, mapped onto Material's custom scheme.
+   Mirrors src/app/globals.css tokens — change both together. */
+
+/* Gloock for headings (Material only loads the body/code fonts).
+   @import must precede all rules or browsers discard it. */
+@import url("https://fonts.googleapis.com/css2?family=Gloock&display=swap");
+
+:root {
+  --md-primary-fg-color: #6d7c42; /* moss-dark */
+  --md-primary-fg-color--light: #8a9a56;
+  --md-primary-fg-color--dark: #5c7f3f;
+  --md-accent-fg-color: #c97b47; /* terracotta */
+}
+
+/* Daylight: parchment shell */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #f6efdf;
+  --md-default-fg-color: #33291a;
+  --md-default-fg-color--light: #4c4028;
+  --md-default-fg-color--lighter: #988a66;
+  --md-typeset-a-color: #b06034;
+  --md-code-bg-color: #f0e8da;
+}
+
+/* Under the soil */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #271d11;
+  --md-default-fg-color: #f0eedd;
+  --md-default-fg-color--light: #bfad8e;
+  --md-default-fg-color--lighter: #a8987e;
+  --md-typeset-a-color: #e8d5a3;
+  --md-code-bg-color: #1b130a;
+  --md-primary-fg-color: #3d2f1f;
+}
+
+/* Serif display voice for headings, matching the app's Gloock role */
+.md-typeset h1,
+.md-typeset h2 {
+  font-family: Gloock, Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}

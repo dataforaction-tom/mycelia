@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
@@ -45,13 +44,17 @@ const lazyAdapter = new Proxy({} as Adapter, {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: lazyAdapter,
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // Magic link is the only sign-in: passwordless, and the email address
+    // doubles as the identity invites are sent to.
     Resend({
       from: process.env.EMAIL_FROM ?? "noreply@tending.network",
+      // Tending-styled magic link instead of NextAuth's default template.
+      // Throws on failure so the sign-in page reports the error rather
+      // than claiming "check your email".
+      async sendVerificationRequest({ identifier, url }) {
+        const { sendMagicLinkEmail } = await import("@/lib/email/messages");
+        await sendMagicLinkEmail(identifier, url);
+      },
     }),
     ...(process.env.NODE_ENV === "development"
       ? [

@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-07-07]
+
+### Added
+
+- **Guided tour for new organisations** — sign-up now seeds a small example network (a person, a programme, a quiet funder), and a short spotlight walkthrough introduces the moment composer, your dashboard pulse, the Network view, and observations. At the end you choose to keep exploring the example data or clear it in one click.
+- **Voice notes** — speak a moment instead of typing it; Tending transcribes what you said and drops it straight into the composer.
+- **Instant recognition in the moment composer** — as you type, people, groups, and spaces you mention are recognised immediately and shown as chips, with no wait for AI. Tending's AI understanding still runs quietly alongside to catch fuzzier mentions and suggest event dates.
+- **Vitality on connection cards** — each card now shows a short story teaser and an at-a-glance sense of how alive the relationship is (active, fading, or gone quiet), reflected in how brightly it's shown.
+- **Redesigned Network view** — a warmer, more organic "living network" look, with glowing connecting threads and node colouring that reflects how active each relationship is.
+- **New marketing pages** — a redesigned home page, a pricing page, a privacy policy, and terms of service, all under the Tending name.
+- **Trial-ending reminder emails** — you'll now automatically receive an email a week before your trial ends, and another the day before (or the morning of, if it ends later that day).
+- **Restyled transactional emails** — the sign-in link, welcome, team-invite, and trial-reminder emails all now share a consistent, branded look.
+
+### Changed
+
+- **Sign-in is now magic link only.** Following your sign-in link now takes you straight into your organisation rather than back to the sign-in page, and if the link has already been used or has expired you'll see a clear message explaining why, with an easy way to request a new one.
+- **Following a link while signed out and returning after signing in now works properly** — for example, a bookmarked or shared link to a specific page will take you to that same page once you've signed in, instead of always landing on the homepage.
+- **Subscriptions are now only confirmed once payment has actually succeeded**, and the "you're subscribed" confirmation email is sent exactly once, right after that happens.
+- **Trial-ending messages now say "today"** rather than "tomorrow" when a trial is ending later the same day.
+- **Simplified pricing** — a single plan at £5/month with everything included, after a 30-day free trial.
+- **Expired trials are now read-only** — once a trial ends without a subscription, you can still view your organisation's settings and billing to subscribe, but adding or editing connections and moments is paused until you do.
+
+### Removed
+
+- **Google sign-in has been removed.** Magic link — a one-time emailed link — is now the only way to sign in; Tending never stores a password for you.
+
+### Fixed
+
+- Fixed how Tending's brand appears in link previews and browser tabs when a page is shared or bookmarked.
+- Fixed a checkout bug that could prevent a subscription from starting correctly.
+
+## [2026-07-06]
+
 ### Added
 
 - Sign up, create an organisation, and invite team members with owner, admin, contributor, and viewer roles.

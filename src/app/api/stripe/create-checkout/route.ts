@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils/api";
 import { requireMembership } from "@/lib/auth/permissions";
 import { PLAN_PRICES } from "@/lib/config/plans";
+import { siteConfig } from "@/lib/config/site";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v3";
 
@@ -55,12 +56,18 @@ export async function POST(request: NextRequest) {
 
     const priceConfig = PLAN_PRICES[parsed.data.plan];
 
+    // Guard explicitly rather than letting Stripe reject an empty price id —
+    // that surfaced as an opaque 400 from Stripe with no clue what was wrong.
+    if (!priceConfig.stripePriceId) {
+      return errorResponse("Billing is not configured yet", 503);
+    }
+
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceConfig.stripePriceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/${org.slug}/settings/billing?success=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/${org.slug}/settings/billing?cancelled=1`,
+      success_url: `${siteConfig.url}/${org.slug}/settings/billing?success=1`,
+      cancel_url: `${siteConfig.url}/${org.slug}/settings/billing?cancelled=1`,
       metadata: { organisationId: org.id },
     });
 
@@ -72,6 +79,7 @@ export async function POST(request: NextRequest) {
       return errorResponse(msg, 403);
     if (msg.includes("Stripe is not configured"))
       return errorResponse("Billing is not configured yet", 503);
+    console.error("Checkout session creation failed", error);
     return errorResponse("Internal server error", 500);
   }
 }

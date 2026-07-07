@@ -8,6 +8,7 @@ import {
   getAuthenticatedUser,
 } from "@/lib/utils/api";
 import { requireMembership } from "@/lib/auth/permissions";
+import { siteConfig } from "@/lib/config/site";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v3";
 
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const session = await getStripe().billingPortal.sessions.create({
       customer: org.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/${org.slug}/settings/billing`,
+      return_url: `${siteConfig.url}/${org.slug}/settings/billing`,
     });
 
     return successResponse({ url: session.url });

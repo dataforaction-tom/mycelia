@@ -1,13 +1,17 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils/cn";
-import { getNavItems, type SidebarOrg } from "./sidebar";
+import {
+  getNavItems,
+  isNavItemActive,
+  NavDotLink,
+  type SidebarOrg,
+} from "./sidebar";
 import { OrgSwitcher } from "./org-switcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -82,34 +86,14 @@ function MobileNav({
 
           {/* Navigation links */}
           <nav className="flex-1 space-y-1 px-3 py-4">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => onOpenChange(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                    isActive
-                      ? "bg-surface text-terracotta-dark shadow-lift"
-                      : "text-bark-light hover:bg-surface/60 hover:text-bark",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "shrink-0",
-                      isActive ? "text-terracotta" : "text-muted",
-                    )}
-                  >
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              );
-            })}
+            {navItems.map((item) => (
+              <NavDotLink
+                key={item.href}
+                item={item}
+                isActive={isNavItemActive(pathname, item, orgSlug)}
+                onClick={() => onOpenChange(false)}
+              />
+            ))}
           </nav>
 
           {/* User section */}

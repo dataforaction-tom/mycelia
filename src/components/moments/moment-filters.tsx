@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { ToggleChip } from "@/components/ui/chip";
+
 interface Option {
   value: string;
   label: string;
@@ -31,8 +34,12 @@ export function MomentFilters({
   from,
   to,
 }: MomentFiltersProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [selectedType, setSelectedType] = useState(connectionType ?? "");
+
   return (
     <form
+      ref={formRef}
       method="GET"
       className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white p-3 text-sm"
       onChange={(e) => e.currentTarget.requestSubmit()}
@@ -73,21 +80,30 @@ export function MomentFilters({
         </label>
       )}
 
-      <label className="flex items-center gap-1.5 text-muted">
-        Connection type
-        <select
-          name="connectionType"
-          defaultValue={connectionType ?? ""}
-          className="rounded-lg border border-border bg-white px-2 py-1 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+      <input type="hidden" name="connectionType" value={selectedType} />
+      <div className="flex items-center gap-2">
+        <ToggleChip
+          pressed={selectedType === ""}
+          onPressedChange={() => {
+            setSelectedType("");
+            requestAnimationFrame(() => formRef.current?.requestSubmit());
+          }}
         >
-          <option value="">All</option>
-          {CONNECTION_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          Everyone
+        </ToggleChip>
+        {CONNECTION_TYPE_OPTIONS.map((opt) => (
+          <ToggleChip
+            key={opt.value}
+            pressed={selectedType === opt.value}
+            onPressedChange={() => {
+              setSelectedType(opt.value);
+              requestAnimationFrame(() => formRef.current?.requestSubmit());
+            }}
+          >
+            {opt.label}
+          </ToggleChip>
+        ))}
+      </div>
 
       <label className="flex items-center gap-1.5 text-muted">
         From

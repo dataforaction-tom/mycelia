@@ -12,11 +12,13 @@ import {
 import {
   addGlowFilter,
   attachBreathing,
-  createFlowOverlay,
+  attachDashFlow,
   keepDrifting,
   vitalityOf,
   VITALITY_OPACITY,
 } from "@/lib/network/living";
+import { Filaments } from "@/components/network/filaments";
+import { Spores } from "@/components/network/spores";
 
 interface NetworkNode {
   id: string;
@@ -124,9 +126,9 @@ export function EcosystemCanvas({
     addGlowFilter(svg, "eco-glow", 3);
 
     const linkGroup = svg.append("g").attr("stroke-linecap", "round");
-    const flowGroup = svg.append("g");
     const nodeGroup = svg.append("g").attr("filter", "url(#eco-glow)");
 
+    // Threads per the prototype: cream dashes flowing along every join
     const link = linkGroup
       .selectAll<SVGLineElement, SimLink>("line")
       .data(links)
@@ -134,12 +136,7 @@ export function EcosystemCanvas({
       .attr("stroke", UNDERGROUND.spore)
       .attr("stroke-width", (d) => strokeWidthScale(d.strength))
       .attr("stroke-opacity", (d) => strokeOpacityScale(d.strength));
-
-    const flow = createFlowOverlay(
-      flowGroup,
-      links.filter((l) => l.strength >= 0.35),
-      UNDERGROUND.spore
-    );
+    attachDashFlow(link);
 
     const nodeRadius = (d: SimNode) => radiusScale(strengthById.get(d.id) ?? 0);
     const node = nodeGroup
@@ -156,11 +153,6 @@ export function EcosystemCanvas({
 
     function paint() {
       link
-        .attr("x1", (d) => (d.source as SimNode).x ?? 0)
-        .attr("y1", (d) => (d.source as SimNode).y ?? 0)
-        .attr("x2", (d) => (d.target as SimNode).x ?? 0)
-        .attr("y2", (d) => (d.target as SimNode).y ?? 0);
-      flow
         .attr("x1", (d) => (d.source as SimNode).x ?? 0)
         .attr("y1", (d) => (d.source as SimNode).y ?? 0)
         .attr("x2", (d) => (d.target as SimNode).x ?? 0)
@@ -213,7 +205,12 @@ export function EcosystemCanvas({
   }, [data, orgSlug, router]);
 
   return (
-    <section className="underground relative overflow-hidden rounded-2xl border border-soil-line shadow-lift">
+    // The whole card is a door into the network; node clicks (which stop
+    // propagation) open their own connection instead.
+    <section
+      onClick={() => router.push(`/${orgSlug}/network`)}
+      className="underground relative cursor-pointer overflow-hidden rounded-2xl border border-soil-line shadow-lift"
+    >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -226,6 +223,8 @@ export function EcosystemCanvas({
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-soil/90 via-soil/40 to-transparent"
         aria-hidden="true"
       />
+      <Filaments width={WIDTH} height={110} count={7} seed={11} />
+      <Spores count={4} seed={11} />
 
       <div className="pointer-events-none relative flex min-h-[22rem] flex-col justify-between p-6 sm:p-8">
         <div className="max-w-md">
@@ -264,7 +263,7 @@ export function EcosystemCanvas({
             href={`/${orgSlug}/network`}
             className="pointer-events-auto rounded-lg border border-spore/40 px-4 py-2 text-sm font-medium text-spore transition-colors hover:bg-spore/10"
           >
-            Enter the network
+            Open the network →
           </Link>
         </div>
       </div>

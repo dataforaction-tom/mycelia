@@ -51,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       allowDangerousEmailAccountLinking: true,
     }),
     Resend({
-      from: process.env.EMAIL_FROM ?? "noreply@mycelium.app",
+      from: process.env.EMAIL_FROM ?? "noreply@tending.network",
     }),
     ...(process.env.NODE_ENV === "development"
       ? [

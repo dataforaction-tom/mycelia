@@ -1,4 +1,4 @@
-site_name: "Mycelium Documentation"
+site_name: Tending
 docs_dir: docs
 theme:
   name: material

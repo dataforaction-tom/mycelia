@@ -1,28 +1,35 @@
+// The prototype's palette has no blue anywhere — people are moss, the
+// whole system stays in earth tones.
 export const CONNECTION_TYPE_COLORS = {
-  person: "#6ba3be", // sky
-  organisation: "#c2683b", // terracotta
-  group: "#66845a", // moss
-  community: "#d0912f", // amber
+  person: "#8a9a56", // moss
+  organisation: "#c97b47", // terracotta/rust
+  group: "#6f9a4f", // green
+  community: "#c9962e", // ochre
 } as const;
 
 // Bioluminescent variants for the underground (dark-canvas) network views —
-// same hue families, lifted for luminosity against deep soil. SVG can't read
+// the prototype's node colours: cream, moss, tan/clay, ochre. SVG can't read
 // CSS variables, so these are mirrored from globals.css by hand.
 export const CONNECTION_TYPE_COLORS_GLOW = {
-  person: "#8ec9e8",
-  organisation: "#f0a875",
-  group: "#a8dfc2",
-  community: "#e8c97d",
+  person: "#e8d5a3", // cream — people glow brightest
+  organisation: "#cd8b57", // clay
+  group: "#adb878", // moss
+  community: "#c9ad6e", // ochre
 } as const;
 
 export const UNDERGROUND = {
-  soil: "#141009",
-  soilRaised: "#1f1811",
-  soilLine: "#322718",
-  spore: "#e8c97d",
-  hypha: "#a8dfc2",
-  ink: "#ede4d3",
-  inkSoft: "#a3937a",
+  soil: "#1b130a",
+  soilMid: "#271d11",
+  soilLight: "#3d2f1f",
+  soilRaised: "rgba(41, 30, 18, 0.85)",
+  soilLine: "rgba(232, 213, 163, 0.25)",
+  spore: "#e8d5a3",
+  hypha: "#adb878",
+  nodeTan: "#c4a184",
+  nodeClay: "#cd8b57",
+  nodeOchre: "#c9ad6e",
+  ink: "#f0eedd",
+  inkSoft: "#bfad8e",
 } as const;
 
 export type ConnectionType = keyof typeof CONNECTION_TYPE_COLORS;

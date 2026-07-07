@@ -8,7 +8,7 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
-function Header({ orgName = "Mycelium", onMenuClick }: HeaderProps) {
+function Header({ orgName = "tending", onMenuClick }: HeaderProps) {
   return (
     <header
       className={cn(

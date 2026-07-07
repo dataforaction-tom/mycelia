@@ -7,6 +7,7 @@ import { slugify } from "@/lib/utils/slugify";
 export function OrgCreateForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [withDemoData, setWithDemoData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,7 @@ export function OrgCreateForm() {
       const res = await fetch("/api/organisations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, withDemoData }),
       });
 
       const data = await res.json();
@@ -64,10 +65,26 @@ export function OrgCreateForm() {
         />
         {previewSlug && (
           <p className="mt-1 text-xs text-muted">
-            Your URL will be: mycelium.app/<strong>{previewSlug}</strong>
+            Your URL will be: tending.network/<strong>{previewSlug}</strong>
           </p>
         )}
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-moss/20 bg-moss/5 p-3.5">
+        <input
+          type="checkbox"
+          checked={withDemoData}
+          onChange={(e) => setWithDemoData(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-moss"
+        />
+        <span className="text-sm text-bark">
+          Start with example data so you can explore
+          <span className="mt-0.5 block text-xs text-muted">
+            A small living network to wander through — you can clear it in
+            one click whenever you like.
+          </span>
+        </span>
+      </label>
 
       <button
         type="submit"

@@ -50,7 +50,7 @@ export default function AuthLayout({
               <circle cx="12" cy="3" r="1.4" fill="currentColor" stroke="none" />
             </svg>
           </div>
-          <span className="font-display text-2xl text-bark">Mycelium</span>
+          <span className="font-display text-2xl text-bark">tending</span>
         </div>
         <div className="rounded-2xl border border-border bg-surface p-8 shadow-hover">
           {children}

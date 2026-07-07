@@ -15,14 +15,14 @@ export function NetworkViewToggle({
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-full border border-border bg-surface p-1 shadow-lift">
+      <div className="inline-flex rounded-full border border-soil-line p-1">
         <button
           type="button"
           onClick={() => setView("force")}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
             view === "force"
-              ? "bg-bark text-cream shadow-sm"
-              : "text-bark-light hover:bg-cream-dark"
+              ? "bg-spore/15 text-soil-ink"
+              : "text-soil-ink-soft hover:text-soil-ink"
           }`}
         >
           Threads
@@ -32,8 +32,8 @@ export function NetworkViewToggle({
           onClick={() => setView("constellation")}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
             view === "constellation"
-              ? "bg-bark text-cream shadow-sm"
-              : "text-bark-light hover:bg-cream-dark"
+              ? "bg-spore/15 text-soil-ink"
+              : "text-soil-ink-soft hover:text-soil-ink"
           }`}
         >
           Constellations

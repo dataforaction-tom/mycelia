@@ -1,8 +1,8 @@
 import { SignInForm } from "@/components/auth/sign-in-form";
 
 export const metadata = {
-  title: "Sign in - Mycelium",
-  description: "Sign in to your Mycelium account",
+  title: "Sign in",
+  description: "Sign in to your Tending account",
 };
 
 export default function SignInPage() {

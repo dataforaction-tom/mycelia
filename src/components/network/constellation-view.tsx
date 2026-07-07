@@ -15,6 +15,9 @@ import {
   vitalityOf,
   VITALITY_OPACITY,
 } from "@/lib/network/living";
+import { vitalityLabel } from "@/lib/network/vitality";
+import { Filaments } from "./filaments";
+import { Spores } from "./spores";
 
 interface NetworkNode {
   id: string;
@@ -40,6 +43,14 @@ interface Tooltip {
   y: number;
   title: string;
   detail: string;
+}
+
+interface SelectedStar {
+  id: string;
+  name: string;
+  type: ConnectionType;
+  strength: number;
+  lastMomentAt: string | null;
 }
 
 interface Star {
@@ -75,6 +86,7 @@ export function ConstellationView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [selected, setSelected] = useState<SelectedStar | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -318,20 +330,14 @@ export function ConstellationView({
       .style("cursor", "pointer")
       .on("click", (event, d) => {
         event.stopPropagation();
-        router.push(`/${orgSlug}/connections/${d.node.id}`);
-      })
-      .on("mouseenter", (event, d) => {
-        setTooltip({
-          x: event.clientX,
-          y: event.clientY,
-          title: d.node.name,
-          detail: `${d.node.type} · click to open`,
+        setSelected({
+          id: d.node.id,
+          name: d.node.name,
+          type: d.node.type,
+          strength: d.strength,
+          lastMomentAt: d.node.lastMomentAt,
         });
-      })
-      .on("mousemove", (event) => {
-        setTooltip((t) => (t ? { ...t, x: event.clientX, y: event.clientY } : t));
-      })
-      .on("mouseleave", () => setTooltip(null));
+      });
     attachTwinkle(
       starSel,
       (d) => VITALITY_OPACITY[vitalityOf(d.node.lastMomentAt)]
@@ -363,16 +369,19 @@ export function ConstellationView({
           : anchor;
       });
 
+    svg.on("click", () => setSelected(null));
+
     return () => {
       simulation.stop();
       svg.selectAll("*").remove();
       setTooltip(null);
+      setSelected(null);
     };
   }, [data, orgSlug, router]);
 
   if (isLoading) {
     return (
-      <div className="underground flex h-96 items-center justify-center rounded-2xl border border-soil-line">
+      <div className="flex h-96 items-center justify-center">
         <div className="flex items-center gap-3">
           <span className="h-2 w-2 animate-glow rounded-full bg-hypha" />
           <p className="text-sm text-soil-ink-soft">
@@ -393,7 +402,7 @@ export function ConstellationView({
 
   if (!data || data.nodes.length < 2) {
     return (
-      <div className="underground flex flex-col items-center rounded-2xl border border-soil-line p-12 text-center">
+      <div className="flex flex-col items-center p-12 text-center">
         <h3 className="font-display text-xl text-soil-ink">
           No constellations yet
         </h3>
@@ -407,18 +416,51 @@ export function ConstellationView({
 
   return (
     <div className="relative">
-      <div className="underground overflow-x-auto rounded-2xl border border-soil-line shadow-lift">
+      <div className="relative overflow-x-auto">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="w-full"
           style={{ minWidth: WIDTH, height: HEIGHT }}
         />
+        <Filaments width={WIDTH} height={130} count={9} seed={41} />
+        <Spores count={6} seed={41} />
+
+        {selected && (
+          <button
+            type="button"
+            onClick={() => router.push(`/${orgSlug}/connections/${selected.id}`)}
+            className="absolute bottom-6 right-6 z-20 w-72 rounded-2xl border border-soil-line bg-soil-raised p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="h-8 w-8 shrink-0 rounded-full"
+                style={{
+                  background: `radial-gradient(circle at 35% 30%, var(--node-tan), ${CONNECTION_TYPE_COLORS_GLOW[selected.type]})`,
+                }}
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-soil-ink">
+                  {selected.name}
+                </p>
+                <p className="truncate text-xs capitalize text-soil-ink-soft">
+                  {selected.type} · strength {selected.strength.toFixed(1)}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2.5 text-xs text-soil-ink-soft">
+              {vitalityLabel(selected.lastMomentAt)}
+            </p>
+            <p className="mt-2.5 text-xs font-medium text-spore">
+              Read the story →
+            </p>
+          </button>
+        )}
       </div>
-      <p className="mt-4 text-xs text-muted">
+      <p className="mt-4 text-xs text-soil-ink-soft/80">
         Each constellation is a group of connections that keep appearing in
         the same moments, named after its brightest member. Click any star to
-        open that connection.
+        see its details.
       </p>
 
       {tooltip && (

@@ -1,10 +1,10 @@
 # User Guide
 
-This guide covers everything you need to know about using Mycelium.
+This guide covers everything you need to know about using Tending.
 
 ## Organisations
 
-Mycelium is organised around **organisations** — your team's shared workspace. When you first sign in, you'll create an organisation, which gives you a unique web address (like `mycelium.app/your-org-name`).
+Tending is organised around **organisations** — your team's shared workspace. When you first sign in, you'll create an organisation, which gives you a unique web address (like `mycelium.app/your-org-name`).
 
 ### Members and roles
 
@@ -27,7 +27,7 @@ Click your name at the bottom of the sidebar to open the account menu, then choo
 
 ## Connections
 
-A connection is the fundamental unit in Mycelium — not a "contact record," but the relationship between your organisation and a person, group, or other organisation. Each connection has:
+A connection is the fundamental unit in Tending — not a "contact record," but the relationship between your organisation and a person, group, or other organisation. Each connection has:
 
 - **A story** — a living narrative built up from moments over time
 - **Qualities** — descriptors that capture how the relationship feels and functions (see [Qualities](#qualities) below)
@@ -47,15 +47,15 @@ When you record a moment:
 
 ### Automatic quality updates
 
-Once a moment is saved, Mycelium automatically looks at what you wrote and updates the quality spectrums (see below) for any connections involved. These AI-suggested updates are marked with an **"AI-suggested"** badge, so you can always tell the difference between a quality you set yourself and one Mycelium inferred. This happens quietly in the background and never blocks or delays saving your moment.
+Once a moment is saved, Tending automatically looks at what you wrote and updates the quality spectrums (see below) for any connections involved. These AI-suggested updates are marked with an **"AI-suggested"** badge, so you can always tell the difference between a quality you set yourself and one Tending inferred. This happens quietly in the background and never blocks or delays saving your moment.
 
 ### Automatic story updates
 
-For any connection with two or more moments, Mycelium also regenerates that connection's **story summary** after each new moment — a short, coherent narrative that reads like someone who knows the relationship telling you about it, not just a list of past entries. It carries tone and continuity forward from the previous summary, so the story evolves rather than resets each time.
+For any connection with two or more moments, Tending also regenerates that connection's **story summary** after each new moment — a short, coherent narrative that reads like someone who knows the relationship telling you about it, not just a list of past entries. It carries tone and continuity forward from the previous summary, so the story evolves rather than resets each time.
 
 ## Qualities
 
-Qualities replace tags and categories. Rather than labelling a connection "donor" or "volunteer," Mycelium tracks how the relationship actually feels, across five spectrums:
+Qualities replace tags and categories. Rather than labelling a connection "donor" or "volunteer," Tending tracks how the relationship actually feels, across five spectrums:
 
 | Spectrum | Range |
 |----------|-------|
@@ -69,7 +69,7 @@ Each connection's page shows its current position on each spectrum, along with a
 
 ## The Network view
 
-The Network view shows your entire relational ecosystem as a living map, rather than a table of names. This is Mycelium's primary view — the idea is that the shape of your network tells you things a list never could.
+The Network view shows your entire relational ecosystem as a living map, rather than a table of names. This is Tending's primary view — the idea is that the shape of your network tells you things a list never could.
 
 - **Zoom, pan, and drag** nodes to explore.
 - **Click a node** to jump straight to that connection's page.
@@ -81,7 +81,7 @@ Connections that are frequently mentioned together in the same moments are autom
 
 ### Clusters
 
-Mycelium automatically detects clusters — tightly-connected groups within your network — and colours nodes accordingly, so you can see at a glance which parts of your ecosystem naturally group together.
+Tending automatically detects clusters — tightly-connected groups within your network — and colours nodes accordingly, so you can see at a glance which parts of your ecosystem naturally group together.
 
 ### Constellation view
 
@@ -99,7 +99,7 @@ Use **Search** to find moments by their content, or connections by name. Search 
 
 ## Observations
 
-Mycelium periodically looks across your whole network for patterns you might not have noticed yourself, and surfaces them as gentle **observations** rather than alarms:
+Tending periodically looks across your whole network for patterns you might not have noticed yourself, and surfaces them as gentle **observations** rather than alarms:
 
 - **Dormant connections** — relationships that have gone quiet for longer than usual
 - **Quality shifts** — a relationship that's meaningfully deepened or cooled
@@ -127,4 +127,4 @@ The **Moments** page (sometimes called the River view) shows every moment record
 
 ## Billing
 
-Mycelium offers Individual, Organisation, and Large plans, each with a trial period. Manage your subscription, view invoices, and change plans from **Settings → Billing**.
+Tending offers Individual, Organisation, and Large plans, each with a trial period. Manage your subscription, view invoices, and change plans from **Settings → Billing**.

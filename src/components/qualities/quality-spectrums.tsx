@@ -21,14 +21,17 @@ export function QualitySpectrums({
   organisationId,
 }: QualitySpectrumsProps) {
   return (
-    <div className="space-y-5">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {SPECTRUM_KEYS.map((key) => {
         const config = QUALITY_SPECTRUMS[key];
         const history = qualities.filter((q) => q.spectrum === key);
         const current = history.at(-1);
 
         return (
-          <div key={key}>
+          <div
+            key={key}
+            className="rounded-xl border border-border bg-surface p-4 shadow-lift"
+          >
             <div className="flex items-center justify-between text-xs text-muted">
               <span className="flex items-center gap-1.5 font-medium text-bark-light">
                 {config.label}
@@ -45,10 +48,18 @@ export function QualitySpectrums({
               <span>{config.low}</span>
               <div className="relative h-1.5 flex-1 rounded-full bg-cream-dark">
                 {current && (
-                  <div
-                    className="absolute top-1/2 h-3 w-3 -translate-y-1/2 -translate-x-1/2 rounded-full bg-moss"
-                    style={{ left: `${((current.position + 1) / 2) * 100}%` }}
-                  />
+                  <>
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-moss-light to-green"
+                      style={{
+                        width: `${((current.position + 1) / 2) * 100}%`,
+                      }}
+                    />
+                    <div
+                      className="animate-breathe-soft absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-cream bg-green shadow-[0_0_10px_rgba(111,154,79,0.6)]"
+                      style={{ left: `${((current.position + 1) / 2) * 100}%` }}
+                    />
+                  </>
                 )}
               </div>
               <span>{config.high}</span>

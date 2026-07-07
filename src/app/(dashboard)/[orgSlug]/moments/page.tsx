@@ -10,9 +10,9 @@ import {
   users,
 } from "@/lib/db/schema";
 import { and, eq, desc, inArray, asc, gte, lte } from "drizzle-orm";
-import Link from "next/link";
 import { MomentList } from "@/components/moments/moment-list";
 import { MomentFilters } from "@/components/moments/moment-filters";
+import { ComposerTriggerBar } from "@/components/moments/composer-trigger-bar";
 
 export default async function MomentsPage({
   params,
@@ -126,21 +126,18 @@ export default async function MomentsPage({
 
   return (
     <div className="stagger-children space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl text-bark">The river</h1>
-          <p className="mt-2 text-muted">
-            Everything flowing through your organisation —{" "}
-            {rows.length === 1 ? "1 moment" : `${rows.length} moments`} so far.
-          </p>
-        </div>
-        <Link
-          href={`/${orgSlug}/moments/new`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
-        >
-          Record a moment
-        </Link>
+      <div>
+        <h1 className="font-display text-4xl text-bark">
+          The river of moments
+        </h1>
+        <p className="mt-2 text-muted">
+          Everything that happened, as it flowed —{" "}
+          {rows.length === 1 ? "1 moment" : `${rows.length} moments`} and
+          counting
+        </p>
       </div>
+
+      <ComposerTriggerBar />
 
       <MomentFilters
         spaces={allSpaces.map((s) => ({ value: s.id, label: s.name }))}

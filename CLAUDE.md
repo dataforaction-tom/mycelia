@@ -1,6 +1,6 @@
-# Project: Mycelium
+# Project: Tending
 
-A relationship management system for social purpose organisations. Named after the underground fungal network — relationships are living narratives, not records.
+A relationship management system for social purpose organisations, at tending.network. The mycelium metaphor runs all the way through — relationships are living narratives, not records. (The repo folder and internal names still say "mycelia"/"mycelium"; only the display name changed.)
 
 ## Architecture
 

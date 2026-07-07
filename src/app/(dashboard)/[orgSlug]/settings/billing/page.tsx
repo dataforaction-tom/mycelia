@@ -1,21 +1,34 @@
-"use client";
+export const dynamic = "force-dynamic";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { db } from "@/lib/db";
+import { organisations } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { PlanSelector } from "@/components/billing/plan-selector";
 
-export default function BillingPage() {
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const orgSlug = params.orgSlug as string;
-  const success = searchParams.get("success");
-  const cancelled = searchParams.get("cancelled");
+export default async function BillingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ success?: string; cancelled?: string }>;
+}) {
+  const { orgSlug } = await params;
+  const { success, cancelled } = await searchParams;
+
+  const [org] = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.slug, orgSlug))
+    .limit(1);
+
+  if (!org) return null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-bark">Billing</h1>
+        <h1 className="font-display text-2xl text-bark">Billing</h1>
         <p className="mt-1 text-sm text-muted">
-          Manage your subscription and billing
+          One flat plan — £5 a month, everything included
         </p>
       </div>
 
@@ -31,7 +44,11 @@ export default function BillingPage() {
         </div>
       )}
 
-      <PlanSelector orgSlug={orgSlug} />
+      <PlanSelector
+        organisationId={org.id}
+        plan={org.plan}
+        trialEndsAt={org.trialEndsAt ? org.trialEndsAt.toISOString() : null}
+      />
     </div>
   );
 }

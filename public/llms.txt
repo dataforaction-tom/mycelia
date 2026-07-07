@@ -1,0 +1,41 @@
+# Tending
+
+> Tending (tending.network) is a relationship management tool for social
+> purpose organisations — charities, community groups, mutual aid networks,
+> social enterprises. It is a relationship-first rethink of a CRM:
+> relationships are living narratives, not database records.
+
+## What it does
+
+- **Moments**: users write short natural-language notes ("Bumped into Amara
+  at the allotment — she offered to introduce me to the council food team").
+  Tending recognises the people, organisations and spaces mentioned and links
+  them automatically. Moments can also be spoken aloud (voice transcription).
+- **The living network**: a breathing, force-directed map of every
+  relationship, with vitality encoding — fresh relationships glow, quiet
+  ones fade — and constellation clustering of groups that appear together.
+- **Stories**: an AI-written narrative for each relationship, updated as
+  moments accrue.
+- **Field notes (observations)**: pattern detection that gently surfaces
+  dormant relationships, quality shifts, and dependency risks (e.g. "all
+  your funder relationships flow through one person").
+- **Spaces**: the real-world places and gatherings where relationships
+  happen — allotments, assemblies, church halls.
+
+## Pricing
+
+Flat £5/month (GBP), everything included, no tiers. 30-day free trial of
+all features, no card required.
+
+## Audience
+
+Social purpose organisations in the UK and beyond: charities, community
+organisers, funders, mutual aid groups — anyone whose work runs on
+relationships rather than sales pipelines.
+
+## Key pages
+
+- https://tending.network/ — product overview
+- https://tending.network/pricing — pricing
+- https://tending.network/privacy — privacy policy
+- https://tending.network/terms — terms of service

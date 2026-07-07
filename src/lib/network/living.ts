@@ -88,6 +88,28 @@ export function attachTwinkle<Datum>(
 }
 
 /**
+ * The prototype's thread style: cream dashes (5 8) flowing along the line.
+ * Applied directly to the base links — under reduced motion the dashes stay,
+ * only the flow stops.
+ */
+export function attachDashFlow<Datum>(
+  lines: d3.Selection<SVGLineElement, Datum, SVGGElement, unknown>
+): void {
+  lines.attr("stroke-dasharray", "5 8").attr("stroke-linecap", "round");
+  if (prefersReducedMotion()) return;
+  lines.each(function (_datum, index) {
+    d3.select(this)
+      .append("animate")
+      .attr("attributeName", "stroke-dashoffset")
+      .attr("from", "0")
+      .attr("to", "-26")
+      .attr("dur", "3.5s")
+      .attr("begin", `${((index * 3) % 7) * 0.2}s`)
+      .attr("repeatCount", "indefinite");
+  });
+}
+
+/**
  * Pulses of light travelling along edges — nutrients moving through
  * hyphae. Draws an overlay line per link with an animated dash; the caller
  * positions the returned selection on every simulation tick alongside the

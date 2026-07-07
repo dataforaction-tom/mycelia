@@ -2,6 +2,11 @@ import { z } from "zod/v3";
 
 export const createOrganisationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  withDemoData: z.boolean().default(false),
+});
+
+export const onboardingActionSchema = z.object({
+  action: z.enum(["complete-tour", "clear-demo"]),
 });
 
 export const updateOrganisationSchema = z.object({
@@ -19,3 +24,4 @@ export const updateOrganisationSchema = z.object({
 
 export type CreateOrganisationInput = z.infer<typeof createOrganisationSchema>;
 export type UpdateOrganisationInput = z.infer<typeof updateOrganisationSchema>;
+export type OnboardingActionInput = z.infer<typeof onboardingActionSchema>;

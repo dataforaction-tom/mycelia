@@ -43,16 +43,18 @@ export function MomentList({ moments, orgSlug }: MomentListProps) {
 
   return (
     <div className="relative">
-      {/* The thread: one continuous hypha running through every moment */}
+      {/* The story river: one continuous thread running through every moment,
+          warming from green to terracotta the way the connection deepens */}
       <div
-        className="absolute bottom-3 left-[7px] top-3 w-px bg-gradient-to-b from-moss/70 via-moss/30 to-transparent"
+        className="absolute bottom-3 left-[7px] top-3 w-[3px] rounded-full bg-gradient-to-b from-green via-moss to-terracotta shadow-[0_0_12px_rgba(138,154,86,0.4)]"
         aria-hidden="true"
       />
       <div className="space-y-4">
-        {moments.map((moment) => (
+        {moments.map((moment, i) => (
           <div key={moment.id} className="relative pl-8">
             <span
-              className="absolute left-[2px] top-5 h-[11px] w-[11px] rounded-full border-2 border-moss bg-cream"
+              className="animate-breathe-soft absolute left-0 top-5 h-[13px] w-[13px] rounded-full border-[3px] border-green bg-cream shadow-[0_0_12px_rgba(111,154,79,0.5)]"
+              style={{ animationDelay: `${(i % 5) * 0.4}s` }}
               aria-hidden="true"
             />
             <MomentCard

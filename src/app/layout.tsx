@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { DM_Sans, DM_Mono, Fraunces } from "next/font/google";
+import { Outfit, DM_Mono, Gloock } from "next/font/google";
+import { siteConfig } from "@/lib/config/site";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const dmMono = DM_Mono({
@@ -13,17 +15,42 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
 });
 
-// Display face: Fraunces' optical + softness axes give letterforms that
-// feel grown rather than typeset — the typographic voice of the app.
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Display face: Gloock's high-contrast serif carries the "grown, not
+// typeset" typographic voice of the app.
+const gloock = Gloock({
+  variable: "--font-gloock",
   subsets: ["latin"],
-  axes: ["SOFT", "WONK", "opsz"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
-  title: "Mycelium",
-  description: "A relationship management system for social purpose organisations",
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: `${siteConfig.name} — tend your living network`,
+    template: `%s · ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: [
+    "relationship management",
+    "CRM alternative",
+    "social purpose organisations",
+    "charity CRM",
+    "community organising",
+    "network mapping",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    url: siteConfig.url,
+    title: `${siteConfig.name} — tend your living network`,
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.name} — tend your living network`,
+    description: siteConfig.description,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -33,7 +60,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${dmMono.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${outfit.variable} ${dmMono.variable} ${gloock.variable} antialiased`}>
         {children}
       </body>
     </html>

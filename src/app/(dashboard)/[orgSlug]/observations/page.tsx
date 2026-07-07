@@ -52,13 +52,30 @@ export default async function ObservationsPage({
 
   const connectionById = new Map(linkedConnections.map((c) => [c.id, c]));
 
+  // The single most-severe, most-recent unresolved observation gets the
+  // large featured slot; everything else (including resolved rows) sits in
+  // the grid. Rows are already ordered by recency, so a stable severity
+  // sort keeps ties recency-first.
+  const severityRank: Record<string, number> = {
+    important: 0,
+    noteworthy: 1,
+    gentle: 2,
+  };
+  const unresolved = rows.filter(
+    (r) => r.status === "new" || r.status === "seen"
+  );
+  const featured = [...unresolved].sort(
+    (a, b) => severityRank[a.severity] - severityRank[b.severity]
+  )[0];
+  const rest = rows.filter((r) => r.id !== featured?.id);
+
   return (
     <div className="stagger-children space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl text-bark">Observations</h1>
+          <h1 className="font-display text-4xl text-bark">Field notes</h1>
           <p className="mt-2 text-muted">
-            Patterns the network has noticed, offered gently.
+            Patterns the network is showing you — noticed, not measured
           </p>
         </div>
         <GeneratePatternsButton organisationId={org.id} />
@@ -76,8 +93,26 @@ export default async function ObservationsPage({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {rows.map((observation) => (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {featured && (
+            <div className="lg:row-span-2">
+              <ObservationCard
+                key={featured.id}
+                id={featured.id}
+                type={featured.type}
+                content={featured.content}
+                severity={featured.severity}
+                status={featured.status}
+                connections={featured.connections
+                  .map((id) => connectionById.get(id))
+                  .filter((c): c is NonNullable<typeof c> => Boolean(c))}
+                organisationId={org.id}
+                orgSlug={orgSlug}
+                featured
+              />
+            </div>
+          )}
+          {rest.map((observation) => (
             <ObservationCard
               key={observation.id}
               id={observation.id}

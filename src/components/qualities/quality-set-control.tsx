@@ -60,7 +60,7 @@ export function QualitySetControl({
         step={0.1}
         value={position}
         onChange={(e) => setPosition(Number(e.target.value))}
-        className="h-1.5 w-full cursor-pointer accent-terracotta"
+        className="quality-slider h-1.5 w-full cursor-pointer accent-green"
       />
       <button
         type="button"

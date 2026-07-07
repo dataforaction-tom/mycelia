@@ -41,6 +41,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     const msg = error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member")) return errorResponse(msg, 403);
+    if (msg.includes("Subscription required"))
+      return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }
@@ -94,6 +96,8 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member") || msg.includes("Forbidden"))
       return errorResponse(msg, 403);
+    if (msg.includes("Subscription required"))
+      return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }

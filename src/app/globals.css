@@ -9,44 +9,56 @@
  * they reach for these tokens so both worlds stay coherent.
  */
 :root {
-  /* The forest floor — daily working surfaces */
-  --background: #faf6ef;
-  --foreground: #33261a;
-  --surface: #fffdf9;
-  --surface-sunken: #f3ecdf;
-  --terracotta: #c2683b;
-  --terracotta-light: #d69368;
-  --terracotta-dark: #a1522a;
-  --moss: #66845a;
-  --moss-light: #8aa87e;
-  --moss-dark: #4a6540;
-  --bark: #5c4332;
-  --bark-light: #7a5d4a;
-  --bark-dark: #33261a;
-  --cream: #faf6ef;
-  --cream-dark: #f0e8da;
-  --amber: #d0912f;
-  --amber-light: #e6b866;
+  /* The forest floor — daily working surfaces (parchment shell) */
+  --background: #e6dcc4; /* the desk the app sits on */
+  --foreground: #33291a;
+  --foreground-secondary: #4c4028;
+  --surface: #f6efdf;
+  --surface-sunken: #f0e8da;
+  --terracotta: #c97b47;
+  --terracotta-light: #d9986c;
+  --terracotta-dark: #b06034;
+  --moss: #8a9a56;
+  --moss-light: #adb878;
+  --moss-dark: #6d7c42;
+  --green: #6f9a4f; /* growth/deepening accent, distinct from moss */
+  --green-light: #8aad6f;
+  --green-dark: #5c7f3f;
+  --bark: #4c4028;
+  --bark-light: #786a4c;
+  --bark-dark: #33291a;
+  --cream: #f6efdf;
+  --cream-dark: #ecdcae;
+  --amber: #c9962e;
+  --amber-light: #e0b563;
+  --amber-dark: #b07c1c;
   --sky: #6ba3be;
   --sky-light: #8ebfd4;
-  --muted: #96826f;
-  --muted-light: #c3b6a6;
-  --border: #e6dccb;
+  --muted: #988a66;
+  --muted-light: #a3966f;
+  --border: rgba(62, 50, 30, 0.07);
+  --border-strong: rgba(62, 50, 30, 0.12);
   --destructive: #c04b3d;
 
   /* The underground — where the network lives */
-  --soil: #141009;
-  --soil-raised: #1f1811;
-  --soil-line: #322718;
-  --spore: #e8c97d; /* bioluminescent amber — primary glow */
-  --hypha: #a8dfc2; /* pale fungal green — secondary glow */
-  --soil-ink: #ede4d3;
-  --soil-ink-soft: #a3937a;
+  --soil: #1b130a;
+  --soil-mid: #271d11;
+  --soil-light: #3d2f1f;
+  --soil-raised: rgba(41, 30, 18, 0.85);
+  --soil-line: rgba(232, 213, 163, 0.25);
+  --spore: #e8d5a3; /* bioluminescent cream — primary glow */
+  --hypha: #adb878; /* pale mycelium green — secondary glow */
+  --node-tan: #c4a184;
+  --node-clay: #cd8b57;
+  --node-ochre: #c9ad6e;
+  --soil-ink: #f0eedd;
+  --soil-ink-soft: #bfad8e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
   --color-terracotta: var(--terracotta);
@@ -55,6 +67,9 @@
   --color-moss: var(--moss);
   --color-moss-light: var(--moss-light);
   --color-moss-dark: var(--moss-dark);
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-green-dark: var(--green-dark);
   --color-bark: var(--bark);
   --color-bark-light: var(--bark-light);
   --color-bark-dark: var(--bark-dark);
@@ -62,32 +77,43 @@
   --color-cream-dark: var(--cream-dark);
   --color-amber: var(--amber);
   --color-amber-light: var(--amber-light);
+  --color-amber-dark: var(--amber-dark);
   --color-sky: var(--sky);
   --color-sky-light: var(--sky-light);
   --color-muted: var(--muted);
   --color-muted-light: var(--muted-light);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
   --color-soil: var(--soil);
+  --color-soil-mid: var(--soil-mid);
+  --color-soil-light: var(--soil-light);
   --color-soil-raised: var(--soil-raised);
   --color-soil-line: var(--soil-line);
   --color-spore: var(--spore);
   --color-hypha: var(--hypha);
+  --color-node-tan: var(--node-tan);
+  --color-node-clay: var(--node-clay);
+  --color-node-ochre: var(--node-ochre);
   --color-soil-ink: var(--soil-ink);
   --color-soil-ink-soft: var(--soil-ink-soft);
 
-  --font-sans: var(--font-dm-sans);
-  --font-display: var(--font-fraunces);
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-gloock);
+  --font-serif: var(--font-gloock), Georgia, serif;
   --font-mono: var(--font-dm-mono);
 
-  --shadow-lift: 0 1px 2px rgb(51 38 26 / 0.04), 0 4px 16px rgb(51 38 26 / 0.05);
-  --shadow-hover: 0 2px 4px rgb(51 38 26 / 0.05), 0 8px 28px rgb(51 38 26 / 0.09);
+  --shadow-frame: 0 40px 90px rgb(44 36 64 / 0.28);
+  --shadow-lift: 0 1px 2px rgb(51 41 26 / 0.04), 0 4px 16px rgb(51 41 26 / 0.05);
+  --shadow-hover: 0 2px 4px rgb(51 41 26 / 0.05), 0 8px 28px rgb(51 41 26 / 0.09);
 
   --animate-rise: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-breathe: breathe 5s ease-in-out infinite;
+  --animate-breathe-soft: breatheSoft 5s ease-in-out infinite;
   --animate-drift: drift 14s ease-in-out infinite alternate;
+  --animate-fade-drift: fadeDrift 14s linear infinite;
   --animate-glow: glow 4s ease-in-out infinite;
+  --animate-hue: hue 10s ease-in-out infinite alternate;
 }
 
 body {
@@ -105,12 +131,9 @@ body {
   outline-offset: 2px;
 }
 
-/* Display type: Fraunces at high softness reads grown, not typeset */
+/* Display type: Gloock's high-contrast serif carries the "grown, not typeset" voice */
 .font-display {
-  font-variation-settings:
-    "SOFT" 60,
-    "WONK" 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 @keyframes rise {
@@ -136,12 +159,42 @@ body {
   }
 }
 
+/* Softer breathing for avatars, the brand mark and spectrum thumbs */
+@keyframes breatheSoft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
 @keyframes drift {
   from {
     transform: translate(0, 0);
   }
   to {
     transform: translate(10px, -18px);
+  }
+}
+
+/* Spores: drift up and fade in/out across the loop, distinct from the
+   network's idle `drift` (which stays position-only, no opacity change). */
+@keyframes fadeDrift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(34px, -110px);
   }
 }
 
@@ -155,10 +208,33 @@ body {
   }
 }
 
+/* Ambient hue drift for light-shell background washes only — never inside .underground */
+@keyframes hue {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(18deg);
+  }
+}
+
 @keyframes draw {
   to {
     stroke-dashoffset: 0;
   }
+}
+
+/* Dashes flowing along a thread — for static SVG marketing surfaces;
+   the live graphs use SMIL for the same effect. */
+@keyframes threadFlow {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+.animate-thread-flow {
+  stroke-dasharray: 5 8;
+  animation: threadFlow 3.5s linear infinite;
 }
 
 /*
@@ -207,10 +283,23 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-breathe,
+  .animate-breathe-soft,
   .animate-drift,
-  .animate-glow {
+  .animate-fade-drift,
+  .animate-glow,
+  .animate-hue,
+  .animate-thread-flow {
     animation: none;
   }
+}
+
+/* A glowing thumb on the quality-spectrum range input, echoing the
+   gradient-track display above it. */
+.quality-slider::-webkit-slider-thumb {
+  box-shadow: 0 0 10px 2px rgba(111, 154, 79, 0.5);
+}
+.quality-slider::-moz-range-thumb {
+  box-shadow: 0 0 10px 2px rgba(111, 154, 79, 0.5);
 }
 
 /*
@@ -224,8 +313,15 @@ body {
   --surface: var(--soil-raised);
   --border: var(--soil-line);
   --muted: var(--soil-ink-soft);
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -10%, #241b10 0%, transparent 55%),
-    var(--soil);
+  background: radial-gradient(
+    120% 100% at 60% 0%,
+    var(--soil-light) 0%,
+    var(--soil-mid) 55%,
+    var(--soil) 100%
+  );
+  border: 1px solid var(--soil-line);
+  box-shadow:
+    inset 0 0 60px rgba(232, 213, 163, 0.06),
+    var(--shadow-hover);
   color: var(--soil-ink);
 }

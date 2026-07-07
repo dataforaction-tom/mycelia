@@ -14,10 +14,30 @@ function priceIdToPlan(priceId: string): PlanType {
   return priceMap[priceId] ?? "individual";
 }
 
-export async function handleSubscriptionCreated(
-  subscription: Stripe.Subscription
-) {
+// Statuses that mean the subscription no longer pays for the plan.
+// `past_due` deliberately stays active — Stripe's dunning retries payment,
+// and a `customer.subscription.deleted` event arrives if it finally fails.
+const DEAD_STATUSES: Stripe.Subscription.Status[] = [
+  "canceled",
+  "unpaid",
+  "incomplete_expired",
+];
+
+async function applySubscription(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
+
+  if (DEAD_STATUSES.includes(subscription.status)) {
+    await db
+      .update(organisations)
+      .set({
+        plan: "trial",
+        stripeSubscriptionId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(organisations.stripeCustomerId, customerId));
+    return;
+  }
+
   const priceId = subscription.items.data[0]?.price?.id;
   const plan = priceId ? priceIdToPlan(priceId) : "individual";
 
@@ -31,21 +51,16 @@ export async function handleSubscriptionCreated(
     .where(eq(organisations.stripeCustomerId, customerId));
 }
 
+export async function handleSubscriptionCreated(
+  subscription: Stripe.Subscription
+) {
+  await applySubscription(subscription);
+}
+
 export async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription
 ) {
-  const customerId = subscription.customer as string;
-  const priceId = subscription.items.data[0]?.price?.id;
-  const plan = priceId ? priceIdToPlan(priceId) : "individual";
-
-  await db
-    .update(organisations)
-    .set({
-      plan,
-      stripeSubscriptionId: subscription.id,
-      updatedAt: new Date(),
-    })
-    .where(eq(organisations.stripeCustomerId, customerId));
+  await applySubscription(subscription);
 }
 
 export async function handleSubscriptionDeleted(

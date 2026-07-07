@@ -1,3 +1,6 @@
+// Pricing is flat: one £5/month plan with everything included, after a
+// 30-day free trial. "individual" is that plan; the other tiers remain in
+// the enum for schema compatibility but are no longer offered.
 export const PLAN_LIMITS = {
   trial: {
     users: 10,
@@ -7,11 +10,11 @@ export const PLAN_LIMITS = {
     mutualConnections: 50,
   },
   individual: {
-    users: 1,
-    connections: 200,
-    spaces: 1,
-    momentsPerMonth: 500,
-    mutualConnections: 0,
+    users: 10,
+    connections: 1000,
+    spaces: 5,
+    momentsPerMonth: 5000,
+    mutualConnections: 50,
   },
   organisation: {
     users: 10,

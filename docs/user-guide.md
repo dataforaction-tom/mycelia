@@ -2,9 +2,17 @@
 
 This guide covers everything you need to know about using Tending.
 
+## Signing in
+
+Tending has no passwords. Enter your email on the sign-in page and Tending sends you a one-time link — click it and you're in. Each link works once and expires after 24 hours.
+
+If a link has already been used or has expired (this can happen if your email provider opens it automatically to scan it), you'll see a message explaining that, with the option to request a fresh one straight away. If you followed a link to a specific page while signed out, signing in takes you back to that same page rather than dropping you at the homepage.
+
 ## Organisations
 
-Tending is organised around **organisations** — your team's shared workspace. When you first sign in, you'll create an organisation, which gives you a unique web address (like `mycelium.app/your-org-name`).
+Tending is organised around **organisations** — your team's shared workspace. When you first sign in, you'll create an organisation, which gives you a unique web address (like `tending.network/your-org-name`).
+
+When creating an organisation, you can choose to start with a small set of example data — a person, a programme, and a few moments already in place — so there's something alive to explore straight away. A short guided tour then walks you through recording a moment, your dashboard, the Network view, and observations. At the end of the tour you choose whether to keep the example data and carry on adding to it, or clear it and start with a blank organisation. You can also clear example data at any time from **Settings**, and it never affects anything your team has added itself.
 
 ### Members and roles
 
@@ -35,15 +43,19 @@ A connection is the fundamental unit in Tending — not a "contact record," but 
 
 You can create, view, edit, and delete connections from the **Connections** section. Each connection has its own page showing its story, quality spectrums, and moment history.
 
+Each connection's card shows a short teaser from its story and a **vitality** indicator — a quick visual sense of how alive the relationship currently is, from freshly active to quiet for a long while, based on how recently a moment was recorded for it.
+
 ## Moments
 
 A moment is any interaction, observation, or event that becomes part of a connection's story — a conversation, an email, a meeting, a piece of news. Moments are written in natural language, not filled into rigid form fields.
 
-When you record a moment:
+You can either type a moment or speak it — tap the microphone in the composer, talk it through, and Tending transcribes what you said into the text box for you to review before saving.
 
-- You can link it to one or more connections.
+As you type (or as your words are transcribed), Tending recognises the names of people, groups, and spaces you mention and shows them instantly as chips — no waiting required, since it's simply matching against who's already in your organisation. When you record a moment:
+
+- You can link it to one or more connections, either by accepting a recognised chip or adding one yourself.
 - You can set an **event date** if the moment happened at a specific point in time (rather than just "now").
-- An **"Understand with AI"** panel can read what you've written and suggest which connections it mentions, flagging any it recognises but that aren't yet linked. This is informational only — it never creates or links anything without you choosing to.
+- An **"Understand with AI"** panel runs alongside and can catch fuzzier mentions the instant recognition misses, and suggest an event date. This is informational only — it never creates or links anything without you choosing to.
 
 ### Automatic quality updates
 
@@ -77,7 +89,7 @@ The Network view shows your entire relational ecosystem as a living map, rather 
 - **Filter** by connection type, relationship strength, or to show only unconnected people.
 - **Search and centre** on a specific connection by name.
 
-Connections that are frequently mentioned together in the same moments are automatically linked, and the strength of each link reflects how often and how recently that's happened.
+Connections that are frequently mentioned together in the same moments are automatically linked, and the strength of each link reflects how often and how recently that's happened. Nodes and threads glow brighter for relationships that are freshly active, and fade for ones that have gone quiet, so vitality is visible at a glance across the whole network.
 
 ### Clusters
 
@@ -91,7 +103,7 @@ For a bird's-eye alternative to the full network graph, switch to **Constellatio
 
 Spaces let you group connections around a shared context — a project, an initiative, or an idea, rather than a person or organisation in its own right. Use spaces to tag which connections are involved in, say, a particular campaign or programme.
 
-You can create spaces, assign connections to them, and filter your Connections and Moments views by space, from **Settings → Spaces**.
+You can create spaces, assign connections to them, and filter your Connections and Moments views by space, from **Settings → Spaces**. The **Spaces** page gives you a browsable view of every space, each showing how many connections it holds and when it last had a moment recorded against it, so you can see where your threads are crossing.
 
 ## Search
 
@@ -127,4 +139,6 @@ The **Moments** page (sometimes called the River view) shows every moment record
 
 ## Billing
 
-Tending offers Individual, Organisation, and Large plans, each with a trial period. Manage your subscription, view invoices, and change plans from **Settings → Billing**.
+Tending has one plan: £5 a month with everything included, after a 30-day free trial that needs no card to start. Manage your subscription and view invoices from **Settings → Billing**.
+
+You'll get a reminder email a week before your trial ends, and another the day before (or that same morning, if it's ending later today). If a trial runs out without a subscription, your organisation becomes **read-only** — you can still sign in, view everything, and reach Settings and Billing to subscribe, but adding or editing connections and moments is paused until you do. Your subscription is only confirmed once payment has actually gone through, and you'll get a confirmation email at that point.

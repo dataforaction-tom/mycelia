@@ -10,17 +10,7 @@ import {
 import { eq, desc, inArray, count, sql, and } from "drizzle-orm";
 import Link from "next/link";
 import { SpaceIcon } from "@/lib/config/space-icons";
-
-/** "last gathering 2d ago" — from the space's most recent moment. */
-function lastGatheringLabel(date: Date | null): string {
-  if (!date) return "no gatherings yet";
-  const days = Math.floor((Date.now() - date.getTime()) / (24 * 60 * 60 * 1000));
-  if (days <= 0) return "last gathering today";
-  if (days === 1) return "last gathering yesterday";
-  if (days < 7) return `last gathering ${days}d ago`;
-  if (days < 30) return `last gathering ${Math.round(days / 7)}w ago`;
-  return `last gathering ${Math.round(days / 30)}mo ago`;
-}
+import { lastGatheringLabel } from "@/lib/spaces/last-gathering";
 
 export default async function SpacesPage({
   params,
@@ -122,9 +112,10 @@ export default async function SpacesPage({
           {rows.map((space) => {
             const threads = threadsBySpace.get(space.id) ?? 0;
             return (
-              <div
+              <Link
                 key={space.id}
-                className="rounded-[20px] border border-border bg-white/80 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.08)]"
+                href={`/${orgSlug}/spaces/${space.id}`}
+                className="block rounded-[20px] border border-border bg-white/80 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.08)] transition-all hover:-translate-y-0.5 hover:border-terracotta/30 hover:shadow-hover"
               >
                 <SpaceIcon seed={space.id} />
                 <p className="mt-3 font-semibold text-bark-dark">
@@ -143,7 +134,7 @@ export default async function SpacesPage({
                     {lastGatheringLabel(lastBySpace.get(space.id) ?? null)}
                   </span>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

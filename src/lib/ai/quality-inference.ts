@@ -1,13 +1,7 @@
 import { z } from "zod/v3";
 import { SPECTRUM_KEYS } from "@/lib/config/qualities";
 import { runAiObjectTask } from "./run-object-task";
-
-const qualitySignalSchema = z.object({
-  connectionId: z.string().uuid(),
-  spectrum: z.enum(SPECTRUM_KEYS as [string, ...string[]]),
-  position: z.number().min(-1).max(1),
-  confidence: z.number().min(0).max(1),
-});
+import { qualitySignalSchema, clampQualitySignals } from "./quality-signal";
 
 export const qualityInferenceSchema = z.object({
   qualitySignals: z.array(qualitySignalSchema),
@@ -50,9 +44,13 @@ export async function inferQualitiesForMoment(
   content: string,
   linkedConnections: LinkedConnection[]
 ): Promise<QualityInference> {
-  return runAiObjectTask(
+  const result = await runAiObjectTask(
     "quality-inference",
     buildPrompt(content, linkedConnections),
     qualityInferenceSchema
   );
+  return {
+    ...result,
+    qualitySignals: clampQualitySignals(result.qualitySignals),
+  };
 }

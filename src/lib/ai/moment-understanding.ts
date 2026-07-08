@@ -1,17 +1,11 @@
 import { z } from "zod/v3";
 import { SPECTRUM_KEYS } from "@/lib/config/qualities";
 import { runAiObjectTask } from "./run-object-task";
+import { qualitySignalSchema, clampQualitySignals } from "./quality-signal";
 
 const entityMentionSchema = z.object({
   name: z.string(),
   connectionId: z.string().uuid().nullable(),
-});
-
-const qualitySignalSchema = z.object({
-  connectionId: z.string().uuid(),
-  spectrum: z.enum(SPECTRUM_KEYS as [string, ...string[]]),
-  position: z.number().min(-1).max(1),
-  confidence: z.number().min(0).max(1),
 });
 
 export const momentUnderstandingSchema = z.object({
@@ -69,9 +63,13 @@ export async function understandMoment(
   content: string,
   existingConnections: ExistingConnection[]
 ): Promise<MomentUnderstanding> {
-  return runAiObjectTask(
+  const result = await runAiObjectTask(
     "moment-understanding",
     buildPrompt(content, existingConnections),
     momentUnderstandingSchema
   );
+  return {
+    ...result,
+    qualitySignals: clampQualitySignals(result.qualitySignals),
+  };
 }

@@ -45,3 +45,75 @@ export function momentCreatedPayload(input: {
     },
   };
 }
+
+/**
+ * Build the content-minimised `data` and `subject` for a `connection.created`
+ * event.
+ */
+export function connectionCreatedPayload(input: {
+  connectionId: string;
+  name: string;
+  type: string;
+}): { data: Record<string, unknown>; subject: EnvelopeSubject } {
+  return {
+    data: {
+      name: input.name,
+      type: input.type,
+    },
+    subject: {
+      kind: "connection",
+      ref: `tending:connection:${input.connectionId}`,
+      url: appUrl(`/connections/${input.connectionId}`),
+    },
+  };
+}
+
+/**
+ * Build the content-minimised `data` and `subject` for an
+ * `observation.generated` event. Observation content is truncated since it can
+ * carry narrative text.
+ */
+export function observationGeneratedPayload(input: {
+  observationId: string;
+  content: string;
+  observationType: string;
+}): { data: Record<string, unknown>; subject: EnvelopeSubject } {
+  return {
+    data: {
+      content: truncate(input.content),
+      observationType: input.observationType,
+    },
+    subject: {
+      kind: "observation",
+      ref: `tending:observation:${input.observationId}`,
+      url: appUrl("/observations"),
+    },
+  };
+}
+
+/**
+ * Build the content-minimised `data` and `subject` for a `quality.shifted`
+ * event. Carries the spectrum and the previous/new positions so subscribers can
+ * see the direction and size of the move.
+ */
+export function qualityShiftedPayload(input: {
+  connectionId: string;
+  connectionName: string;
+  spectrum: string;
+  from: number;
+  to: number;
+}): { data: Record<string, unknown>; subject: EnvelopeSubject } {
+  return {
+    data: {
+      connectionName: input.connectionName,
+      spectrum: input.spectrum,
+      from: input.from,
+      to: input.to,
+    },
+    subject: {
+      kind: "quality",
+      ref: `tending:connection:${input.connectionId}`,
+      url: appUrl(`/connections/${input.connectionId}`),
+    },
+  };
+}

@@ -14,6 +14,8 @@ import {
 } from "@/lib/network/dependencies";
 import { detectQualityShifts } from "@/lib/network/quality-shifts";
 import { QUALITY_SPECTRUMS } from "@/lib/config/qualities";
+import { emitEvent } from "@/lib/webhooks/emit";
+import { observationGeneratedPayload } from "@/lib/webhooks/payloads";
 
 const DORMANT_THRESHOLD_MS = 8 * 7 * 24 * 60 * 60 * 1000; // 8 weeks
 
@@ -166,13 +168,36 @@ export async function generateObservations(
     );
     if (exists) continue;
 
-    await db.insert(observations).values({
-      organisationId,
-      type: observation.type,
-      content: observation.content,
-      connections: observation.connectionIds,
-    });
+    const [inserted] = await db
+      .insert(observations)
+      .values({
+        organisationId,
+        type: observation.type,
+        content: observation.content,
+        connections: observation.connectionIds,
+      })
+      .returning();
     created++;
+
+    // Best-effort — emit an outbound webhook for subscribers. Its own
+    // try/catch so a webhook failure (or absent subscribers) never breaks
+    // observation generation.
+    try {
+      await emitEvent(organisationId, "observation.generated", {
+        actor: { kind: "ai" },
+        ...observationGeneratedPayload({
+          observationId: inserted.id,
+          content: inserted.content,
+          observationType: inserted.type,
+        }),
+      });
+    } catch (webhookError) {
+      console.error(
+        "Failed to emit observation.generated webhook",
+        inserted.id,
+        webhookError
+      );
+    }
   }
 
   return { created };

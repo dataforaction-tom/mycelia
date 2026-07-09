@@ -15,7 +15,10 @@ import { inferQualitiesForMoment } from "@/lib/ai/quality-inference";
 import { synthesizeThread } from "@/lib/ai/thread-synthesis";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { emitEvent } from "@/lib/webhooks/emit";
-import { momentCreatedPayload } from "@/lib/webhooks/payloads";
+import {
+  momentCreatedPayload,
+  qualityShiftedPayload,
+} from "@/lib/webhooks/payloads";
 import { spaces } from "@/lib/db/schema";
 import { and, eq, asc, desc, count, gte, inArray } from "drizzle-orm";
 
@@ -184,6 +187,30 @@ export async function POST(request: NextRequest) {
         );
 
         if (qualitySignals.length) {
+          // Capture each signal's previous latest position for its
+          // (connectionId, spectrum) BEFORE inserting the new inferred
+          // qualities, so we can detect material shifts afterwards.
+          const previousPositions = new Map<string, number>();
+          for (const signal of qualitySignals) {
+            const [prev] = await db
+              .select({ position: qualities.position })
+              .from(qualities)
+              .where(
+                and(
+                  eq(qualities.connectionId, signal.connectionId),
+                  eq(qualities.spectrum, signal.spectrum)
+                )
+              )
+              .orderBy(desc(qualities.createdAt))
+              .limit(1);
+            if (prev) {
+              previousPositions.set(
+                `${signal.connectionId}:${signal.spectrum}`,
+                prev.position
+              );
+            }
+          }
+
           await db.insert(qualities).values(
             qualitySignals.map((s) => ({
               connectionId: s.connectionId,
@@ -194,6 +221,33 @@ export async function POST(request: NextRequest) {
               momentId: moment.id,
             }))
           );
+
+          // Best-effort — emit quality.shifted for any material move
+          // (> 0.3) against the connection's previous position for that
+          // spectrum. A missing previous position means this is the first
+          // reading, which isn't a shift.
+          const nameById = new Map(
+            linkedConnections.map((c) => [c.id, c.name])
+          );
+          for (const signal of qualitySignals) {
+            const prevPosition = previousPositions.get(
+              `${signal.connectionId}:${signal.spectrum}`
+            );
+            if (prevPosition === undefined) continue;
+            if (Math.abs(signal.position - prevPosition) <= 0.3) continue;
+
+            await emitEvent(organisationId, "quality.shifted", {
+              actor: { kind: "ai" },
+              ...qualityShiftedPayload({
+                connectionId: signal.connectionId,
+                connectionName:
+                  nameById.get(signal.connectionId) ?? "A connection",
+                spectrum: signal.spectrum,
+                from: prevPosition,
+                to: signal.position,
+              }),
+            });
+          }
         }
       } catch (aiError) {
         console.error(

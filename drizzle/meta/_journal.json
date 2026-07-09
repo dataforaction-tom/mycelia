@@ -57,6 +57,13 @@
       "when": 1783599526963,
       "tag": "0007_chief_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783599968215,
+      "tag": "0008_tan_songbird",
+      "breakpoints": true
     }
   ]
 }

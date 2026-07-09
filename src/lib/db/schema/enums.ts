@@ -32,6 +32,7 @@ export const momentSourceEnum = pgEnum("moment_source", [
   "email",
   "photo",
   "quick_capture",
+  "api",
 ]);
 
 export const qualitySourceEnum = pgEnum("quality_source", [

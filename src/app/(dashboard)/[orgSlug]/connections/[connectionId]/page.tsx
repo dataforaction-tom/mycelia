@@ -22,6 +22,7 @@ import { MomentList } from "@/components/moments/moment-list";
 import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
 import { SpacePicker } from "@/components/spaces/space-picker";
 import { ContactDetailsCard } from "@/components/connections/contact-details-card";
+import { ExportButton } from "@/components/export/export-button";
 
 export default async function ConnectionDetailPage({
   params,
@@ -175,7 +176,15 @@ export default async function ConnectionDetailPage({
             </p>
           </div>
         </div>
-        <AddMomentButton seedText={connection.name} />
+        <div className="flex items-center gap-3">
+          <ExportButton
+            url={`/api/connections/${connectionId}/export`}
+            organisationId={org.id}
+            fallbackFilename={`tending-${connection.name}.zip`}
+            label="Export"
+          />
+          <AddMomentButton seedText={connection.name} />
+        </div>
       </div>
 
       {/* The story leads: relationships are narratives, not records */}

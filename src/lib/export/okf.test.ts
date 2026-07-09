@@ -31,4 +31,15 @@ describe("renderOkf", () => {
     const withSummary = Object.values(tree).find((c) => c.includes("thread_summary_source:"));
     expect(withSummary).toBeDefined();
   });
+
+  it("emits sub-index docs so the top-level nav links resolve", () => {
+    // The top-level index links to connections/index.md, moments/index.md,
+    // spaces/index.md — those must exist and list their records.
+    for (const dir of ["connections", "moments", "spaces"]) {
+      expect(tree[`okf/${dir}/index.md`]).toBeDefined();
+    }
+    // Each sub-index links to at least one real record file in its directory.
+    expect(tree["okf/connections/index.md"]).toMatch(/\]\([^)]+\.md\)/);
+    expect(tree["okf/index.md"]).toContain("(connections/index.md)");
+  });
 });

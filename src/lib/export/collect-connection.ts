@@ -62,9 +62,18 @@ export function scopeToConnection(
       link.targetConnectionId === connectionId,
   );
 
-  const observations = data.observations.filter((observation) =>
-    observation.connections.includes(connectionId),
-  );
+  // Keep observations that reference the target, but prune each one's
+  // connection references to those actually in this scoped export — otherwise
+  // the OKF bundle links to (and the JSON/YAML name) connection documents that
+  // aren't included, i.e. dangling references.
+  const observations = data.observations
+    .filter((observation) => observation.connections.includes(connectionId))
+    .map((observation) => ({
+      ...observation,
+      connections: observation.connections.filter((id) =>
+        connectionIds.has(id),
+      ),
+    }));
 
   return {
     exportedAt: data.exportedAt,

@@ -67,3 +67,10 @@ export const observationStatusEnum = pgEnum("observation_status", [
   "acted_on",
   "dismissed",
 ]);
+
+export const webhookDeliveryStatusEnum = pgEnum("webhook_delivery_status", [
+  "pending",
+  "delivered",
+  "failed",
+  "dead",
+]);

@@ -6,6 +6,7 @@ import { connections, connectionSpaces } from "./connections";
 import { moments, momentConnections } from "./moments";
 import { qualities } from "./qualities";
 import { networkLinks } from "./network-links";
+import { webhookEndpoints, webhookDeliveries } from "./webhooks";
 
 // Auth relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -40,6 +41,7 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   spaces: many(spaces),
   connections: many(connections),
   moments: many(moments),
+  webhookEndpoints: many(webhookEndpoints),
 }));
 
 // Space relations
@@ -137,3 +139,25 @@ export const networkLinksRelations = relations(networkLinks, ({ one }) => ({
     relationName: "targetLinks",
   }),
 }));
+
+// Webhook relations
+export const webhookEndpointsRelations = relations(
+  webhookEndpoints,
+  ({ one, many }) => ({
+    organisation: one(organisations, {
+      fields: [webhookEndpoints.organisationId],
+      references: [organisations.id],
+    }),
+    deliveries: many(webhookDeliveries),
+  })
+);
+
+export const webhookDeliveriesRelations = relations(
+  webhookDeliveries,
+  ({ one }) => ({
+    endpoint: one(webhookEndpoints, {
+      fields: [webhookDeliveries.endpointId],
+      references: [webhookEndpoints.id],
+    }),
+  })
+);

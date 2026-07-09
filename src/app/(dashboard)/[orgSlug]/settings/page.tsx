@@ -7,6 +7,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getMembership, hasMinRole } from "@/lib/auth/permissions";
 import { OrgSettingsForm } from "@/components/organisations/org-settings-form";
+import { NewConnectionSuggestionsToggle } from "@/components/organisations/new-connection-suggestions-toggle";
 import { ClearDemoData } from "@/components/organisations/clear-demo-data";
 import { ExportButton } from "@/components/export/export-button";
 
@@ -31,9 +32,14 @@ export default async function SettingsPage({
   const membership = session?.user?.id
     ? await getMembership(session.user.id, org.id)
     : null;
-  const canExportOrg = membership
+  const canManageSettings = membership
     ? hasMinRole(membership.role, "admin")
     : false;
+  const canExportOrg = canManageSettings;
+
+  const newConnectionSuggestions =
+    (org.settings as { newConnectionSuggestions?: "opt_in" | "opt_out" } | null)
+      ?.newConnectionSuggestions ?? "opt_in";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -45,6 +51,13 @@ export default async function SettingsPage({
       </div>
 
       <OrgSettingsForm org={org} />
+
+      {canManageSettings && (
+        <NewConnectionSuggestionsToggle
+          organisationId={org.id}
+          value={newConnectionSuggestions}
+        />
+      )}
 
       {Boolean((org.settings as { demo?: unknown } | null)?.demo) && (
         <ClearDemoData organisationId={org.id} />

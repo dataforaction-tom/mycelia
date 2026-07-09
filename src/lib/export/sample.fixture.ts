@@ -124,6 +124,8 @@ export function sampleExport(): OrgExport {
         severity: "gentle",
         status: "new",
         userResponse: null,
+        dueAt: null,
+        sourceMomentId: null,
         createdAt: CREATED_AT,
       },
     ],

@@ -4,7 +4,7 @@ import { observations } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { listObservationsSchema } from "@/lib/validators/observations";
-import { and, eq, desc, inArray } from "drizzle-orm";
+import { and, eq, desc, inArray, ne } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +25,13 @@ export async function GET(request: NextRequest) {
 
     const { status, limit, offset } = parsed.data;
 
-    const conditions = [eq(observations.organisationId, organisationId)];
+    const conditions = [
+      eq(observations.organisationId, organisationId),
+      // Never leak follow-up reminders still waiting on their due date; the
+      // cron flips them to "new" once due. (The status filter can't request
+      // "scheduled" anyway — listObservationsSchema doesn't allow it.)
+      ne(observations.status, "scheduled"),
+    ];
     if (status) conditions.push(eq(observations.status, status));
 
     const rows = await db

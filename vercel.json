@@ -5,6 +5,10 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/cron/follow-up-reminders",
+      "schedule": "0 8 * * *"
+    },
+    {
       "path": "/api/cron/webhook-deliveries",
       "schedule": "*/10 * * * *"
     }

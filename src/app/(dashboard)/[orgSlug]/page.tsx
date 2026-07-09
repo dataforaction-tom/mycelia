@@ -9,7 +9,7 @@ import {
   observations,
   users,
 } from "@/lib/db/schema";
-import { and, eq, count, desc, gte, lt, inArray } from "drizzle-orm";
+import { and, eq, count, desc, asc, gte, lt, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { MomentCard } from "@/components/moments/moment-card";
@@ -17,6 +17,7 @@ import { ComposerTriggerBar } from "@/components/moments/composer-trigger-bar";
 import { AddConnectionButton } from "@/components/connections/add-connection-button";
 import { GuidedTour } from "@/components/onboarding/guided-tour";
 import { WhisperCard } from "@/components/observations/whisper-card";
+import { UpcomingReminders } from "@/components/observations/upcoming-reminders";
 import { EcosystemCanvas } from "@/components/network/ecosystem-canvas";
 
 const SEVERITY_RANK: Record<string, number> = {
@@ -111,8 +112,36 @@ export default async function OrgDashboard({
   );
   const attentionList = unresolvedObservations.slice(0, 5);
 
+  // Upcoming reminders: follow-ups still waiting on their due date, soonest
+  // first. These are deliberately excluded from every other surface until the
+  // cron flips them to "new" — this is the one place a pending one is visible.
+  const upcomingReminders = (
+    await db
+      .select({
+        id: observations.id,
+        note: observations.content,
+        dueAt: observations.dueAt,
+        connections: observations.connections,
+      })
+      .from(observations)
+      .where(
+        and(
+          eq(observations.organisationId, org.id),
+          eq(observations.type, "follow_up"),
+          eq(observations.status, "scheduled")
+        )
+      )
+      .orderBy(asc(observations.dueAt))
+      .limit(5)
+  ).filter((reminder): reminder is typeof reminder & { dueAt: Date } =>
+    Boolean(reminder.dueAt)
+  );
+
   const attentionConnectionIds = [
-    ...new Set(attentionList.flatMap((o) => o.connections)),
+    ...new Set([
+      ...attentionList.flatMap((o) => o.connections),
+      ...upcomingReminders.flatMap((r) => r.connections),
+    ]),
   ];
   const attentionConnections = attentionConnectionIds.length
     ? await db
@@ -366,6 +395,20 @@ export default async function OrgDashboard({
           </section>
         </div>
       )}
+
+      <UpcomingReminders
+        orgSlug={orgSlug}
+        organisationId={org.id}
+        reminders={upcomingReminders.map((reminder) => ({
+          id: reminder.id,
+          note: reminder.note,
+          dueAt: reminder.dueAt,
+          connections: reminder.connections
+            .map((id) => attentionConnectionById.get(id))
+            .filter((c): c is NonNullable<typeof c> => Boolean(c))
+            .map((c) => ({ id: c.id, name: c.name })),
+        }))}
+      />
 
       {/* Fresh moments: a quick 3-up grid, distinct from the river's
           threaded view — the day's texture at a glance. */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { EntityRecognitionOverlay } from "./entity-recognition-overlay";
@@ -45,6 +45,30 @@ const MOMENT_TYPE_CHIPS = [
 
 const UNDERSTAND_DEBOUNCE_MS = 600;
 
+/** ISO date/string → the yyyy-mm-dd a <input type="date"> expects. */
+function toDateInput(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+/** "Tue 15 Jul" — a light, friendly rendering of a reminder's due date. */
+function formatFollowUpDate(dateInput: string): string {
+  if (!dateInput) return "";
+  // dateInput is a plain yyyy-mm-dd. Parse the parts as a LOCAL calendar date:
+  // `new Date("2026-07-15")` parses as UTC midnight, which renders as the day
+  // before in timezones west of UTC (e.g. America/New_York).
+  const [year, month, day] = dateInput.split("-").map(Number);
+  if (!year || !month || !day) return "";
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 /** "1 person", "2 people and 1 space", "1 organisation, 1 space" … */
 function describeRecognised(
   connections: RosterConnection[],
@@ -76,8 +100,19 @@ export function MomentComposerModal({
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The follow-up reminder the composer will plant alongside the moment. Seeded
+  // from the AI's detection, but once the user edits or removes it, `touched`
+  // stops the debounced understanding from re-seeding over their choice.
+  const [followUp, setFollowUp] = useState<{ note: string; date: string } | null>(
+    null,
+  );
+  const [followUpTouched, setFollowUpTouched] = useState(false);
+  const [editingFollowUp, setEditingFollowUp] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rosterLoadedFor = useRef<string | null>(null);
+  // The exact text the current `understanding` was computed for — lets
+  // "Plant it" tell whether it needs a final flush before submitting.
+  const understoodContentRef = useRef<string | null>(null);
 
   // Seed the text when opening from a context that knows who it's about
   // (e.g. "Add moment" on a connection page) — recognition picks the name
@@ -150,16 +185,11 @@ export function MomentComposerModal({
     .filter((e) => e.kind === "space")
     .map((e) => e.id);
 
-  // AI enhancement, best-effort and silent: catches mentions the literal
-  // text search can't ("the food network" → Sheffield Food Network) and
-  // detects event dates. Never blocks or breaks the composer.
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!content.trim()) {
-      setUnderstanding(null);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
+  // One AI understanding round-trip. Sends the user's timezone so relative
+  // dates ("today", "next week") resolve against their calendar day. Records
+  // the text it ran for and returns the result so "Plant it" can flush it.
+  const runUnderstanding = useCallback(
+    async (text: string): Promise<MomentUnderstanding | null> => {
       try {
         const res = await fetch("/api/moments/understand", {
           method: "POST",
@@ -167,18 +197,55 @@ export function MomentComposerModal({
             "Content-Type": "application/json",
             "x-organisation-id": organisationId,
           },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({
+            content: text,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
         });
         const data = await res.json();
-        if (res.ok) setUnderstanding(data.data);
+        if (res.ok) {
+          setUnderstanding(data.data);
+          understoodContentRef.current = text;
+          return data.data as MomentUnderstanding;
+        }
       } catch {
         // Recognition already happened locally; AI is a bonus.
       }
+      return null;
+    },
+    [organisationId],
+  );
+
+  // AI enhancement, best-effort and silent: catches mentions the literal
+  // text search can't ("the food network" → Sheffield Food Network) and
+  // detects event dates. Never blocks or breaks the composer.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!content.trim()) {
+      setUnderstanding(null);
+      understoodContentRef.current = null;
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      runUnderstanding(content);
     }, UNDERSTAND_DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [content, organisationId]);
+  }, [content, runUnderstanding]);
+
+  // Seed the follow-up chip from the AI's detection, but never clobber a
+  // reminder the user has already edited or dismissed (the understanding call
+  // re-fires on every keystroke). `dueDate` arrives as an ISO string over JSON.
+  useEffect(() => {
+    if (followUpTouched) return;
+    const detected = understanding?.followUp ?? null;
+    setFollowUp(
+      detected
+        ? { note: detected.note, date: toDateInput(detected.dueDate) }
+        : null,
+    );
+  }, [understanding, followUpTouched]);
 
   const aiExtraConnectionIds = (understanding?.entities ?? [])
     .map((e) => e.connectionId)
@@ -205,6 +272,9 @@ export function MomentComposerModal({
     setSelectedType(null);
     setUsedVoice(false);
     setError(null);
+    setFollowUp(null);
+    setFollowUpTouched(false);
+    setEditingFollowUp(false);
     onOpenChange(false);
   }
 
@@ -212,6 +282,40 @@ export function MomentComposerModal({
     if (!content.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
+
+    // Flush pending AI understanding: if "Plant it" is clicked before the
+    // debounced call has run for this exact text, run it now (and wait) so the
+    // reminder + event date aren't lost to the race. No-op once understood.
+    const effective =
+      understoodContentRef.current === content
+        ? understanding
+        : await runUnderstanding(content);
+
+    // Merge the AI's extra connections (e.g. "the food network") with the
+    // instant local recognition, using whichever understanding we just settled.
+    const aiExtraIds = (effective?.entities ?? [])
+      .map((e) => e.connectionId)
+      .filter(
+        (id): id is string =>
+          Boolean(id) && !recognisedConnectionIds.includes(id!),
+      );
+    const connectionIds = [...recognisedConnectionIds, ...aiExtraIds]
+      .map((id) => connectionById.get(id))
+      .filter((c): c is RosterConnection => Boolean(c))
+      .map((c) => c.id);
+
+    // The user's edited/removed chip wins once touched; otherwise use the
+    // freshly detected follow-up (which the flush above guarantees is current).
+    const effectiveFollowUp = followUpTouched
+      ? followUp && followUp.note.trim() && followUp.date
+        ? { note: followUp.note.trim(), dueDate: followUp.date }
+        : undefined
+      : effective?.followUp
+        ? {
+            note: effective.followUp.note,
+            dueDate: toDateInput(effective.followUp.dueDate),
+          }
+        : undefined;
 
     try {
       const res = await fetch("/api/moments", {
@@ -223,10 +327,11 @@ export function MomentComposerModal({
         body: JSON.stringify({
           content,
           source: usedVoice ? "voice" : "quick_capture",
-          connectionIds: allRecognisedConnections.map((c) => c.id),
+          connectionIds,
           spaceId:
             recognisedSpaceIds.length === 1 ? recognisedSpaceIds[0] : undefined,
-          eventDate: understanding?.eventDate ?? undefined,
+          eventDate: effective?.eventDate ?? undefined,
+          followUp: effectiveFollowUp,
         }),
       });
 
@@ -301,6 +406,77 @@ export function MomentComposerModal({
               }}
             />
           </div>
+
+          {followUp && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-3 py-2">
+              <span aria-hidden="true">🔔</span>
+              {editingFollowUp ? (
+                <>
+                  <input
+                    type="text"
+                    value={followUp.note}
+                    onChange={(e) => {
+                      setFollowUpTouched(true);
+                      setFollowUp((prev) =>
+                        prev ? { ...prev, note: e.target.value } : prev,
+                      );
+                    }}
+                    placeholder="What to check in about"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-white px-2.5 py-1 text-sm text-bark placeholder:text-muted-light focus:border-amber focus:outline-none"
+                  />
+                  <input
+                    type="date"
+                    value={followUp.date}
+                    onChange={(e) => {
+                      setFollowUpTouched(true);
+                      setFollowUp((prev) =>
+                        prev ? { ...prev, date: e.target.value } : prev,
+                      );
+                    }}
+                    className="rounded-lg border border-border bg-white px-2 py-1 text-sm text-bark focus:border-amber focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditingFollowUp(false)}
+                    className="rounded-lg bg-amber/20 px-2.5 py-1 text-xs font-semibold text-amber-dark hover:bg-amber/30"
+                  >
+                    Done
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 text-sm text-bark">
+                    <span className="text-muted">Reminder:</span> {followUp.note}
+                    {followUp.date && (
+                      <span className="text-amber-dark">
+                        {" · "}
+                        {formatFollowUpDate(followUp.date)}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingFollowUp(true)}
+                    className="text-xs font-medium text-muted hover:text-bark"
+                  >
+                    edit
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remove reminder"
+                    onClick={() => {
+                      setFollowUpTouched(true);
+                      setFollowUp(null);
+                      setEditingFollowUp(false);
+                    }}
+                    className="text-muted transition-colors hover:text-terracotta-dark"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {MOMENT_TYPE_CHIPS.map((label) => (

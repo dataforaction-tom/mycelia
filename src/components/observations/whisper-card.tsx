@@ -29,6 +29,11 @@ const KICKERS: Record<string, { label: string; accent: string; card: string }> =
     accent: "text-terracotta-dark",
     card: "border-border bg-white/80",
   },
+  follow_up: {
+    label: "Time to check in",
+    accent: "text-amber-dark",
+    card: "border-amber/30 bg-gradient-to-r from-amber/10 to-white/85",
+  },
 };
 
 const FALLBACK_KICKER = {

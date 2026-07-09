@@ -47,8 +47,29 @@
     {
       "idx": 6,
       "version": "7",
-      "when": 1783523087511,
-      "tag": "0006_common_leech",
+      "when": 1783597988846,
+      "tag": "0006_smooth_ikaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783599526963,
+      "tag": "0007_chief_next_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783599968215,
+      "tag": "0008_tan_songbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783607400828,
+      "tag": "0009_tiresome_imperial_guard",
       "breakpoints": true
     }
   ]

@@ -40,7 +40,10 @@ export async function getAuthenticatedUser() {
  * Read the `x-organisation-id` header and validate the user's membership.
  * Returns `{ user, membership, organisationId }`.
  */
-export async function getOrgContext(request: Request) {
+export async function getOrgContext(
+  request: Request,
+  options?: { skipPaymentGate?: boolean },
+) {
   const user = await getAuthenticatedUser();
 
   const organisationId = request.headers.get("x-organisation-id");
@@ -58,7 +61,11 @@ export async function getOrgContext(request: Request) {
   // Payment gate: expired trials go read-only. Every content route (and
   // only content routes) flows through here, so this one check gates all
   // writes while leaving reads, settings and billing untouched.
-  if (MUTATING_METHODS.has(request.method)) {
+  //
+  // Security/management actions (revoking a leaked API key, disabling a
+  // webhook) pass `skipPaymentGate` — an expired customer must still be able
+  // to cut off integrations, so those must not be blocked behind billing.
+  if (!options?.skipPaymentGate && MUTATING_METHODS.has(request.method)) {
     const [org] = await db
       .select({
         plan: organisations.plan,

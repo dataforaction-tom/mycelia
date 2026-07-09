@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import { organisations, observations, connections } from "@/lib/db/schema";
-import { and, eq, desc, inArray } from "drizzle-orm";
+import { and, eq, desc, inArray, ne } from "drizzle-orm";
 import { ObservationCard } from "@/components/observations/observation-card";
 import { ObservationStatusFilter } from "@/components/observations/observation-status-filter";
 import { GeneratePatternsButton } from "@/components/observations/generate-patterns-button";
@@ -25,7 +25,12 @@ export default async function ObservationsPage({
 
   if (!org) return null;
 
-  const conditions = [eq(observations.organisationId, org.id)];
+  const conditions = [
+    eq(observations.organisationId, org.id),
+    // Follow-up reminders awaiting their due date are hidden here — the daily
+    // cron flips them to "new" once due, and only then do they appear.
+    ne(observations.status, "scheduled"),
+  ];
   if (status) {
     conditions.push(
       eq(

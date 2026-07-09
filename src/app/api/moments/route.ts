@@ -6,6 +6,7 @@ import {
   organisations,
   connections,
   qualities,
+  observations,
 } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
@@ -247,6 +248,31 @@ export async function POST(request: NextRequest) {
             aiError
           );
         }
+      }
+    }
+
+    // A confirmed follow-up becomes a "scheduled" observation that stays
+    // hidden until its dueAt, when the daily cron surfaces it. Best-effort:
+    // a reminder failure must never fail moment creation (mirrors the AI
+    // blocks above). Independent of connections — some reminders name no one.
+    if (parsed.data.followUp) {
+      try {
+        await db.insert(observations).values({
+          organisationId,
+          type: "follow_up",
+          content: parsed.data.followUp.note,
+          connections: parsed.data.connectionIds ?? [],
+          severity: "noteworthy",
+          status: "scheduled",
+          dueAt: parsed.data.followUp.dueDate,
+          sourceMomentId: moment.id,
+        });
+      } catch (followUpError) {
+        console.error(
+          "Follow-up reminder creation failed for moment",
+          moment.id,
+          followUpError,
+        );
       }
     }
 

@@ -8,6 +8,14 @@ export const createMomentSchema = z.object({
   eventDate: z.coerce.date().optional(),
   connectionIds: z.array(z.string().uuid()).optional(),
   spaceId: z.string().uuid().optional(),
+  // A follow-up reminder the composer detected and the user confirmed. Stored
+  // as a "scheduled" observation that surfaces on its dueDate.
+  followUp: z
+    .object({
+      note: z.string().min(1).max(500),
+      dueDate: z.coerce.date(),
+    })
+    .optional(),
 });
 
 export const updateMomentSchema = z.object({

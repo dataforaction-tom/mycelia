@@ -45,6 +45,25 @@ const MOMENT_TYPE_CHIPS = [
 
 const UNDERSTAND_DEBOUNCE_MS = 600;
 
+/** ISO date/string → the yyyy-mm-dd a <input type="date"> expects. */
+function toDateInput(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+/** "Tue 15 Jul" — a light, friendly rendering of a reminder's due date. */
+function formatFollowUpDate(dateInput: string): string {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 /** "1 person", "2 people and 1 space", "1 organisation, 1 space" … */
 function describeRecognised(
   connections: RosterConnection[],
@@ -76,6 +95,14 @@ export function MomentComposerModal({
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The follow-up reminder the composer will plant alongside the moment. Seeded
+  // from the AI's detection, but once the user edits or removes it, `touched`
+  // stops the debounced understanding from re-seeding over their choice.
+  const [followUp, setFollowUp] = useState<{ note: string; date: string } | null>(
+    null,
+  );
+  const [followUpTouched, setFollowUpTouched] = useState(false);
+  const [editingFollowUp, setEditingFollowUp] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rosterLoadedFor = useRef<string | null>(null);
 
@@ -180,6 +207,19 @@ export function MomentComposerModal({
     };
   }, [content, organisationId]);
 
+  // Seed the follow-up chip from the AI's detection, but never clobber a
+  // reminder the user has already edited or dismissed (the understanding call
+  // re-fires on every keystroke). `dueDate` arrives as an ISO string over JSON.
+  useEffect(() => {
+    if (followUpTouched) return;
+    const detected = understanding?.followUp ?? null;
+    setFollowUp(
+      detected
+        ? { note: detected.note, date: toDateInput(detected.dueDate) }
+        : null,
+    );
+  }, [understanding, followUpTouched]);
+
   const aiExtraConnectionIds = (understanding?.entities ?? [])
     .map((e) => e.connectionId)
     .filter(
@@ -205,6 +245,9 @@ export function MomentComposerModal({
     setSelectedType(null);
     setUsedVoice(false);
     setError(null);
+    setFollowUp(null);
+    setFollowUpTouched(false);
+    setEditingFollowUp(false);
     onOpenChange(false);
   }
 
@@ -227,6 +270,10 @@ export function MomentComposerModal({
           spaceId:
             recognisedSpaceIds.length === 1 ? recognisedSpaceIds[0] : undefined,
           eventDate: understanding?.eventDate ?? undefined,
+          followUp:
+            followUp && followUp.note.trim() && followUp.date
+              ? { note: followUp.note.trim(), dueDate: followUp.date }
+              : undefined,
         }),
       });
 
@@ -301,6 +348,77 @@ export function MomentComposerModal({
               }}
             />
           </div>
+
+          {followUp && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-3 py-2">
+              <span aria-hidden="true">🔔</span>
+              {editingFollowUp ? (
+                <>
+                  <input
+                    type="text"
+                    value={followUp.note}
+                    onChange={(e) => {
+                      setFollowUpTouched(true);
+                      setFollowUp((prev) =>
+                        prev ? { ...prev, note: e.target.value } : prev,
+                      );
+                    }}
+                    placeholder="What to check in about"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-white px-2.5 py-1 text-sm text-bark placeholder:text-muted-light focus:border-amber focus:outline-none"
+                  />
+                  <input
+                    type="date"
+                    value={followUp.date}
+                    onChange={(e) => {
+                      setFollowUpTouched(true);
+                      setFollowUp((prev) =>
+                        prev ? { ...prev, date: e.target.value } : prev,
+                      );
+                    }}
+                    className="rounded-lg border border-border bg-white px-2 py-1 text-sm text-bark focus:border-amber focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditingFollowUp(false)}
+                    className="rounded-lg bg-amber/20 px-2.5 py-1 text-xs font-semibold text-amber-dark hover:bg-amber/30"
+                  >
+                    Done
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 text-sm text-bark">
+                    <span className="text-muted">Reminder:</span> {followUp.note}
+                    {followUp.date && (
+                      <span className="text-amber-dark">
+                        {" · "}
+                        {formatFollowUpDate(followUp.date)}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingFollowUp(true)}
+                    className="text-xs font-medium text-muted hover:text-bark"
+                  >
+                    edit
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remove reminder"
+                    onClick={() => {
+                      setFollowUpTouched(true);
+                      setFollowUp(null);
+                      setEditingFollowUp(false);
+                    }}
+                    className="text-muted transition-colors hover:text-terracotta-dark"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {MOMENT_TYPE_CHIPS.map((label) => (

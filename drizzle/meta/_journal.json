@@ -43,6 +43,13 @@
       "when": 1783449330162,
       "tag": "0005_add_organisation_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783523087511,
+      "tag": "0006_common_leech",
+      "breakpoints": true
     }
   ]
 }

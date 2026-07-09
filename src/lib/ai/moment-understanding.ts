@@ -12,6 +12,25 @@ export const momentUnderstandingSchema = z.object({
   entities: z.array(entityMentionSchema),
   qualitySignals: z.array(qualitySignalSchema),
   eventDate: z.coerce.date().nullable(),
+  // A natural-language follow-up the user would want reminding about, e.g.
+  // "check in about the National Lottery fund". Null when nothing in the text
+  // implies a future action. No .min/.max here — Anthropic's structured-output
+  // API rejects numeric bounds; the same rule applies to string constraints,
+  // so keep the schema unconstrained and describe intent via .describe().
+  followUp: z
+    .object({
+      note: z
+        .string()
+        .describe(
+          "short, friendly nudge phrased as an action, e.g. 'check in about the National Lottery fund'",
+        ),
+      dueDate: z.coerce
+        .date()
+        .describe(
+          "ISO 8601 date to be reminded — ideally shortly before the event or deadline so the nudge is actionable",
+        ),
+    })
+    .nullable(),
 });
 
 export type MomentUnderstanding = z.infer<typeof momentUnderstandingSchema>;
@@ -49,6 +68,12 @@ with someone in their network. Read the moment below and:
    (as opposed to today, when it is being recorded), set "eventDate" to
    that date (ISO 8601). Otherwise set it to null. Do not assume the event
    date is today only because none is stated.
+4. If the moment implies a future action, commitment, or event the user
+   would want to follow up on (e.g. "the fund opens again next week", "she'll
+   send it Monday", "chase this in a fortnight"), set "followUp" with a short
+   note describing what to check in about and a "dueDate" (ISO 8601) for when
+   to be reminded — ideally shortly before the event/deadline. Set it to null
+   when nothing in the text implies a follow-up; never invent one.
 
 Existing connections roster:
 ${roster}

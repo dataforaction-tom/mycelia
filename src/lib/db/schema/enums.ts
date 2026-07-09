@@ -53,6 +53,7 @@ export const observationTypeEnum = pgEnum("observation_type", [
   "theme",
   "quality_shift",
   "bridge_risk",
+  "follow_up",
 ]);
 
 export const observationSeverityEnum = pgEnum("observation_severity", [
@@ -66,4 +67,7 @@ export const observationStatusEnum = pgEnum("observation_status", [
   "seen",
   "acted_on",
   "dismissed",
+  // A follow-up reminder waiting for its due date; the daily cron flips it to
+  // "new" once due, at which point it surfaces like any other observation.
+  "scheduled",
 ]);

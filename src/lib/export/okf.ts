@@ -39,6 +39,11 @@ function iso(value: Date | string | null | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : String(value);
 }
 
+/** Escape a pipe so it doesn't break a Markdown table cell. */
+function escapeCell(value: string): string {
+  return value.replace(/\|/g, "\\|");
+}
+
 export function renderOkf(data: OrgExport): FileTree {
   const tree: FileTree = {};
 
@@ -192,13 +197,7 @@ export function renderOkf(data: OrgExport): FileTree {
     const connectionSpaceIds = spacesByConnection.get(connection.id) ?? [];
     if (connectionSpaceIds.length > 0) {
       lines.push("## Spaces", "");
-      for (const spaceId of connectionSpaceIds) {
-        const space = data.spaces.find((candidate) => candidate.id === spaceId);
-        const spaceSlugValue = spaceSlug.get(spaceId) ?? spaceId;
-        lines.push(
-          `- [${space?.name ?? spaceId}](../spaces/${spaceSlugValue}.md)`,
-        );
-      }
+      for (const spaceId of connectionSpaceIds) lines.push(spaceLink(spaceId));
       lines.push("");
     }
 
@@ -324,7 +323,7 @@ export function renderOkf(data: OrgExport): FileTree {
     "| --- | --- | --- |",
   ];
   for (const member of data.members) {
-    memberLines.push(`| ${member.role} | ${member.name ?? ""} | ${member.email} |`);
+    memberLines.push(`| ${member.role} | ${escapeCell(member.name ?? "")} | ${escapeCell(member.email)} |`);
   }
   memberLines.push("");
   tree["okf/members.md"] = memberLines.join("\n");

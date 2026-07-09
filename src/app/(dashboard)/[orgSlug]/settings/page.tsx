@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
-import { organisations, organisationMemberships } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { organisations } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { hasMinRole } from "@/lib/auth/permissions";
+import { getMembership, hasMinRole } from "@/lib/auth/permissions";
 import { OrgSettingsForm } from "@/components/organisations/org-settings-form";
 import { ClearDemoData } from "@/components/organisations/clear-demo-data";
 import { ExportButton } from "@/components/export/export-button";
@@ -28,18 +28,9 @@ export default async function SettingsPage({
   // The viewer's role gates the whole-org export (admin+); the API enforces
   // the same, this just hides the affordance for members below admin.
   const session = await auth();
-  const [membership] = session?.user?.id
-    ? await db
-        .select({ role: organisationMemberships.role })
-        .from(organisationMemberships)
-        .where(
-          and(
-            eq(organisationMemberships.userId, session.user.id),
-            eq(organisationMemberships.organisationId, org.id)
-          )
-        )
-        .limit(1)
-    : [];
+  const membership = session?.user?.id
+    ? await getMembership(session.user.id, org.id)
+    : null;
   const canExportOrg = membership
     ? hasMinRole(membership.role, "admin")
     : false;

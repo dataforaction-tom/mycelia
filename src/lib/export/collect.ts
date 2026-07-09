@@ -49,6 +49,13 @@ export const EXPORTED_ENTITY_KEYS = new Set([
  *   never password, tokens, or other secret columns.
  */
 export async function collectOrgData(orgId: string): Promise<OrgExport> {
+  // SECURITY: the blanket `db.select().from(table)` reads below (connections,
+  // moments, spaces, observations, networkLinks) include EVERY column by design,
+  // so new columns flow into exports automatically. If any of these tables ever
+  // gains a secret/credential column (e.g. an integration or webhook secret),
+  // it will silently be exported — allowlist the select for that table, as we
+  // already do for `organisations` (id/name/slug/plan/createdAt) and `members`
+  // (role/name/email) below.
   const [
     organisationRow,
     connectionRows,

@@ -14,6 +14,9 @@ import { strengthenLinksForMoment } from "@/lib/network/infer-links";
 import { inferQualitiesForMoment } from "@/lib/ai/quality-inference";
 import { synthesizeThread } from "@/lib/ai/thread-synthesis";
 import { PLAN_LIMITS } from "@/lib/config/plans";
+import { emitEvent } from "@/lib/webhooks/emit";
+import { momentCreatedPayload } from "@/lib/webhooks/payloads";
+import { spaces } from "@/lib/db/schema";
 import { and, eq, asc, desc, count, gte, inArray } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -248,6 +251,52 @@ export async function POST(request: NextRequest) {
           );
         }
       }
+    }
+
+    // Best-effort — emit an outbound webhook for subscribers. Its own
+    // try/catch so a webhook failure (or absent subscribers) never breaks
+    // moment creation.
+    try {
+      const connectionIds = parsed.data.connectionIds ?? [];
+      const connectionNames = connectionIds.length
+        ? (
+            await db
+              .select({ name: connections.name })
+              .from(connections)
+              .where(inArray(connections.id, connectionIds))
+          ).map((row) => row.name)
+        : [];
+
+      let spaceName: string | null = null;
+      if (parsed.data.spaceId) {
+        const [space] = await db
+          .select({ name: spaces.name })
+          .from(spaces)
+          .where(eq(spaces.id, parsed.data.spaceId))
+          .limit(1);
+        spaceName = space?.name ?? null;
+      }
+
+      await emitEvent(organisationId, "moment.created", {
+        actor: {
+          kind: "user",
+          ref: `tending:user:${user.id}`,
+          name: user.name ?? undefined,
+        },
+        ...momentCreatedPayload({
+          momentId: moment.id,
+          content: parsed.data.content,
+          source: moment.source,
+          connectionNames,
+          spaceName,
+        }),
+      });
+    } catch (webhookError) {
+      console.error(
+        "Failed to emit moment.created webhook",
+        moment.id,
+        webhookError
+      );
     }
 
     return successResponse(moment, 201);

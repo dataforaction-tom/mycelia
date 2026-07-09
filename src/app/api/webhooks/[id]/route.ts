@@ -12,20 +12,20 @@ type Params = { params: Promise<{ id: string }> };
 
 /**
  * Kept in lockstep with `WebhookEventName` via `satisfies`.
+ * follow_up.due is emitted only once the reminder cron lands (separate branch); omit until then.
  */
-const WEBHOOK_EVENT_NAMES = [
+const SUBSCRIBABLE_EVENTS = [
   "moment.created",
   "connection.created",
   "observation.generated",
   "quality.shifted",
-  "follow_up.due",
 ] as const satisfies readonly WebhookEventName[];
 
 const updateEndpointSchema = z
   .object({
     active: z.boolean().optional(),
     events: z
-      .array(z.enum(WEBHOOK_EVENT_NAMES))
+      .array(z.enum(SUBSCRIBABLE_EVENTS))
       .min(1, "Subscribe to at least one event")
       .optional(),
     rotateSecret: z.literal(true).optional(),

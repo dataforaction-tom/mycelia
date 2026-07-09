@@ -3,15 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * The five emittable events, shown as subscribe checkboxes. Labels are for
- * display only; the values are what the API validates against.
+ * The events shown as subscribe checkboxes. Labels are for display only; the
+ * values are what the API validates against.
+ * follow_up.due is emitted only once the reminder cron lands (separate branch); omit until then.
  */
-const EVENT_OPTIONS: { value: string; label: string }[] = [
+const SUBSCRIBABLE_EVENTS: { value: string; label: string }[] = [
   { value: "moment.created", label: "Moment created" },
   { value: "connection.created", label: "Connection created" },
   { value: "observation.generated", label: "Observation generated" },
   { value: "quality.shifted", label: "Quality shifted" },
-  { value: "follow_up.due", label: "Follow-up due" },
 ];
 
 interface Endpoint {
@@ -305,7 +305,7 @@ export function WebhookManager({ organisationId }: WebhookManagerProps) {
           <fieldset>
             <legend className="mb-1 text-sm text-bark">Events</legend>
             <div className="grid gap-2 sm:grid-cols-2">
-              {EVENT_OPTIONS.map((option) => (
+              {SUBSCRIBABLE_EVENTS.map((option) => (
                 <label
                   key={option.value}
                   className="flex items-center gap-2 text-sm text-bark"

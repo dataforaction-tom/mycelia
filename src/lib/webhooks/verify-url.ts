@@ -114,6 +114,10 @@ function isPrivateIpv6(hostname: string): boolean {
   }
 }
 
+// NOTE: this validates the hostname string, not the IP that fetch() ultimately
+// resolves to. A DNS-rebinding attacker (hostname public at create time, private
+// at delivery time) is therefore not caught here; a future hardening could
+// resolve the hostname and pin/re-check the IP at delivery.
 export function isSafeWebhookUrl(url: string): boolean {
   let parsed: URL;
   try {

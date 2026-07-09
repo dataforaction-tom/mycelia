@@ -8,6 +8,7 @@ import { ConnectionComposerModal } from "@/components/connections/connection-com
 interface ComposerOrg {
   id: string;
   slug: string;
+  newConnectionSuggestions?: "opt_in" | "opt_out";
 }
 
 interface ComposerContextValue {
@@ -69,6 +70,7 @@ export function MomentComposerProvider({
             }}
             organisationId={org.id}
             seedText={seedText}
+            newConnectionSuggestionsMode={org.newConnectionSuggestions ?? "opt_in"}
           />
           <ConnectionComposerModal
             open={connectionOpen}

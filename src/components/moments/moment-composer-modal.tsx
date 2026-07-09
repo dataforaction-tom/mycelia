@@ -12,6 +12,10 @@ import {
   distinctEntities,
   type RosterEntry,
 } from "@/lib/moments/recognition";
+import {
+  newConnectionSuggestions,
+  type ConnectionType,
+} from "@/lib/moments/new-connections";
 import type { MomentUnderstanding } from "@/lib/ai/moment-understanding";
 
 interface MomentComposerModalProps {
@@ -20,6 +24,31 @@ interface MomentComposerModalProps {
   organisationId: string;
   /** Pre-seed the text (e.g. a connection's name from its story page). */
   seedText?: string;
+  /**
+   * Org preference for how "add new connection" chips start out.
+   * `"opt_in"` (default) = chips start unselected (ask first);
+   * `"opt_out"` = chips start pre-selected (add unless deselected).
+   */
+  newConnectionSuggestionsMode?: "opt_in" | "opt_out";
+}
+
+/** The user's decision about one suggested new connection, keyed by name. */
+interface NewConnectionChoice {
+  name: string;
+  type: ConnectionType;
+  selected: boolean;
+}
+
+const CONNECTION_TYPE_OPTIONS: ConnectionType[] = [
+  "person",
+  "organisation",
+  "group",
+  "community",
+];
+
+/** Lowercase/trim/collapse-whitespace key for a suggestion name (mirrors the guard). */
+function normaliseName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
 interface RosterConnection {
@@ -90,6 +119,7 @@ export function MomentComposerModal({
   onOpenChange,
   organisationId,
   seedText,
+  newConnectionSuggestionsMode = "opt_in",
 }: MomentComposerModalProps) {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -108,6 +138,15 @@ export function MomentComposerModal({
   );
   const [followUpTouched, setFollowUpTouched] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState(false);
+  // The user's decisions about suggested new connections, keyed by normalised
+  // name. Seeded from the AI's detection; `newConnectionChoicesTouched` stops a
+  // later understanding pass re-seeding over an edit (mirrors followUpTouched).
+  // The LATER "create on plant" task reads `newConnectionChoices`.
+  const [newConnectionChoices, setNewConnectionChoices] = useState<
+    Record<string, NewConnectionChoice>
+  >({});
+  const [newConnectionChoicesTouched, setNewConnectionChoicesTouched] =
+    useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rosterLoadedFor = useRef<string | null>(null);
   // The exact text the current `understanding` was computed for — lets
@@ -173,6 +212,13 @@ export function MomentComposerModal({
   // Instant, deterministic recognition on every keystroke.
   const matches = useMemo(() => matchEntities(content, roster), [content, roster]);
   const recognised = useMemo(() => distinctEntities(matches), [matches]);
+
+  // New people/orgs/groups the AI spotted that aren't existing connections.
+  // The guard drops near-duplicates and generics, so this is safe to surface.
+  const suggestions = useMemo(
+    () => newConnectionSuggestions(understanding?.entities ?? [], rosterConnections),
+    [understanding, rosterConnections],
+  );
 
   const connectionById = useMemo(
     () => new Map(rosterConnections.map((c) => [c.id, c])),
@@ -247,6 +293,25 @@ export function MomentComposerModal({
     );
   }, [understanding, followUpTouched]);
 
+  // Seed the new-connection chips from the AI's suggestions, but never clobber
+  // choices the user has already made — the understanding call re-fires on every
+  // keystroke. Default `selected` follows the org's opt_in/opt_out preference.
+  useEffect(() => {
+    if (newConnectionChoicesTouched) return;
+    setNewConnectionChoices(
+      Object.fromEntries(
+        suggestions.map((suggestion) => [
+          normaliseName(suggestion.name),
+          {
+            name: suggestion.name,
+            type: suggestion.type,
+            selected: newConnectionSuggestionsMode === "opt_out",
+          },
+        ]),
+      ),
+    );
+  }, [suggestions, newConnectionChoicesTouched, newConnectionSuggestionsMode]);
+
   const aiExtraConnectionIds = (understanding?.entities ?? [])
     .map((e) => e.connectionId)
     .filter(
@@ -275,6 +340,8 @@ export function MomentComposerModal({
     setFollowUp(null);
     setFollowUpTouched(false);
     setEditingFollowUp(false);
+    setNewConnectionChoices({});
+    setNewConnectionChoicesTouched(false);
     onOpenChange(false);
   }
 
@@ -475,6 +542,80 @@ export function MomentComposerModal({
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {suggestions.length > 0 && (
+            <div className="mt-3 flex flex-col gap-2 rounded-xl border border-moss/25 bg-moss/5 px-3 py-2.5">
+              <p className="text-xs text-muted">
+                New here — add {suggestions.length === 1 ? "this" : "these"} as
+                {suggestions.length === 1 ? " a connection" : " connections"}?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.map((suggestion) => {
+                  const key = normaliseName(suggestion.name);
+                  const choice = newConnectionChoices[key];
+                  // Fall back to the suggestion until the seeding effect fills state.
+                  const selected = choice?.selected ?? false;
+                  const type = choice?.type ?? suggestion.type;
+                  return (
+                    <div
+                      key={key}
+                      className={
+                        selected
+                          ? "flex items-center gap-1.5 rounded-full border border-green/40 bg-green/15 py-1 pl-3 pr-1.5"
+                          : "flex items-center gap-1.5 rounded-full border border-border-strong bg-white py-1 pl-3 pr-1.5"
+                      }
+                    >
+                      <span className="text-sm text-bark">{suggestion.name}</span>
+                      <select
+                        aria-label={`Type for ${suggestion.name}`}
+                        value={type}
+                        onChange={(e) => {
+                          setNewConnectionChoicesTouched(true);
+                          setNewConnectionChoices((prev) => ({
+                            ...prev,
+                            [key]: {
+                              name: suggestion.name,
+                              type: e.target.value as ConnectionType,
+                              selected: prev[key]?.selected ?? selected,
+                            },
+                          }));
+                        }}
+                        className="rounded-md border border-border bg-cream px-1.5 py-0.5 text-xs text-bark-light focus:border-moss focus:outline-none"
+                      >
+                        {CONNECTION_TYPE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => {
+                          setNewConnectionChoicesTouched(true);
+                          setNewConnectionChoices((prev) => ({
+                            ...prev,
+                            [key]: {
+                              name: suggestion.name,
+                              type: prev[key]?.type ?? type,
+                              selected: !selected,
+                            },
+                          }));
+                        }}
+                        className={
+                          selected
+                            ? "rounded-full bg-green/20 px-2.5 py-0.5 text-xs font-semibold text-green-dark hover:bg-green/30"
+                            : "rounded-full bg-cream-dark px-2.5 py-0.5 text-xs font-medium text-bark-light hover:bg-border-strong/40"
+                        }
+                      >
+                        {selected ? "✓ Added" : "＋ Add"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

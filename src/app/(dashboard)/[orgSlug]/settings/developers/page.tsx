@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getMembership, hasMinRole } from "@/lib/auth/permissions";
 import { WebhookManager } from "@/components/developers/webhook-manager";
+import { ApiKeyManager } from "@/components/developers/api-key-manager";
 
 export default async function DevelopersPage({
   params,
@@ -43,7 +44,20 @@ export default async function DevelopersPage({
       </div>
 
       {isAdmin ? (
-        <WebhookManager organisationId={org.id} />
+        <>
+          <WebhookManager organisationId={org.id} />
+
+          <section className="space-y-4 border-t border-border pt-6">
+            <div>
+              <h2 className="text-lg font-semibold text-bark">API keys</h2>
+              <p className="mt-1 text-sm text-muted">
+                Authenticate programmatic access to your organisation&apos;s
+                data. Keys are shown once at creation.
+              </p>
+            </div>
+            <ApiKeyManager organisationId={org.id} />
+          </section>
+        </>
       ) : (
         <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center">
           <p className="text-sm text-muted">
@@ -51,8 +65,6 @@ export default async function DevelopersPage({
           </p>
         </div>
       )}
-
-      {/* TODO: API keys section to be added here later. */}
     </div>
   );
 }

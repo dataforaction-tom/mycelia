@@ -6,6 +6,8 @@ import { connections, connectionSpaces } from "./connections";
 import { moments, momentConnections } from "./moments";
 import { qualities } from "./qualities";
 import { networkLinks } from "./network-links";
+import { webhookEndpoints, webhookDeliveries } from "./webhooks";
+import { apiKeys } from "./api-keys";
 
 // Auth relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -40,6 +42,8 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   spaces: many(spaces),
   connections: many(connections),
   moments: many(moments),
+  webhookEndpoints: many(webhookEndpoints),
+  apiKeys: many(apiKeys),
 }));
 
 // Space relations
@@ -135,5 +139,35 @@ export const networkLinksRelations = relations(networkLinks, ({ one }) => ({
     fields: [networkLinks.targetConnectionId],
     references: [connections.id],
     relationName: "targetLinks",
+  }),
+}));
+
+// Webhook relations
+export const webhookEndpointsRelations = relations(
+  webhookEndpoints,
+  ({ one, many }) => ({
+    organisation: one(organisations, {
+      fields: [webhookEndpoints.organisationId],
+      references: [organisations.id],
+    }),
+    deliveries: many(webhookDeliveries),
+  })
+);
+
+export const webhookDeliveriesRelations = relations(
+  webhookDeliveries,
+  ({ one }) => ({
+    endpoint: one(webhookEndpoints, {
+      fields: [webhookDeliveries.endpointId],
+      references: [webhookEndpoints.id],
+    }),
+  })
+);
+
+// API key relations
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [apiKeys.organisationId],
+    references: [organisations.id],
   }),
 }));

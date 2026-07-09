@@ -87,6 +87,12 @@ export default async function SettingsPage({
         >
           Billing
         </Link>
+        <Link
+          href={`/${orgSlug}/settings/developers`}
+          className="text-terracotta hover:text-terracotta-dark"
+        >
+          Developers
+        </Link>
       </div>
     </div>
   );

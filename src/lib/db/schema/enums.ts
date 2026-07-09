@@ -32,6 +32,7 @@ export const momentSourceEnum = pgEnum("moment_source", [
   "email",
   "photo",
   "quick_capture",
+  "api",
 ]);
 
 export const qualitySourceEnum = pgEnum("quality_source", [
@@ -67,3 +68,12 @@ export const observationStatusEnum = pgEnum("observation_status", [
   "acted_on",
   "dismissed",
 ]);
+
+export const webhookDeliveryStatusEnum = pgEnum("webhook_delivery_status", [
+  "pending",
+  "delivered",
+  "failed",
+  "dead",
+]);
+
+export const apiKeyScopeEnum = pgEnum("api_key_scope", ["read", "read_write"]);

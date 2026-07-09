@@ -10,6 +10,8 @@ import {
 } from "@/lib/validators/connections";
 import { PLAN_LIMITS } from "@/lib/config/plans";
 import { organisations } from "@/lib/db/schema";
+import { emitEvent } from "@/lib/webhooks/emit";
+import { connectionCreatedPayload } from "@/lib/webhooks/payloads";
 import { and, eq, ilike, asc, desc, count } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -72,7 +74,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { membership, organisationId } = await getOrgContext(request);
+    const { user, membership, organisationId } = await getOrgContext(request);
 
     if (!hasMinRole(membership.role, "contributor")) {
       return errorResponse("Forbidden", 403);
@@ -117,6 +119,30 @@ export async function POST(request: NextRequest) {
         metadata: parsed.data.metadata ?? {},
       })
       .returning();
+
+    // Best-effort — emit an outbound webhook for subscribers. Its own
+    // try/catch so a webhook failure (or absent subscribers) never breaks
+    // connection creation.
+    try {
+      await emitEvent(organisationId, "connection.created", {
+        actor: {
+          kind: "user",
+          ref: `tending:user:${user.id}`,
+          name: user.name ?? undefined,
+        },
+        ...connectionCreatedPayload({
+          connectionId: connection.id,
+          name: connection.name,
+          type: connection.type,
+        }),
+      });
+    } catch (webhookError) {
+      console.error(
+        "Failed to emit connection.created webhook",
+        connection.id,
+        webhookError
+      );
+    }
 
     return successResponse(connection, 201);
   } catch (error) {

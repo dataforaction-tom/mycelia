@@ -2,10 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
 import { organisations, observations, connections } from "@/lib/db/schema";
-import { and, eq, desc, inArray, ne } from "drizzle-orm";
+import { and, eq, desc, asc, inArray, ne } from "drizzle-orm";
 import { ObservationCard } from "@/components/observations/observation-card";
 import { ObservationStatusFilter } from "@/components/observations/observation-status-filter";
 import { GeneratePatternsButton } from "@/components/observations/generate-patterns-button";
+import { UpcomingReminders } from "@/components/observations/upcoming-reminders";
 
 export default async function ObservationsPage({
   params,
@@ -46,7 +47,36 @@ export default async function ObservationsPage({
     .where(and(...conditions))
     .orderBy(desc(observations.createdAt));
 
-  const connectionIds = [...new Set(rows.flatMap((r) => r.connections))];
+  // Pending reminders — the scheduled follow-ups excluded from the list above,
+  // shown as their own "Upcoming" section (this is their home). Soonest first.
+  const upcomingReminders = (
+    await db
+      .select({
+        id: observations.id,
+        note: observations.content,
+        dueAt: observations.dueAt,
+        connections: observations.connections,
+      })
+      .from(observations)
+      .where(
+        and(
+          eq(observations.organisationId, org.id),
+          eq(observations.type, "follow_up"),
+          eq(observations.status, "scheduled")
+        )
+      )
+      .orderBy(asc(observations.dueAt))
+      .limit(20)
+  ).filter((reminder): reminder is typeof reminder & { dueAt: Date } =>
+    Boolean(reminder.dueAt)
+  );
+
+  const connectionIds = [
+    ...new Set([
+      ...rows.flatMap((r) => r.connections),
+      ...upcomingReminders.flatMap((r) => r.connections),
+    ]),
+  ];
 
   const linkedConnections = connectionIds.length
     ? await db
@@ -85,6 +115,20 @@ export default async function ObservationsPage({
         </div>
         <GeneratePatternsButton organisationId={org.id} />
       </div>
+
+      <UpcomingReminders
+        orgSlug={orgSlug}
+        organisationId={org.id}
+        reminders={upcomingReminders.map((reminder) => ({
+          id: reminder.id,
+          note: reminder.note,
+          dueAt: reminder.dueAt,
+          connections: reminder.connections
+            .map((id) => connectionById.get(id))
+            .filter((c): c is NonNullable<typeof c> => Boolean(c))
+            .map((c) => ({ id: c.id, name: c.name })),
+        }))}
+      />
 
       <ObservationStatusFilter selected={status} />
 

@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface UpcomingConnection {
@@ -28,16 +32,54 @@ function dueLabel(dueAt: Date): string {
 /**
  * Pending follow-up reminders — the ones still waiting on their due date, so a
  * reminder is visible the moment it's planted rather than only when it surfaces
- * as a whisper. Read-only; acting on a reminder happens once it comes due.
+ * as a whisper. Each can be cancelled (dismissed) before it comes due.
  */
 export function UpcomingReminders({
   reminders,
   orgSlug,
+  organisationId,
 }: {
   reminders: UpcomingReminder[];
   orgSlug: string;
+  organisationId: string;
 }) {
-  if (reminders.length === 0) return null;
+  const router = useRouter();
+  // Track cancellations locally so a dismissed reminder disappears immediately
+  // and stays gone across the router.refresh() (client state survives it).
+  const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set());
+
+  const visible = reminders.filter((reminder) => !cancelledIds.has(reminder.id));
+  if (visible.length === 0) return null;
+
+  async function cancel(id: string) {
+    setCancelledIds((prev) => new Set(prev).add(id));
+    try {
+      const res = await fetch(`/api/observations/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-organisation-id": organisationId,
+        },
+        body: JSON.stringify({ status: "dismissed" }),
+      });
+      if (!res.ok) {
+        // Restore the row if the server rejected it.
+        setCancelledIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        return;
+      }
+      router.refresh();
+    } catch {
+      setCancelledIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
 
   return (
     <section>
@@ -46,7 +88,7 @@ export function UpcomingReminders({
         Nudges waiting to surface — you&apos;ll be reminded when each comes due
       </p>
       <ul className="mt-4 divide-y divide-border rounded-xl border border-amber/25 bg-gradient-to-br from-amber/[0.06] to-white/80 shadow-lift">
-        {reminders.map((reminder) => (
+        {visible.map((reminder) => (
           <li
             key={reminder.id}
             className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3.5"
@@ -74,6 +116,15 @@ export function UpcomingReminders({
             <span className="shrink-0 rounded-full bg-amber/15 px-2.5 py-0.5 text-xs font-medium text-amber-dark">
               {dueLabel(reminder.dueAt)}
             </span>
+            <button
+              type="button"
+              onClick={() => cancel(reminder.id)}
+              aria-label="Cancel reminder"
+              title="Cancel reminder"
+              className="shrink-0 text-muted transition-colors hover:text-terracotta-dark"
+            >
+              ✕
+            </button>
           </li>
         ))}
       </ul>

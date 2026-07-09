@@ -398,6 +398,7 @@ export default async function OrgDashboard({
 
       <UpcomingReminders
         orgSlug={orgSlug}
+        organisationId={org.id}
         reminders={upcomingReminders.map((reminder) => ({
           id: reminder.id,
           note: reminder.note,

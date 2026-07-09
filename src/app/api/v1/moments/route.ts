@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from "@/lib/utils/api";
 import { getApiContext, apiErrorResponse } from "@/lib/api-keys/context";
 import { parsePagination } from "@/lib/api/pagination";
 import { applyMomentSideEffects } from "@/lib/moments/side-effects";
+import { checkMomentQuota } from "@/lib/moments/quota";
 import { desc, eq } from "drizzle-orm";
 
 /**
@@ -50,6 +51,13 @@ export async function POST(request: NextRequest) {
 
     if (!parsed.success) {
       return errorResponse(parsed.error.issues[0].message, 422);
+    }
+
+    // Same subscription + monthly-quota gate the session route applies — an
+    // API key must not bypass billing limits.
+    const quotaError = await checkMomentQuota(organisationId);
+    if (quotaError) {
+      return errorResponse(quotaError.message, quotaError.status);
     }
 
     const [moment] = await db

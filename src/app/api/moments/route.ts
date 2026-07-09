@@ -1,16 +1,12 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import {
-  moments,
-  momentConnections,
-  organisations,
-} from "@/lib/db/schema";
+import { moments, momentConnections } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { createMomentSchema, listMomentsSchema } from "@/lib/validators/moments";
 import { applyMomentSideEffects } from "@/lib/moments/side-effects";
-import { PLAN_LIMITS } from "@/lib/config/plans";
-import { and, eq, asc, desc, count, gte } from "drizzle-orm";
+import { checkMomentQuota } from "@/lib/moments/quota";
+import { and, eq, asc, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,35 +97,11 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error.issues[0].message, 422);
     }
 
-    // Check plan limits (moments per month)
-    const [org] = await db
-      .select({ plan: organisations.plan })
-      .from(organisations)
-      .where(eq(organisations.id, organisationId))
-      .limit(1);
-
-    if (org) {
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-
-      const [monthlyCount] = await db
-        .select({ value: count() })
-        .from(moments)
-        .where(
-          and(
-            eq(moments.organisationId, organisationId),
-            gte(moments.createdAt, monthStart)
-          )
-        );
-
-      const limit = PLAN_LIMITS[org.plan].momentsPerMonth;
-      if (monthlyCount.value >= limit) {
-        return errorResponse(
-          `Your plan allows up to ${limit} moments per month. Upgrade to add more.`,
-          403
-        );
-      }
+    // Subscription + monthly-quota gate — shared with /api/v1/moments so both
+    // entry points enforce the same billing limits.
+    const quotaError = await checkMomentQuota(organisationId);
+    if (quotaError) {
+      return errorResponse(quotaError.message, quotaError.status);
     }
 
     const [moment] = await db

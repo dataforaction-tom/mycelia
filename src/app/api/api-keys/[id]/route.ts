@@ -9,7 +9,11 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const { membership, organisationId } = await getOrgContext(request);
+    // Revoking a (possibly leaked) key is a security action — it must work even
+    // when the org's trial has expired, so skip the payment gate.
+    const { membership, organisationId } = await getOrgContext(request, {
+      skipPaymentGate: true,
+    });
     const { id } = await params;
 
     if (!hasMinRole(membership.role, "admin")) {

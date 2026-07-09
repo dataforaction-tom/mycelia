@@ -46,6 +46,11 @@ export async function deliverOne(
   try {
     const res = await fetch(endpoint.url, {
       method: "POST",
+      // Never follow redirects: the SSRF guard only validated endpoint.url, so
+      // a public endpoint that 3xx-redirects to an internal address (metadata,
+      // localhost) would otherwise bypass it — and 307/308 preserve the POST
+      // body. We treat any redirect as a permanent failure below.
+      redirect: "manual",
       headers: {
         "Content-Type": "application/json",
         "X-Tending-Signature": signature,
@@ -77,7 +82,11 @@ export async function deliverOne(
       return;
     }
 
-    const next = nextRetryAt(attempts, now);
+    // A redirect (3xx, surfaced here because redirect: "manual") is never
+    // followed and never retried — kill the delivery so we can't be walked to
+    // an internal target on a later attempt.
+    const isRedirect = res.status >= 300 && res.status < 400;
+    const next = isRedirect ? null : nextRetryAt(attempts, now);
     await db
       .update(webhookDeliveries)
       .set({

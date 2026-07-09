@@ -120,7 +120,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const { membership, organisationId } = await getOrgContext(request);
+    // Deleting a (possibly misbehaving) webhook is a security action — allow it
+    // even when the org's trial has expired, so skip the payment gate.
+    const { membership, organisationId } = await getOrgContext(request, {
+      skipPaymentGate: true,
+    });
     const { id } = await params;
 
     if (!hasMinRole(membership.role, "admin")) {

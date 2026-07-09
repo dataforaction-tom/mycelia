@@ -130,9 +130,9 @@ export function renderOkf(data: OrgExport): FileTree {
     "",
     "## Explore",
     "",
-    "- [Connections](connections/)",
-    "- [Moments](moments/)",
-    "- [Spaces](spaces/)",
+    "- [Connections](connections/index.md)",
+    "- [Moments](moments/index.md)",
+    "- [Spaces](spaces/index.md)",
     "- [Observations](observations/index.md)",
     "- [Members](members.md)",
     "",
@@ -204,6 +204,19 @@ export function renderOkf(data: OrgExport): FileTree {
     tree[`okf/connections/${slug}.md`] = lines.join("\n");
   }
 
+  // Sub-index so the top-level nav link resolves in viewers that don't browse
+  // bare directory links.
+  tree["okf/connections/index.md"] = [
+    frontmatter({ type: "index", title: "Connections" }),
+    "# Connections",
+    "",
+    ...data.connections.map(
+      (connection) =>
+        `- [${connection.name}](${connectionSlug.get(connection.id)!}.md)`,
+    ),
+    "",
+  ].join("\n");
+
   // --- moments/<momentId>.md ---------------------------------------------
 
   for (const moment of data.moments) {
@@ -235,6 +248,17 @@ export function renderOkf(data: OrgExport): FileTree {
 
     tree[`okf/moments/${moment.id}.md`] = lines.join("\n");
   }
+
+  tree["okf/moments/index.md"] = [
+    frontmatter({ type: "index", title: "Moments" }),
+    "# Moments",
+    "",
+    ...data.moments.map(
+      (moment) =>
+        `- [${iso(moment.eventDate) ?? iso(moment.createdAt) ?? "moment"}](${moment.id}.md)`,
+    ),
+    "",
+  ].join("\n");
 
   // --- spaces/<slug>.md --------------------------------------------------
 
@@ -277,6 +301,16 @@ export function renderOkf(data: OrgExport): FileTree {
 
     tree[`okf/spaces/${slug}.md`] = lines.join("\n");
   }
+
+  tree["okf/spaces/index.md"] = [
+    frontmatter({ type: "index", title: "Spaces" }),
+    "# Spaces",
+    "",
+    ...data.spaces.map(
+      (space) => `- [${space.name}](${spaceSlug.get(space.id)!}.md)`,
+    ),
+    "",
+  ].join("\n");
 
   // --- observations/index.md ---------------------------------------------
 

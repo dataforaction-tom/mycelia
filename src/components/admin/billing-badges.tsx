@@ -18,3 +18,9 @@ export function RoleBadge({ role }: { role: "super_admin" | "user" }) {
   if (role === "super_admin") return <Badge variant="amber">Super admin</Badge>;
   return <Badge variant="outline">User</Badge>;
 }
+
+/** Account status badge — suspended reads as a warning. */
+export function UserStatusBadge({ status }: { status: "active" | "suspended" }) {
+  if (status === "suspended") return <Badge variant="bark">Suspended</Badge>;
+  return <Badge variant="moss">Active</Badge>;
+}

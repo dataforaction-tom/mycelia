@@ -109,23 +109,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verifyRequest: "/sign-in?verify=1",
   },
   callbacks: {
+    // Block suspended accounts at sign-in. The verification email may still be
+    // sent, but the sign-in cannot complete.
+    async signIn({ user }) {
+      if ((user as { status?: string }).status === "suspended") return false;
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
         token.platformRole = user.platformRole ?? "user";
+        token.tokenVersion = user.tokenVersion ?? 0;
       }
 
       if (!user && token.id) {
         const db = getDb();
         const [dbUser] = await db
-          .select({ platformRole: users.platformRole })
+          .select({
+            platformRole: users.platformRole,
+            status: users.status,
+            tokenVersion: users.tokenVersion,
+          })
           .from(users)
           .where(eq(users.id, token.id))
           .limit(1);
 
-        if (dbUser) {
-          token.platformRole = dbUser.platformRole;
-        }
+        // Retire the session (returning null) when the account is gone,
+        // suspended, or has been forcibly signed out (tokenVersion bumped).
+        // Tokens minted before this field existed default to 0 and so are
+        // left intact until an admin actually bumps the version.
+        if (!dbUser) return null;
+        if (dbUser.status === "suspended") return null;
+        if (dbUser.tokenVersion !== (token.tokenVersion ?? 0)) return null;
+
+        token.platformRole = dbUser.platformRole;
       }
 
       return token;

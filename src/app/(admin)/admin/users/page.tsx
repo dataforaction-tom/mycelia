@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getUsersPage } from "@/lib/admin/users";
 import { RoleBadge } from "@/components/admin/billing-badges";
 import {
@@ -74,7 +75,12 @@ export default async function AdminUsersPage({
             {rows.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">
-                  {user.name ?? "—"}
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="hover:text-terracotta hover:underline"
+                  >
+                    {user.name ?? user.email}
+                  </Link>
                 </TableCell>
                 <TableCell className="text-muted">{user.email}</TableCell>
                 <TableCell>

@@ -6,7 +6,7 @@ import {
   integer,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { platformRoleEnum, orgRoleEnum } from "./enums";
+import { platformRoleEnum, orgRoleEnum, userStatusEnum } from "./enums";
 import { organisations } from "./organisations";
 
 export const users = pgTable("users", {
@@ -16,6 +16,14 @@ export const users = pgTable("users", {
   emailVerified: timestamp("email_verified", { mode: "date", withTimezone: true }),
   image: text("image"),
   platformRole: platformRoleEnum("platform_role").notNull().default("user"),
+  // Account lifecycle. Suspended accounts cannot sign in and their existing
+  // sessions are invalidated on the next request (see the auth jwt callback).
+  status: userStatusEnum("status").notNull().default("active"),
+  suspendedAt: timestamp("suspended_at", { mode: "date", withTimezone: true }),
+  // Bumped to force sign-out: the JWT carries the version it was minted with,
+  // and any mismatch invalidates the session. There is no sessions table to
+  // revoke against, so this is how a token is retired early.
+  tokenVersion: integer("token_version").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow(),

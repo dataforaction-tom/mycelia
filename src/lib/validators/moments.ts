@@ -38,6 +38,10 @@ export const linkConnectionsSchema = z.object({
 
 export const understandMomentSchema = z.object({
   content: z.string().min(1).max(10000),
+  // The user's IANA timezone (e.g. "Europe/London"), so the model can resolve
+  // relative dates like "today" / "next week" against their actual calendar
+  // day rather than the server's UTC day. Optional — falls back to UTC.
+  timeZone: z.string().max(100).optional(),
 });
 
 export type CreateMomentInput = z.infer<typeof createMomentSchema>;

@@ -31,7 +31,11 @@ export async function POST(request: NextRequest) {
       .from(connections)
       .where(eq(connections.organisationId, organisationId));
 
-    const result = await understandMoment(parsed.data.content, existingConnections);
+    const result = await understandMoment(
+      parsed.data.content,
+      existingConnections,
+      { timeZone: parsed.data.timeZone }
+    );
 
     return successResponse(result);
   } catch (error) {

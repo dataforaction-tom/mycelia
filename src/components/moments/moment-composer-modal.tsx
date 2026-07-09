@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { EntityRecognitionOverlay } from "./entity-recognition-overlay";
@@ -105,6 +105,9 @@ export function MomentComposerModal({
   const [editingFollowUp, setEditingFollowUp] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rosterLoadedFor = useRef<string | null>(null);
+  // The exact text the current `understanding` was computed for — lets
+  // "Plant it" tell whether it needs a final flush before submitting.
+  const understoodContentRef = useRef<string | null>(null);
 
   // Seed the text when opening from a context that knows who it's about
   // (e.g. "Add moment" on a connection page) — recognition picks the name
@@ -177,16 +180,11 @@ export function MomentComposerModal({
     .filter((e) => e.kind === "space")
     .map((e) => e.id);
 
-  // AI enhancement, best-effort and silent: catches mentions the literal
-  // text search can't ("the food network" → Sheffield Food Network) and
-  // detects event dates. Never blocks or breaks the composer.
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!content.trim()) {
-      setUnderstanding(null);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
+  // One AI understanding round-trip. Sends the user's timezone so relative
+  // dates ("today", "next week") resolve against their calendar day. Records
+  // the text it ran for and returns the result so "Plant it" can flush it.
+  const runUnderstanding = useCallback(
+    async (text: string): Promise<MomentUnderstanding | null> => {
       try {
         const res = await fetch("/api/moments/understand", {
           method: "POST",
@@ -194,18 +192,42 @@ export function MomentComposerModal({
             "Content-Type": "application/json",
             "x-organisation-id": organisationId,
           },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({
+            content: text,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
         });
         const data = await res.json();
-        if (res.ok) setUnderstanding(data.data);
+        if (res.ok) {
+          setUnderstanding(data.data);
+          understoodContentRef.current = text;
+          return data.data as MomentUnderstanding;
+        }
       } catch {
         // Recognition already happened locally; AI is a bonus.
       }
+      return null;
+    },
+    [organisationId],
+  );
+
+  // AI enhancement, best-effort and silent: catches mentions the literal
+  // text search can't ("the food network" → Sheffield Food Network) and
+  // detects event dates. Never blocks or breaks the composer.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!content.trim()) {
+      setUnderstanding(null);
+      understoodContentRef.current = null;
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      runUnderstanding(content);
     }, UNDERSTAND_DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [content, organisationId]);
+  }, [content, runUnderstanding]);
 
   // Seed the follow-up chip from the AI's detection, but never clobber a
   // reminder the user has already edited or dismissed (the understanding call
@@ -256,6 +278,40 @@ export function MomentComposerModal({
     setIsSubmitting(true);
     setError(null);
 
+    // Flush pending AI understanding: if "Plant it" is clicked before the
+    // debounced call has run for this exact text, run it now (and wait) so the
+    // reminder + event date aren't lost to the race. No-op once understood.
+    const effective =
+      understoodContentRef.current === content
+        ? understanding
+        : await runUnderstanding(content);
+
+    // Merge the AI's extra connections (e.g. "the food network") with the
+    // instant local recognition, using whichever understanding we just settled.
+    const aiExtraIds = (effective?.entities ?? [])
+      .map((e) => e.connectionId)
+      .filter(
+        (id): id is string =>
+          Boolean(id) && !recognisedConnectionIds.includes(id!),
+      );
+    const connectionIds = [...recognisedConnectionIds, ...aiExtraIds]
+      .map((id) => connectionById.get(id))
+      .filter((c): c is RosterConnection => Boolean(c))
+      .map((c) => c.id);
+
+    // The user's edited/removed chip wins once touched; otherwise use the
+    // freshly detected follow-up (which the flush above guarantees is current).
+    const effectiveFollowUp = followUpTouched
+      ? followUp && followUp.note.trim() && followUp.date
+        ? { note: followUp.note.trim(), dueDate: followUp.date }
+        : undefined
+      : effective?.followUp
+        ? {
+            note: effective.followUp.note,
+            dueDate: toDateInput(effective.followUp.dueDate),
+          }
+        : undefined;
+
     try {
       const res = await fetch("/api/moments", {
         method: "POST",
@@ -266,14 +322,11 @@ export function MomentComposerModal({
         body: JSON.stringify({
           content,
           source: usedVoice ? "voice" : "quick_capture",
-          connectionIds: allRecognisedConnections.map((c) => c.id),
+          connectionIds,
           spaceId:
             recognisedSpaceIds.length === 1 ? recognisedSpaceIds[0] : undefined,
-          eventDate: understanding?.eventDate ?? undefined,
-          followUp:
-            followUp && followUp.note.trim() && followUp.date
-              ? { note: followUp.note.trim(), dueDate: followUp.date }
-              : undefined,
+          eventDate: effective?.eventDate ?? undefined,
+          followUp: effectiveFollowUp,
         }),
       });
 

@@ -43,14 +43,28 @@ interface ExistingConnection {
 
 function buildPrompt(
   content: string,
-  existingConnections: ExistingConnection[]
+  existingConnections: ExistingConnection[],
+  timeZone?: string
 ): string {
   const roster =
     existingConnections.map((c) => `- ${c.name} (${c.type}), id: ${c.id}`).join("\n") ||
     "(none yet)";
 
+  // Anchor relative dates ("today", "next week", "Tuesday") to the user's
+  // actual calendar day. Without this the model has no reference and
+  // hallucinates dates. Formatted in the user's timezone when known.
+  const today = new Date().toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: timeZone || "UTC",
+  });
+
   return `You are helping a user log a "moment" — a short note about an interaction
-with someone in their network. Read the moment below and:
+with someone in their network. Today's date is ${today}. Resolve any relative
+dates in the moment ("today", "tomorrow", "next week", "Tuesday", "in a
+fortnight") against that date. Read the moment below and:
 
 1. Extract every person, organisation, or group mentioned by name. For each,
    check the existing connections roster and set "connectionId" to the
@@ -86,11 +100,12 @@ ${content}
 
 export async function understandMoment(
   content: string,
-  existingConnections: ExistingConnection[]
+  existingConnections: ExistingConnection[],
+  options?: { timeZone?: string }
 ): Promise<MomentUnderstanding> {
   const result = await runAiObjectTask(
     "moment-understanding",
-    buildPrompt(content, existingConnections),
+    buildPrompt(content, existingConnections, options?.timeZone),
     momentUnderstandingSchema
   );
   return {

@@ -7,6 +7,7 @@ import { moments, momentConnections } from "./moments";
 import { qualities } from "./qualities";
 import { networkLinks } from "./network-links";
 import { webhookEndpoints, webhookDeliveries } from "./webhooks";
+import { apiKeys } from "./api-keys";
 
 // Auth relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -42,6 +43,7 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   connections: many(connections),
   moments: many(moments),
   webhookEndpoints: many(webhookEndpoints),
+  apiKeys: many(apiKeys),
 }));
 
 // Space relations
@@ -161,3 +163,11 @@ export const webhookDeliveriesRelations = relations(
     }),
   })
 );
+
+// API key relations
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [apiKeys.organisationId],
+    references: [organisations.id],
+  }),
+}));

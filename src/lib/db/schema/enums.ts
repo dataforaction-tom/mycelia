@@ -74,3 +74,5 @@ export const webhookDeliveryStatusEnum = pgEnum("webhook_delivery_status", [
   "failed",
   "dead",
 ]);
+
+export const apiKeyScopeEnum = pgEnum("api_key_scope", ["read", "read_write"]);

@@ -9,4 +9,5 @@ export * from "./qualities";
 export * from "./network-links";
 export * from "./observations";
 export * from "./webhooks";
+export * from "./api-keys";
 export * from "./relations";

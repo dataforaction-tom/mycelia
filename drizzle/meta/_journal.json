@@ -50,6 +50,13 @@
       "when": 1783597988846,
       "tag": "0006_smooth_ikaris",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783599526963,
+      "tag": "0007_chief_next_avengers",
+      "breakpoints": true
     }
   ]
 }

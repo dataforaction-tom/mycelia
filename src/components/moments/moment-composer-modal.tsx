@@ -55,7 +55,12 @@ function toDateInput(value: string | Date): string {
 /** "Tue 15 Jul" — a light, friendly rendering of a reminder's due date. */
 function formatFollowUpDate(dateInput: string): string {
   if (!dateInput) return "";
-  const date = new Date(dateInput);
+  // dateInput is a plain yyyy-mm-dd. Parse the parts as a LOCAL calendar date:
+  // `new Date("2026-07-15")` parses as UTC midnight, which renders as the day
+  // before in timezones west of UTC (e.g. America/New_York).
+  const [year, month, day] = dateInput.split("-").map(Number);
+  if (!year || !month || !day) return "";
+  const date = new Date(year, month - 1, day);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString("en-GB", {
     weekday: "short",

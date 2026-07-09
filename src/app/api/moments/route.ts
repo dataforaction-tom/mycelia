@@ -257,13 +257,17 @@ export async function POST(request: NextRequest) {
     // blocks above). Independent of connections — some reminders name no one.
     if (parsed.data.followUp) {
       try {
+        // If the reminder is already due (dueDate today or in the past),
+        // surface it immediately as "new" rather than leaving it "scheduled"
+        // until the next daily cron sweep — which could be up to a day away.
+        const alreadyDue = parsed.data.followUp.dueDate <= new Date();
         await db.insert(observations).values({
           organisationId,
           type: "follow_up",
           content: parsed.data.followUp.note,
           connections: parsed.data.connectionIds ?? [],
           severity: "noteworthy",
-          status: "scheduled",
+          status: alreadyDue ? "new" : "scheduled",
           dueAt: parsed.data.followUp.dueDate,
           sourceMomentId: moment.id,
         });

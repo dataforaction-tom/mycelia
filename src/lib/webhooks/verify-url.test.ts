@@ -23,6 +23,39 @@ describe("isSafeWebhookUrl", () => {
     expect(isSafeWebhookUrl("https://169.254.169.254/latest/meta-data")).toBe(false);
   });
 
+  it("rejects the 0.0.0.0/8 unspecified/loopback-routable range", () => {
+    // 0.0.0.0 routes to loopback on Linux and is a classic SSRF bypass for
+    // reaching services bound to localhost.
+    expect(isSafeWebhookUrl("https://0.0.0.0/")).toBe(false);
+    expect(isSafeWebhookUrl("http://0.0.0.0/")).toBe(false);
+  });
+
+  it("rejects IPv4-mapped IPv6 that reaches internal ranges", () => {
+    // Node normalises ::ffff:a.b.c.d to a hex form (::ffff:hhhh:hhhh); the
+    // embedded IPv4 must be run through the same private-range check.
+    expect(isSafeWebhookUrl("https://[::ffff:169.254.169.254]/")).toBe(false);
+    expect(isSafeWebhookUrl("https://[::ffff:127.0.0.1]/")).toBe(false);
+    expect(isSafeWebhookUrl("https://[::ffff:10.0.0.1]/")).toBe(false);
+  });
+
+  it("rejects NAT64-embedded internal IPv4 (64:ff9b::/96)", () => {
+    // NAT64 maps an IPv4 into the last 32 bits; reaching the metadata IP this
+    // way must also be blocked.
+    expect(isSafeWebhookUrl("https://[64:ff9b::a9fe:a9fe]/")).toBe(false);
+  });
+
+  it("rejects the IPv6 unspecified address", () => {
+    expect(isSafeWebhookUrl("https://[::]/")).toBe(false);
+  });
+
+  it("keeps decimal/octal/hex IPv4 obfuscation closed", () => {
+    // Node's URL parser normalises these to dotted-decimal (127.0.0.1) before
+    // our check runs, so they are already rejected — documented here so the
+    // vectors stay closed if that parsing behaviour ever changes.
+    expect(isSafeWebhookUrl("https://2130706433/")).toBe(false);
+    expect(isSafeWebhookUrl("https://0x7f000001/")).toBe(false);
+  });
+
   it("rejects private IPv4 ranges", () => {
     expect(isSafeWebhookUrl("https://10.0.0.5/x")).toBe(false);
     expect(isSafeWebhookUrl("https://192.168.1.1")).toBe(false);

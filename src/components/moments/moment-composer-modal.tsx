@@ -366,10 +366,39 @@ export function MomentComposerModal({
         (id): id is string =>
           Boolean(id) && !recognisedConnectionIds.includes(id!),
       );
-    const connectionIds = [...recognisedConnectionIds, ...aiExtraIds]
+    const recognisedIds = [...recognisedConnectionIds, ...aiExtraIds]
       .map((id) => connectionById.get(id))
       .filter((c): c is RosterConnection => Boolean(c))
       .map((c) => c.id);
+
+    // Create the connections the user confirmed via the suggestion chips, and
+    // link them to this moment. Each create is best-effort: a single failure is
+    // skipped (never aborts the plant) so the rest — and the moment — still land.
+    const createdConnectionIds: string[] = [];
+    for (const choice of Object.values(newConnectionChoices).filter(
+      (c) => c.selected,
+    )) {
+      try {
+        const res = await fetch("/api/connections", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-organisation-id": organisationId,
+          },
+          body: JSON.stringify({ name: choice.name, type: choice.type }),
+        });
+        if (!res.ok) continue;
+        const created = await res.json();
+        if (created?.data?.id) createdConnectionIds.push(created.data.id);
+      } catch {
+        // One failed create is skipped — the plant carries on with the rest.
+      }
+    }
+
+    // Merge recognised + freshly-created ids, de-duplicated, for the moment link.
+    const connectionIds = [
+      ...new Set([...recognisedIds, ...createdConnectionIds]),
+    ];
 
     // The user's edited/removed chip wins once touched; otherwise use the
     // freshly detected follow-up (which the flush above guarantees is current).

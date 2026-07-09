@@ -130,6 +130,9 @@ export function MomentComposerModal({
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A non-fatal notice shown after a successful plant (e.g. some suggested
+  // connections couldn't be created) — distinct from the destructive `error`.
+  const [notice, setNotice] = useState<string | null>(null);
   // The follow-up reminder the composer will plant alongside the moment. Seeded
   // from the AI's detection, but once the user edits or removes it, `touched`
   // stops the debounced understanding from re-seeding over their choice.
@@ -331,7 +334,9 @@ export function MomentComposerModal({
     recognisedSpaceIds.length,
   );
 
-  function resetAndClose() {
+  /** Reset every field/selection — used both on close and after a partial-
+   *  success plant (which keeps the modal open to show a notice). */
+  function clearComposer() {
     setContent("");
     setUnderstanding(null);
     setSelectedType(null);
@@ -342,6 +347,11 @@ export function MomentComposerModal({
     setEditingFollowUp(false);
     setNewConnectionChoices({});
     setNewConnectionChoicesTouched(false);
+  }
+
+  function resetAndClose() {
+    clearComposer();
+    setNotice(null);
     onOpenChange(false);
   }
 
@@ -349,6 +359,7 @@ export function MomentComposerModal({
     if (!content.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
 
     // Flush pending AI understanding: if "Plant it" is clicked before the
     // debounced call has run for this exact text, run it now (and wait) so the
@@ -371,13 +382,31 @@ export function MomentComposerModal({
       .filter((c): c is RosterConnection => Boolean(c))
       .map((c) => c.id);
 
-    // Create the connections the user confirmed via the suggestion chips, and
-    // link them to this moment. Each create is best-effort: a single failure is
-    // skipped (never aborts the plant) so the rest — and the moment — still land.
+    // Reconcile the confirmed new-connection chips with the freshly-flushed
+    // detection so a fast "Plant it" (before the 600ms debounce) still captures
+    // new names — mirroring the follow-up flush above. For each detected
+    // suggestion, the user's explicit choice wins; otherwise the org default
+    // applies (opt_out pre-selects, opt_in does not).
+    const selectedNewConnections = newConnectionSuggestions(
+      effective?.entities ?? [],
+      rosterConnections,
+    )
+      .map(
+        (suggestion) =>
+          newConnectionChoices[normaliseName(suggestion.name)] ?? {
+            name: suggestion.name,
+            type: suggestion.type,
+            selected: newConnectionSuggestionsMode === "opt_out",
+          },
+      )
+      .filter((choice) => choice.selected);
+
+    // Create each confirmed connection and link it to this moment. Best-effort:
+    // a single failure is skipped (never aborts the plant) but is collected so
+    // we can tell the user which ones didn't make it.
     const createdConnectionIds: string[] = [];
-    for (const choice of Object.values(newConnectionChoices).filter(
-      (c) => c.selected,
-    )) {
+    const failedNewConnections: string[] = [];
+    for (const choice of selectedNewConnections) {
       try {
         const res = await fetch("/api/connections", {
           method: "POST",
@@ -387,11 +416,14 @@ export function MomentComposerModal({
           },
           body: JSON.stringify({ name: choice.name, type: choice.type }),
         });
-        if (!res.ok) continue;
+        if (!res.ok) {
+          failedNewConnections.push(choice.name);
+          continue;
+        }
         const created = await res.json();
         if (created?.data?.id) createdConnectionIds.push(created.data.id);
       } catch {
-        // One failed create is skipped — the plant carries on with the rest.
+        failedNewConnections.push(choice.name);
       }
     }
 
@@ -437,8 +469,20 @@ export function MomentComposerModal({
         return;
       }
 
-      resetAndClose();
       router.refresh();
+      if (failedNewConnections.length > 0) {
+        // The moment landed, but some confirmed connections couldn't be created.
+        // Clear the fields (so the same moment can't be re-planted) but keep the
+        // modal open with a note so the user knows to add them manually.
+        clearComposer();
+        setNotice(
+          `Moment planted — but couldn't add ${failedNewConnections.join(
+            ", ",
+          )}. You can add ${failedNewConnections.length === 1 ? "it" : "them"} from Connections.`,
+        );
+      } else {
+        resetAndClose();
+      }
     } catch {
       setError("Something went wrong");
     } finally {
@@ -467,6 +511,12 @@ export function MomentComposerModal({
           {error && (
             <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
+            </div>
+          )}
+
+          {notice && (
+            <div className="mb-3 rounded-lg border border-amber/30 bg-amber/10 p-3 text-sm text-amber-dark">
+              {notice}
             </div>
           )}
 

@@ -6,6 +6,10 @@ import { qualitySignalSchema, clampQualitySignals } from "./quality-signal";
 const entityMentionSchema = z.object({
   name: z.string(),
   connectionId: z.string().uuid().nullable(),
+  type: z
+    .enum(["person", "organisation", "group", "community"])
+    .nullable()
+    .describe("best guess at the kind of entity this is; null if genuinely unsure"),
 });
 
 export const momentUnderstandingSchema = z.object({
@@ -66,11 +70,16 @@ with someone in their network. Today's date is ${today}. Resolve any relative
 dates in the moment ("today", "tomorrow", "next week", "Tuesday", "in a
 fortnight") against that date. Read the moment below and:
 
-1. Extract every person, organisation, or group mentioned by name. For each,
-   check the existing connections roster and set "connectionId" to the
-   matching connection's id if it clearly refers to the same entity, or
-   null if it does not match anyone on the roster (a new person/org not
-   yet tracked).
+1. Extract every person, organisation, or group mentioned by name. Only
+   extract *named* entities — do not return generic references like "the
+   council", "my manager", or "the team" as entities. For each named entity,
+   first check the existing connections roster and PREFER matching an entry
+   there before deciding it is new, so we don't invent near-duplicates of
+   people already tracked: set "connectionId" to the matching connection's id
+   if it clearly refers to the same entity, or null if it genuinely does not
+   match anyone on the roster (a new person/org not yet tracked). Also infer a
+   "type" for each entity — one of person, organisation, group, or community —
+   or null if you are genuinely unsure.
 2. For entities that DID match an existing connection (connectionId is not
    null), infer 0 or more quality signals: a spectrum key (one of
    ${SPECTRUM_KEYS.join(", ")}), a position from -1 to 1 along that

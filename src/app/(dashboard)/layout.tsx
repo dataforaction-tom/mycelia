@@ -16,11 +16,12 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  const memberOrgs = await db
+  const memberOrgRows = await db
     .select({
       id: organisations.id,
       name: organisations.name,
       slug: organisations.slug,
+      settings: organisations.settings,
     })
     .from(organisationMemberships)
     .innerJoin(
@@ -28,6 +29,13 @@ export default async function DashboardLayout({
       eq(organisationMemberships.organisationId, organisations.id)
     )
     .where(eq(organisationMemberships.userId, session.user.id));
+
+  const memberOrgs = memberOrgRows.map((org) => ({
+    id: org.id,
+    name: org.name,
+    slug: org.slug,
+    newConnectionSuggestions: org.settings?.newConnectionSuggestions,
+  }));
 
   return (
     <DashboardShell

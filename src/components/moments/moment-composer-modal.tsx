@@ -12,6 +12,10 @@ import {
   distinctEntities,
   type RosterEntry,
 } from "@/lib/moments/recognition";
+import {
+  newConnectionSuggestions,
+  type ConnectionType,
+} from "@/lib/moments/new-connections";
 import type { MomentUnderstanding } from "@/lib/ai/moment-understanding";
 
 interface MomentComposerModalProps {
@@ -20,6 +24,31 @@ interface MomentComposerModalProps {
   organisationId: string;
   /** Pre-seed the text (e.g. a connection's name from its story page). */
   seedText?: string;
+  /**
+   * Org preference for how "add new connection" chips start out.
+   * `"opt_in"` (default) = chips start unselected (ask first);
+   * `"opt_out"` = chips start pre-selected (add unless deselected).
+   */
+  newConnectionSuggestionsMode?: "opt_in" | "opt_out";
+}
+
+/** The user's decision about one suggested new connection, keyed by name. */
+interface NewConnectionChoice {
+  name: string;
+  type: ConnectionType;
+  selected: boolean;
+}
+
+const CONNECTION_TYPE_OPTIONS: ConnectionType[] = [
+  "person",
+  "organisation",
+  "group",
+  "community",
+];
+
+/** Lowercase/trim/collapse-whitespace key for a suggestion name (mirrors the guard). */
+function normaliseName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
 interface RosterConnection {
@@ -90,6 +119,7 @@ export function MomentComposerModal({
   onOpenChange,
   organisationId,
   seedText,
+  newConnectionSuggestionsMode = "opt_in",
 }: MomentComposerModalProps) {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -100,6 +130,9 @@ export function MomentComposerModal({
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A non-fatal notice shown after a successful plant (e.g. some suggested
+  // connections couldn't be created) — distinct from the destructive `error`.
+  const [notice, setNotice] = useState<string | null>(null);
   // The follow-up reminder the composer will plant alongside the moment. Seeded
   // from the AI's detection, but once the user edits or removes it, `touched`
   // stops the debounced understanding from re-seeding over their choice.
@@ -108,6 +141,15 @@ export function MomentComposerModal({
   );
   const [followUpTouched, setFollowUpTouched] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState(false);
+  // The user's decisions about suggested new connections, keyed by normalised
+  // name. Seeded from the AI's detection; `newConnectionChoicesTouched` stops a
+  // later understanding pass re-seeding over an edit (mirrors followUpTouched).
+  // The LATER "create on plant" task reads `newConnectionChoices`.
+  const [newConnectionChoices, setNewConnectionChoices] = useState<
+    Record<string, NewConnectionChoice>
+  >({});
+  const [newConnectionChoicesTouched, setNewConnectionChoicesTouched] =
+    useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rosterLoadedFor = useRef<string | null>(null);
   // The exact text the current `understanding` was computed for — lets
@@ -173,6 +215,13 @@ export function MomentComposerModal({
   // Instant, deterministic recognition on every keystroke.
   const matches = useMemo(() => matchEntities(content, roster), [content, roster]);
   const recognised = useMemo(() => distinctEntities(matches), [matches]);
+
+  // New people/orgs/groups the AI spotted that aren't existing connections.
+  // The guard drops near-duplicates and generics, so this is safe to surface.
+  const suggestions = useMemo(
+    () => newConnectionSuggestions(understanding?.entities ?? [], rosterConnections),
+    [understanding, rosterConnections],
+  );
 
   const connectionById = useMemo(
     () => new Map(rosterConnections.map((c) => [c.id, c])),
@@ -247,6 +296,25 @@ export function MomentComposerModal({
     );
   }, [understanding, followUpTouched]);
 
+  // Seed the new-connection chips from the AI's suggestions, but never clobber
+  // choices the user has already made — the understanding call re-fires on every
+  // keystroke. Default `selected` follows the org's opt_in/opt_out preference.
+  useEffect(() => {
+    if (newConnectionChoicesTouched) return;
+    setNewConnectionChoices(
+      Object.fromEntries(
+        suggestions.map((suggestion) => [
+          normaliseName(suggestion.name),
+          {
+            name: suggestion.name,
+            type: suggestion.type,
+            selected: newConnectionSuggestionsMode === "opt_out",
+          },
+        ]),
+      ),
+    );
+  }, [suggestions, newConnectionChoicesTouched, newConnectionSuggestionsMode]);
+
   const aiExtraConnectionIds = (understanding?.entities ?? [])
     .map((e) => e.connectionId)
     .filter(
@@ -266,7 +334,9 @@ export function MomentComposerModal({
     recognisedSpaceIds.length,
   );
 
-  function resetAndClose() {
+  /** Reset every field/selection — used both on close and after a partial-
+   *  success plant (which keeps the modal open to show a notice). */
+  function clearComposer() {
     setContent("");
     setUnderstanding(null);
     setSelectedType(null);
@@ -275,6 +345,13 @@ export function MomentComposerModal({
     setFollowUp(null);
     setFollowUpTouched(false);
     setEditingFollowUp(false);
+    setNewConnectionChoices({});
+    setNewConnectionChoicesTouched(false);
+  }
+
+  function resetAndClose() {
+    clearComposer();
+    setNotice(null);
     onOpenChange(false);
   }
 
@@ -282,6 +359,7 @@ export function MomentComposerModal({
     if (!content.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
 
     // Flush pending AI understanding: if "Plant it" is clicked before the
     // debounced call has run for this exact text, run it now (and wait) so the
@@ -299,10 +377,60 @@ export function MomentComposerModal({
         (id): id is string =>
           Boolean(id) && !recognisedConnectionIds.includes(id!),
       );
-    const connectionIds = [...recognisedConnectionIds, ...aiExtraIds]
+    const recognisedIds = [...recognisedConnectionIds, ...aiExtraIds]
       .map((id) => connectionById.get(id))
       .filter((c): c is RosterConnection => Boolean(c))
       .map((c) => c.id);
+
+    // Reconcile the confirmed new-connection chips with the freshly-flushed
+    // detection so a fast "Plant it" (before the 600ms debounce) still captures
+    // new names — mirroring the follow-up flush above. For each detected
+    // suggestion, the user's explicit choice wins; otherwise the org default
+    // applies (opt_out pre-selects, opt_in does not).
+    const selectedNewConnections = newConnectionSuggestions(
+      effective?.entities ?? [],
+      rosterConnections,
+    )
+      .map(
+        (suggestion) =>
+          newConnectionChoices[normaliseName(suggestion.name)] ?? {
+            name: suggestion.name,
+            type: suggestion.type,
+            selected: newConnectionSuggestionsMode === "opt_out",
+          },
+      )
+      .filter((choice) => choice.selected);
+
+    // Create each confirmed connection and link it to this moment. Best-effort:
+    // a single failure is skipped (never aborts the plant) but is collected so
+    // we can tell the user which ones didn't make it.
+    const createdConnectionIds: string[] = [];
+    const failedNewConnections: string[] = [];
+    for (const choice of selectedNewConnections) {
+      try {
+        const res = await fetch("/api/connections", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-organisation-id": organisationId,
+          },
+          body: JSON.stringify({ name: choice.name, type: choice.type }),
+        });
+        if (!res.ok) {
+          failedNewConnections.push(choice.name);
+          continue;
+        }
+        const created = await res.json();
+        if (created?.data?.id) createdConnectionIds.push(created.data.id);
+      } catch {
+        failedNewConnections.push(choice.name);
+      }
+    }
+
+    // Merge recognised + freshly-created ids, de-duplicated, for the moment link.
+    const connectionIds = [
+      ...new Set([...recognisedIds, ...createdConnectionIds]),
+    ];
 
     // The user's edited/removed chip wins once touched; otherwise use the
     // freshly detected follow-up (which the flush above guarantees is current).
@@ -341,8 +469,20 @@ export function MomentComposerModal({
         return;
       }
 
-      resetAndClose();
       router.refresh();
+      if (failedNewConnections.length > 0) {
+        // The moment landed, but some confirmed connections couldn't be created.
+        // Clear the fields (so the same moment can't be re-planted) but keep the
+        // modal open with a note so the user knows to add them manually.
+        clearComposer();
+        setNotice(
+          `Moment planted — but couldn't add ${failedNewConnections.join(
+            ", ",
+          )}. You can add ${failedNewConnections.length === 1 ? "it" : "them"} from Connections.`,
+        );
+      } else {
+        resetAndClose();
+      }
     } catch {
       setError("Something went wrong");
     } finally {
@@ -371,6 +511,12 @@ export function MomentComposerModal({
           {error && (
             <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
+            </div>
+          )}
+
+          {notice && (
+            <div className="mb-3 rounded-lg border border-amber/30 bg-amber/10 p-3 text-sm text-amber-dark">
+              {notice}
             </div>
           )}
 
@@ -475,6 +621,80 @@ export function MomentComposerModal({
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {suggestions.length > 0 && (
+            <div className="mt-3 flex flex-col gap-2 rounded-xl border border-moss/25 bg-moss/5 px-3 py-2.5">
+              <p className="text-xs text-muted">
+                New here — add {suggestions.length === 1 ? "this" : "these"} as
+                {suggestions.length === 1 ? " a connection" : " connections"}?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.map((suggestion) => {
+                  const key = normaliseName(suggestion.name);
+                  const choice = newConnectionChoices[key];
+                  // Fall back to the suggestion until the seeding effect fills state.
+                  const selected = choice?.selected ?? false;
+                  const type = choice?.type ?? suggestion.type;
+                  return (
+                    <div
+                      key={key}
+                      className={
+                        selected
+                          ? "flex items-center gap-1.5 rounded-full border border-green/40 bg-green/15 py-1 pl-3 pr-1.5"
+                          : "flex items-center gap-1.5 rounded-full border border-border-strong bg-white py-1 pl-3 pr-1.5"
+                      }
+                    >
+                      <span className="text-sm text-bark">{suggestion.name}</span>
+                      <select
+                        aria-label={`Type for ${suggestion.name}`}
+                        value={type}
+                        onChange={(e) => {
+                          setNewConnectionChoicesTouched(true);
+                          setNewConnectionChoices((prev) => ({
+                            ...prev,
+                            [key]: {
+                              name: suggestion.name,
+                              type: e.target.value as ConnectionType,
+                              selected: prev[key]?.selected ?? selected,
+                            },
+                          }));
+                        }}
+                        className="rounded-md border border-border bg-cream px-1.5 py-0.5 text-xs text-bark-light focus:border-moss focus:outline-none"
+                      >
+                        {CONNECTION_TYPE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => {
+                          setNewConnectionChoicesTouched(true);
+                          setNewConnectionChoices((prev) => ({
+                            ...prev,
+                            [key]: {
+                              name: suggestion.name,
+                              type: prev[key]?.type ?? type,
+                              selected: !selected,
+                            },
+                          }));
+                        }}
+                        className={
+                          selected
+                            ? "rounded-full bg-green/20 px-2.5 py-0.5 text-xs font-semibold text-green-dark hover:bg-green/30"
+                            : "rounded-full bg-cream-dark px-2.5 py-0.5 text-xs font-medium text-bark-light hover:bg-border-strong/40"
+                        }
+                      >
+                        {selected ? "✓ Added" : "＋ Add"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

@@ -75,6 +75,7 @@ interface SidebarOrg {
   id: string;
   name: string;
   slug: string;
+  newConnectionSuggestions?: "opt_in" | "opt_out";
 }
 
 interface SidebarProps {

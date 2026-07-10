@@ -12,6 +12,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Users", href: "/admin/users" },
   { label: "Organisations", href: "/admin/organisations" },
   { label: "Usage", href: "/admin/usage" },
+  { label: "Feedback", href: "/admin/feedback" },
 ];
 
 function isAdminNavActive(pathname: string, href: string) {

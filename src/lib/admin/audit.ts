@@ -9,7 +9,7 @@ import { adminActions } from "@/lib/db/schema";
 export async function recordAdminAction(input: {
   actorUserId: string;
   action: string;
-  targetType: "user" | "organisation";
+  targetType: "user" | "organisation" | "feedback";
   targetId?: string;
   metadata?: Record<string, unknown>;
 }): Promise<void> {

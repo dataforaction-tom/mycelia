@@ -10,4 +10,5 @@ export * from "./network-links";
 export * from "./observations";
 export * from "./webhooks";
 export * from "./api-keys";
+export * from "./admin";
 export * from "./relations";

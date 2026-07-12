@@ -1,4 +1,5 @@
 import { z } from "zod/v3";
+import { isReservedSlug } from "@/lib/config/reserved-slugs";
 
 export const createOrganisationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -19,6 +20,7 @@ export const updateOrganisationSchema = z.object({
       /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
       "Slug must be lowercase alphanumeric with dashes"
     )
+    .refine((value) => !isReservedSlug(value), "This slug is reserved")
     .optional(),
 });
 

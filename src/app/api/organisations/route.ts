@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils/api";
 import { createOrganisationSchema } from "@/lib/validators/organisations";
 import { slugify } from "@/lib/utils/slugify";
+import { isReservedSlug } from "@/lib/config/reserved-slugs";
 import { seedDemoData } from "@/lib/demo/seed-demo-data";
 import { sendWelcomeEmail } from "@/lib/email/messages";
 import { eq } from "drizzle-orm";
@@ -24,6 +25,15 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = slugify(parsed.data.name);
+
+    // Reject names that slugify to a reserved top-level route (e.g. "Admin"
+    // → /admin), which would otherwise shadow the org dashboard route.
+    if (isReservedSlug(slug)) {
+      return errorResponse(
+        "That name is reserved — please choose another",
+        422
+      );
+    }
 
     // Check slug uniqueness
     const [existing] = await db

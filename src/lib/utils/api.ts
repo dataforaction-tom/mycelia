@@ -23,6 +23,17 @@ export function errorResponse(message: string, status = 400) {
 }
 
 /**
+ * Map errors thrown by admin route handlers to responses. Shared across the
+ * /api/admin/* routes so the requireSuperAdmin() contract is handled once.
+ */
+export function adminErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : "Internal server error";
+  if (message === "Not authenticated") return errorResponse(message, 401);
+  if (message === "Forbidden") return errorResponse(message, 403);
+  return errorResponse("Internal server error", 500);
+}
+
+/**
  * Get the authenticated user from the session.
  * Throws if not authenticated.
  */

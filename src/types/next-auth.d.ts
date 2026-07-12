@@ -6,6 +6,8 @@ type PlatformRole = "super_admin" | "user";
 declare module "next-auth" {
   interface User {
     platformRole?: PlatformRole;
+    status?: "active" | "suspended";
+    tokenVersion?: number;
   }
 
   interface Session {
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     platformRole: PlatformRole;
+    tokenVersion?: number;
   }
 }

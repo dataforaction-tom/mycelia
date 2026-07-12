@@ -144,6 +144,48 @@ export async function sendSubscriptionConfirmedEmail(
   });
 }
 
+/**
+ * Sent to BOTH the old and new address when an admin changes a user's email —
+ * the old address gets a heads-up (in case it wasn't them), the new address
+ * gets confirmation plus a fresh sign-in link.
+ */
+export async function sendEmailChangedEmail(
+  oldEmail: string,
+  newEmail: string,
+) {
+  const notifyOld = renderEmail({
+    preheader: `The email on your Tending account was changed to ${newEmail}.`,
+    heading: "Your account email was changed",
+    paragraphs: [
+      `The email address on your Tending account was changed from ${oldEmail} to ${newEmail} by an administrator.`,
+      "If you were expecting this, no action is needed. If not, reply to this email straight away so we can help.",
+    ],
+  });
+  const notifyNew = renderEmail({
+    preheader: "Your Tending account email was updated — sign in with this address.",
+    heading: "This is now your Tending sign-in email",
+    paragraphs: [
+      `Your Tending account now uses ${newEmail}. Sign in with this address from the sign-in page — Tending has no passwords, you'll get a one-time link.`,
+    ],
+    cta: { label: "Go to sign in", url: `${siteConfig.url}/sign-in` },
+  });
+
+  await Promise.all([
+    sendEmail({
+      to: oldEmail,
+      subject: "Your Tending account email was changed",
+      html: notifyOld.html,
+      text: notifyOld.text,
+    }),
+    sendEmail({
+      to: newEmail,
+      subject: "Your Tending account email was updated",
+      html: notifyNew.html,
+      text: notifyNew.text,
+    }),
+  ]);
+}
+
 export async function sendSubscriptionEndedEmail(
   to: string,
   orgName: string,

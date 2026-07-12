@@ -5,6 +5,8 @@ export const platformRoleEnum = pgEnum("platform_role", [
   "user",
 ]);
 
+export const userStatusEnum = pgEnum("user_status", ["active", "suspended"]);
+
 export const orgRoleEnum = pgEnum("org_role", [
   "owner",
   "admin",

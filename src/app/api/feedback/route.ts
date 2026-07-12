@@ -6,6 +6,7 @@ import {
   errorResponse,
   getAuthenticatedUser,
 } from "@/lib/utils/api";
+import { getMembership } from "@/lib/auth/permissions";
 import { submitFeedbackSchema } from "@/lib/validators/feedback";
 
 /**
@@ -22,11 +23,20 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error.issues[0].message, 422);
     }
 
+    // Only attribute feedback to an org the submitter actually belongs to —
+    // otherwise a crafted request could tag it to any org and poison triage.
+    // Membership alone is enough; expired/read-only orgs may still report.
+    let organisationId: string | null = null;
+    if (parsed.data.organisationId) {
+      const membership = await getMembership(user.id, parsed.data.organisationId);
+      organisationId = membership ? parsed.data.organisationId : null;
+    }
+
     const [created] = await db
       .insert(feedback)
       .values({
         userId: user.id,
-        organisationId: parsed.data.organisationId ?? null,
+        organisationId,
         type: parsed.data.type,
         title: parsed.data.title,
         body: parsed.data.body,

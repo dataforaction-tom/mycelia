@@ -83,3 +83,24 @@ export const webhookDeliveryStatusEnum = pgEnum("webhook_delivery_status", [
 ]);
 
 export const apiKeyScopeEnum = pgEnum("api_key_scope", ["read", "read_write"]);
+
+export const feedbackTypeEnum = pgEnum("feedback_type", [
+  "bug",
+  "feature",
+  "other",
+]);
+
+export const feedbackStatusEnum = pgEnum("feedback_status", [
+  "new",
+  "triaged",
+  "planned",
+  "in_progress",
+  "done",
+  "declined",
+]);
+
+export const feedbackPriorityEnum = pgEnum("feedback_priority", [
+  "low",
+  "medium",
+  "high",
+]);

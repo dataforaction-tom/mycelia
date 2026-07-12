@@ -1,13 +1,16 @@
+import Link from "next/link";
 import { getOverviewMetrics, getSignupsByDay } from "@/lib/admin/metrics";
+import { getOpenFeedbackCount } from "@/lib/admin/feedback";
 import { StatCard } from "@/components/admin/stat-card";
 import { SignupsChart } from "@/components/admin/signups-chart";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOverviewPage() {
-  const [metrics, signups] = await Promise.all([
+  const [metrics, signups, openFeedback] = await Promise.all([
     getOverviewMetrics(),
     getSignupsByDay(30),
+    getOpenFeedbackCount(),
   ]);
 
   const newInWindow = signups.reduce((sum, day) => sum + day.count, 0);
@@ -47,6 +50,9 @@ export default async function AdminOverviewPage() {
           value={metrics.momentsThisMonth}
           hint={`${metrics.totalMoments} all-time`}
         />
+        <Link href="/admin/feedback" className="block">
+          <StatCard label="Open feedback" value={openFeedback} hint="needs triage" />
+        </Link>
       </div>
 
       <div className="rounded-[18px] border border-border bg-white/75 p-6 shadow-lift backdrop-blur">

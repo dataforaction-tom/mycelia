@@ -11,4 +11,5 @@ export * from "./observations";
 export * from "./webhooks";
 export * from "./api-keys";
 export * from "./admin";
+export * from "./feedback";
 export * from "./relations";

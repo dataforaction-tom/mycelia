@@ -31,7 +31,14 @@ export async function POST(_request: NextRequest, { params }: Params) {
       return errorResponse("User is suspended — reactivate before sending a link", 400);
     }
 
-    await signIn("resend", { email: target.email, redirect: false });
+    // Land the user on "/" after verifying, not the admin API/request context
+    // this runs in — otherwise a non-admin's resent link would resolve to
+    // /admin and 404. Mirrors the sign-in form's explicit callback.
+    await signIn("resend", {
+      email: target.email,
+      redirectTo: "/",
+      redirect: false,
+    });
 
     await recordAdminAction({
       actorUserId: admin.id,

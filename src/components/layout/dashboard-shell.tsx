@@ -5,6 +5,7 @@ import { Sidebar, type SidebarOrg } from "./sidebar";
 import { Header } from "./header";
 import { MobileNav } from "./mobile-nav";
 import { MomentComposerProvider } from "@/components/moments/moment-composer-context";
+import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -74,6 +75,7 @@ export function DashboardShell({
             <div className="mx-auto w-full max-w-6xl">{children}</div>
           </main>
         </div>
+        <FeedbackWidget organisations={organisations ?? []} />
       </div>
     </MomentComposerProvider>
   );

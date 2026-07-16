@@ -22,6 +22,7 @@ import { MomentList } from "@/components/moments/moment-list";
 import { QualitySpectrums } from "@/components/qualities/quality-spectrums";
 import { SpacePicker } from "@/components/spaces/space-picker";
 import { ContactDetailsCard } from "@/components/connections/contact-details-card";
+import { EditConnectionModal } from "@/components/connections/edit-connection-modal";
 import { ExportButton } from "@/components/export/export-button";
 
 export default async function ConnectionDetailPage({
@@ -120,7 +121,10 @@ export default async function ConnectionDetailPage({
           sharedCount: sql<number>`count(*)`.mapWith(Number),
         })
         .from(momentConnections)
-        .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
+        .innerJoin(
+          connections,
+          eq(momentConnections.connectionId, connections.id)
+        )
         .where(
           and(
             inArray(momentConnections.momentId, sharedMomentIds),
@@ -149,24 +153,24 @@ export default async function ConnectionDetailPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-center gap-4">
           <div
-            className="animate-breathe-soft h-16 w-16 shrink-0 rounded-full bg-gradient-to-br from-terracotta-light to-moss-dark shadow-[0_0_24px_rgba(138,154,86,0.35)]"
+            className="animate-breathe-soft from-terracotta-light to-moss-dark h-16 w-16 shrink-0 rounded-full bg-gradient-to-br shadow-[0_0_24px_rgba(138,154,86,0.35)]"
             aria-hidden="true"
           />
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-display text-4xl text-bark">
+              <h1 className="font-display text-bark text-4xl">
                 {connection.name}
               </h1>
               <ConnectionTypeBadge type={connection.type}>
                 {connection.type}
               </ConnectionTypeBadge>
               {depthLabel && (
-                <span className="rounded-full border border-green/35 bg-gradient-to-r from-green/15 to-moss/10 px-3 py-1 text-xs font-semibold text-green-dark">
+                <span className="border-green/35 from-green/15 to-moss/10 text-green-dark rounded-full border bg-gradient-to-r px-3 py-1 text-xs font-semibold">
                   {depthLabel}
                 </span>
               )}
             </div>
-            <p className="mt-2 text-sm text-muted">
+            <p className="text-muted mt-2 text-sm">
               In your network since{" "}
               {connection.createdAt.toLocaleDateString("en-GB", {
                 day: "numeric",
@@ -177,6 +181,15 @@ export default async function ConnectionDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {canEdit && (
+            <EditConnectionModal
+              connectionId={connectionId}
+              organisationId={org.id}
+              initialName={connection.name}
+              initialType={connection.type}
+              initialContact={connection.contactDetails ?? {}}
+            />
+          )}
           <ExportButton
             url={`/api/connections/${connectionId}/export`}
             organisationId={org.id}
@@ -188,25 +201,24 @@ export default async function ConnectionDetailPage({
       </div>
 
       {/* The story leads: relationships are narratives, not records */}
-      <div className="rounded-2xl border border-border bg-surface p-6 shadow-lift sm:p-8">
-        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+      <div className="border-border bg-surface shadow-lift rounded-2xl border p-6 sm:p-8">
+        <h2 className="text-muted text-xs font-medium tracking-[0.14em] uppercase">
           The story so far
         </h2>
         {connection.threadSummary ? (
-          <p className="mt-3 font-serif text-lg leading-relaxed text-bark">
+          <p className="text-bark mt-3 font-serif text-lg leading-relaxed">
             {connection.threadSummary}
           </p>
         ) : (
-          <p className="mt-3 text-sm text-muted">
-            No story yet. As you record moments with{" "}
-            {connection.name}, Tending will write and keep a living narrative
-            of this relationship here.
+          <p className="text-muted mt-3 text-sm">
+            No story yet. As you record moments with {connection.name}, Tending
+            will write and keep a living narrative of this relationship here.
           </p>
         )}
       </div>
 
       <div>
-        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+        <h2 className="text-muted text-xs font-medium tracking-[0.14em] uppercase">
           Qualities
         </h2>
         <div className="mt-4">
@@ -220,7 +232,7 @@ export default async function ConnectionDetailPage({
 
       <div className="grid gap-8 lg:grid-cols-[3fr_2fr] lg:items-start">
         <div>
-          <h2 className="font-display text-xl text-bark">Moments together</h2>
+          <h2 className="font-display text-bark text-xl">Moments together</h2>
           <div className="mt-4">
             <MomentList moments={connectionMoments} orgSlug={orgSlug} />
           </div>
@@ -229,16 +241,16 @@ export default async function ConnectionDetailPage({
         <div className="flex flex-col gap-6">
           {sharedThreads.length > 0 && (
             <div className="underground relative overflow-hidden rounded-xl p-5">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-soil-ink-soft">
+              <p className="text-soil-ink-soft text-xs font-medium tracking-[0.12em] uppercase">
                 Shared threads
               </p>
-              <p className="mt-2.5 text-sm leading-relaxed text-soil-ink">
+              <p className="text-soil-ink mt-2.5 text-sm leading-relaxed">
                 Connected to{" "}
                 {sharedThreads.map((t, i) => (
                   <span key={t.id}>
                     <Link
                       href={`/${orgSlug}/connections/${t.id}`}
-                      className="text-spore underline decoration-spore/30 underline-offset-2 hover:decoration-spore"
+                      className="text-spore decoration-spore/30 hover:decoration-spore underline underline-offset-2"
                     >
                       {t.name}
                     </Link>
@@ -255,14 +267,12 @@ export default async function ConnectionDetailPage({
           )}
 
           <ContactDetailsCard
-            connectionId={connectionId}
-            organisationId={org.id}
-            initial={connection.contactDetails ?? {}}
+            details={connection.contactDetails ?? {}}
             canEdit={canEdit}
           />
 
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-lift">
-            <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+          <div className="border-border bg-surface shadow-lift rounded-xl border p-6">
+            <h2 className="text-muted text-xs font-medium tracking-[0.14em] uppercase">
               Spaces
             </h2>
             <div className="mt-4">

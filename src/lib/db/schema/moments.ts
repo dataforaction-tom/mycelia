@@ -41,6 +41,13 @@ export const moments = pgTable(
       "gin",
       sql`to_tsvector('english', ${table.content})`
     ),
+    // Org-scoped listing ordered by recency — the shape of nearly every
+    // moment query (dashboard, moments page, quota). Composite covers both.
+    index("moments_org_created_idx").on(table.organisationId, table.createdAt),
+    // Space timelines filter moments by spaceId.
+    index("moments_space_idx").on(table.spaceId),
+    // Team-activity / author attribution filters by authorId.
+    index("moments_author_idx").on(table.authorId),
   ]
 );
 
@@ -54,5 +61,10 @@ export const momentConnections = pgTable(
       .notNull()
       .references(() => connections.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.momentId, table.connectionId] })]
+  (table) => [
+    primaryKey({ columns: [table.momentId, table.connectionId] }),
+    // PK is (momentId, connectionId); the very common reverse lookup — all
+    // moments for a connection — has no index without this.
+    index("moment_connections_connection_idx").on(table.connectionId),
+  ]
 );

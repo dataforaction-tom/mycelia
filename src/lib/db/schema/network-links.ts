@@ -1,4 +1,11 @@
-import { pgTable, real, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  pgTable,
+  real,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { linkSourceEnum } from "./enums";
 import { organisations } from "./organisations";
 import { connections } from "./connections";
@@ -27,5 +34,7 @@ export const networkLinks = pgTable(
       table.sourceConnectionId,
       table.targetConnectionId
     ),
+    // The network graph loads all links for an org.
+    index("network_links_org_idx").on(table.organisationId),
   ]
 );

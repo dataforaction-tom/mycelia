@@ -1,4 +1,12 @@
-import { jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { connectionTypeEnum } from "./enums";
 import { organisations } from "./organisations";
 import { spaces } from "./spaces";
@@ -16,27 +24,32 @@ export interface ContactDetails {
   location?: string;
 }
 
-export const connections = pgTable("connections", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  organisationId: uuid("organisation_id")
-    .notNull()
-    .references(() => organisations.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  type: connectionTypeEnum("type").notNull().default("person"),
-  threadSummary: text("thread_summary"),
-  threadUpdatedAt: timestamp("thread_updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }),
-  contactDetails: jsonb("contact_details").$type<ContactDetails>().default({}),
-  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: connectionTypeEnum("type").notNull().default("person"),
+    threadSummary: text("thread_summary"),
+    threadUpdatedAt: timestamp("thread_updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    contactDetails: jsonb("contact_details").$type<ContactDetails>().default({}),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  // Every connection query is org-scoped; without this each is a full scan.
+  (table) => [index("connections_org_idx").on(table.organisationId)]
+);
 
 export const connectionSpaces = pgTable(
   "connection_spaces",
@@ -48,5 +61,10 @@ export const connectionSpaces = pgTable(
       .notNull()
       .references(() => spaces.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.connectionId, table.spaceId] })]
+  (table) => [
+    primaryKey({ columns: [table.connectionId, table.spaceId] }),
+    // PK covers lookups by connectionId; filtering by spaceId (space detail,
+    // space membership) needs its own index.
+    index("connection_spaces_space_idx").on(table.spaceId),
+  ]
 );

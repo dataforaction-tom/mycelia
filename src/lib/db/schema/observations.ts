@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   observationTypeEnum,
@@ -33,4 +33,14 @@ export const observations = pgTable("observations", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+},
+  (table) => [
+    // The observations list filters by org and status (new/scheduled/etc).
+    index("observations_org_status_idx").on(
+      table.organisationId,
+      table.status
+    ),
+    // The reminders cron sweeps scheduled rows whose dueAt has passed.
+    index("observations_due_idx").on(table.dueAt),
+  ]
+);

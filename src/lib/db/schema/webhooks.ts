@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -11,27 +12,32 @@ import { sql } from "drizzle-orm";
 import { webhookDeliveryStatusEnum } from "./enums";
 import { organisations } from "./organisations";
 
-export const webhookEndpoints = pgTable("webhook_endpoints", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  organisationId: uuid("organisation_id")
-    .notNull()
-    .references(() => organisations.id, { onDelete: "cascade" }),
-  url: text("url").notNull(),
-  secret: text("secret").notNull(),
-  events: text("events")
-    .array()
-    .notNull()
-    .default(sql`'{}'::text[]`),
-  active: boolean("active").notNull().default(true),
-  lastDeliveryAt: timestamp("last_delivery_at", {
-    mode: "date",
-    withTimezone: true,
-  }),
-  lastStatus: text("last_status"),
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organisationId: uuid("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    secret: text("secret").notNull(),
+    events: text("events")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    active: boolean("active").notNull().default(true),
+    lastDeliveryAt: timestamp("last_delivery_at", {
+      mode: "date",
+      withTimezone: true,
+    }),
+    lastStatus: text("last_status"),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  // The developers settings page lists an org's endpoints.
+  (table) => [index("webhook_endpoints_org_idx").on(table.organisationId)]
+);
 
 export const webhookDeliveries = pgTable("webhook_deliveries", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -55,4 +61,15 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+},
+  (table) => [
+    // The delivery cron sweeps due retries: WHERE status IN (...) AND
+    // nextRetryAt <= now. Without this it scans the whole deliveries table.
+    index("webhook_deliveries_status_retry_idx").on(
+      table.status,
+      table.nextRetryAt
+    ),
+    // Endpoint-scoped delivery lookups / cascade.
+    index("webhook_deliveries_endpoint_idx").on(table.endpointId),
+  ]
+);

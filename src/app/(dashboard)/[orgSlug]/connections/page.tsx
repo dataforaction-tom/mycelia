@@ -69,7 +69,10 @@ export default async function ConnectionsPage({
         .where(eq(connections.organisationId, org.id))
         .orderBy(desc(connections.updatedAt));
 
-  // Get last moment date and count for each connection
+  // Get last moment date and count for each connection. Scope to this org's
+  // moments — without the filter this aggregates momentConnections across
+  // every organisation (a full cross-tenant scan whose cost grows with the
+  // whole platform, not this org).
   const momentStats = await db
     .select({
       connectionId: momentConnections.connectionId,
@@ -78,6 +81,7 @@ export default async function ConnectionsPage({
     })
     .from(momentConnections)
     .innerJoin(moments, eq(momentConnections.momentId, moments.id))
+    .where(eq(moments.organisationId, org.id))
     .groupBy(momentConnections.connectionId);
 
   const statsMap = new Map(
@@ -97,8 +101,8 @@ export default async function ConnectionsPage({
     <div className="stagger-children space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl text-bark">Connections</h1>
-          <p className="mt-2 text-muted">
+          <h1 className="font-display text-bark text-4xl">Connections</h1>
+          <p className="text-muted mt-2">
             {rows.length === 1
               ? "1 relationship you're tending"
               : `${rows.length} relationships you're tending`}
@@ -111,10 +115,7 @@ export default async function ConnectionsPage({
         <SpaceFilterSelect spaces={allSpaces} selected={spaceId} />
       )}
 
-      <ConnectionList
-        connections={connectionsWithStats}
-        orgSlug={orgSlug}
-      />
+      <ConnectionList connections={connectionsWithStats} orgSlug={orgSlug} />
     </div>
   );
 }

@@ -66,11 +66,24 @@ export default async function MomentsPage({
     const matchingMomentIds = await db
       .selectDistinct({ momentId: momentConnections.momentId })
       .from(momentConnections)
-      .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
-      .where(eq(connections.type, connectionType as "person" | "organisation" | "group" | "community"));
+      .innerJoin(
+        connections,
+        eq(momentConnections.connectionId, connections.id)
+      )
+      .where(
+        and(
+          eq(connections.organisationId, org.id),
+          eq(
+            connections.type,
+            connectionType as "person" | "organisation" | "group" | "community"
+          )
+        )
+      );
 
     const ids = matchingMomentIds.map((m) => m.momentId);
-    conditions.push(ids.length ? inArray(moments.id, ids) : inArray(moments.id, ["__none__"]));
+    conditions.push(
+      ids.length ? inArray(moments.id, ids) : inArray(moments.id, ["__none__"])
+    );
   }
 
   const rows = await db
@@ -95,7 +108,10 @@ export default async function MomentsPage({
           type: connections.type,
         })
         .from(momentConnections)
-        .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
+        .innerJoin(
+          connections,
+          eq(momentConnections.connectionId, connections.id)
+        )
         .where(
           inArray(
             momentConnections.momentId,
@@ -121,16 +137,16 @@ export default async function MomentsPage({
   const momentsWithConnections = rows.map((m) => ({
     ...m,
     connections: connectionsByMoment.get(m.id) ?? [],
-    author: m.authorId ? authorById.get(m.authorId) ?? null : null,
+    author: m.authorId ? (authorById.get(m.authorId) ?? null) : null,
   }));
 
   return (
     <div className="stagger-children space-y-6">
       <div>
-        <h1 className="font-display text-4xl text-bark">
+        <h1 className="font-display text-bark text-4xl">
           The river of moments
         </h1>
-        <p className="mt-2 text-muted">
+        <p className="text-muted mt-2">
           Everything that happened, as it flowed —{" "}
           {rows.length === 1 ? "1 moment" : `${rows.length} moments`} and
           counting

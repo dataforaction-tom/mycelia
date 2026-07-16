@@ -20,7 +20,9 @@ describe("isSafeWebhookUrl", () => {
 
   it("rejects the cloud metadata IP", () => {
     expect(isSafeWebhookUrl("http://169.254.169.254/")).toBe(false);
-    expect(isSafeWebhookUrl("https://169.254.169.254/latest/meta-data")).toBe(false);
+    expect(isSafeWebhookUrl("https://169.254.169.254/latest/meta-data")).toBe(
+      false
+    );
   });
 
   it("rejects the 0.0.0.0/8 unspecified/loopback-routable range", () => {
@@ -69,6 +71,19 @@ describe("isSafeWebhookUrl", () => {
     expect(isSafeWebhookUrl("https://[fd12:3456::1]/x")).toBe(false);
   });
 
+  it("rejects IPv6 link-local (fe80::/10) and multicast (ff00::/8)", () => {
+    expect(isSafeWebhookUrl("https://[fe80::1]/x")).toBe(false);
+    expect(isSafeWebhookUrl("https://[ff02::1]/x")).toBe(false);
+  });
+
+  it("does not mistake domains that start with fc/fd for unique-local IPv6", () => {
+    // Regression: the fc00::/7 prefix test must only apply to IPv6 literals,
+    // not to ordinary hostnames like fcbarcelona.com / fdny.example.
+    expect(isSafeWebhookUrl("https://fcbarcelona.com/hook")).toBe(true);
+    expect(isSafeWebhookUrl("https://fd-signal.example.com/hook")).toBe(true);
+    expect(isSafeWebhookUrl("https://fe80.example.com/hook")).toBe(true);
+  });
+
   it("rejects non-http(s) schemes", () => {
     expect(isSafeWebhookUrl("file:///etc/passwd")).toBe(false);
     expect(isSafeWebhookUrl("ftp://example.com")).toBe(false);
@@ -90,7 +105,9 @@ describe("isSafeWebhookUrl", () => {
     });
 
     it("rejects the GCP metadata hostname", () => {
-      expect(isSafeWebhookUrl("https://metadata.google.internal/x")).toBe(false);
+      expect(isSafeWebhookUrl("https://metadata.google.internal/x")).toBe(
+        false
+      );
     });
   });
 

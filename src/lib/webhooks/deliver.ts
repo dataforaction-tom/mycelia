@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema/webhooks";
 import { nextRetryAt } from "./backoff";
 import { sign } from "./sign";
-import { isSafeWebhookUrl } from "./verify-url";
+import { isSafeWebhookUrl, resolvedHostIsPublic } from "./verify-url";
 
 type Delivery = InferSelectModel<typeof webhookDeliveries>;
 type Endpoint = InferSelectModel<typeof webhookEndpoints>;
@@ -25,8 +25,14 @@ export async function deliverOne(
   endpoint: Endpoint,
 ): Promise<void> {
   // Re-check the destination at send time: a URL that was safe when stored may
-  // have become unsafe, and we must never POST to an internal address.
-  if (!isSafeWebhookUrl(endpoint.url)) {
+  // have become unsafe, and we must never POST to an internal address. The
+  // string guard rejects private IP literals; the DNS resolve additionally
+  // rejects a public hostname that now resolves to an internal IP (SSRF via
+  // DNS). Both run before we open any socket.
+  const safeString = isSafeWebhookUrl(endpoint.url);
+  const safeResolved =
+    safeString && (await resolvedHostIsPublic(new URL(endpoint.url).hostname));
+  if (!safeString || !safeResolved) {
     await db
       .update(webhookDeliveries)
       .set({

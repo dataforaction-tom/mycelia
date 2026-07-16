@@ -19,11 +19,11 @@ export async function GET(request: NextRequest) {
 
     return successResponse({ available: isTranscriptionConfigured() });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member")) return errorResponse(msg, 403);
-    if (msg.includes("Subscription required"))
-      return errorResponse(msg, 402);
+    if (msg.includes("Subscription required")) return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }
@@ -48,7 +48,10 @@ export async function POST(request: NextRequest) {
     if (audio.size > MAX_AUDIO_BYTES) {
       return errorResponse("Audio too large (max 15 MB)", 413);
     }
-    if (audio.type && !audio.type.startsWith("audio/")) {
+    // Require a declared audio/* content type. Previously an empty type
+    // (audio.type === "") skipped the check entirely; reject it so an
+    // arbitrary blob can't be smuggled to the transcription provider.
+    if (!audio.type.startsWith("audio/")) {
       return errorResponse("Unsupported file type", 422);
     }
 
@@ -56,7 +59,8 @@ export async function POST(request: NextRequest) {
 
     return successResponse({ text });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member")) return errorResponse(msg, 403);
     if (msg.includes("No transcription provider")) {
@@ -65,8 +69,7 @@ export async function POST(request: NextRequest) {
     if (msg.includes("transcription failed")) {
       return errorResponse("Transcription is unavailable right now", 502);
     }
-    if (msg.includes("Subscription required"))
-      return errorResponse(msg, 402);
+    if (msg.includes("Subscription required")) return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }

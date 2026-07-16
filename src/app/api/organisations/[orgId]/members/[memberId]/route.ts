@@ -31,6 +31,26 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return errorResponse("Cannot change your own role", 400);
     }
 
+    // Cannot demote the owner. The schema already forbids setting anyone *to*
+    // owner, so any PATCH against the current owner would only ever demote
+    // them (leaving the org ownerless / stripping owner powers). Mirrors the
+    // owner guard on DELETE.
+    const [target] = await db
+      .select({ role: organisationMemberships.role })
+      .from(organisationMemberships)
+      .where(
+        and(
+          eq(organisationMemberships.userId, memberId),
+          eq(organisationMemberships.organisationId, orgId)
+        )
+      )
+      .limit(1);
+
+    if (!target) return errorResponse("Member not found", 404);
+    if (target.role === "owner") {
+      return errorResponse("Cannot change the organisation owner's role", 400);
+    }
+
     const permissions = parsed.data.permissionOverrides
       ? parsed.data.permissionOverrides.reduce(
           (mask, flag) => mask | PERMISSIONS[flag],
@@ -56,7 +76,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return successResponse(updated);
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member") || msg.includes("Insufficient role"))
       return errorResponse(msg, 403);
@@ -104,7 +125,8 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
     return successResponse({ deleted: true });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member") || msg.includes("Insufficient role"))
       return errorResponse(msg, 403);

@@ -6,6 +6,7 @@ import {
 } from "@/lib/db/schema/webhooks";
 import { successResponse, errorResponse } from "@/lib/utils/api";
 import { deliverOne } from "@/lib/webhooks/deliver";
+import { isValidBearer } from "@/lib/auth/timing";
 import { and, eq, inArray, isNull, lte, or } from "drizzle-orm";
 
 /** Cap how many deliveries a single run will attempt. */
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
   if (!secret) {
     return errorResponse("Cron is not configured", 503);
   }
-  if (request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isValidBearer(request.headers.get("authorization"), secret)) {
     return errorResponse("Unauthorized", 401);
   }
 

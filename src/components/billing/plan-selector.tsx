@@ -83,28 +83,31 @@ export function PlanSelector({
   }
 
   return (
-    <div className="max-w-md rounded-[20px] border border-border bg-white/85 p-6 shadow-lift">
+    <div className="border-border shadow-lift max-w-md rounded-[20px] border bg-white/85 p-6">
       {error && (
-        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
 
-      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
+      <p className="text-muted text-xs font-medium tracking-[0.12em] uppercase">
         The plan
       </p>
-      <p className="mt-2 font-display text-4xl text-bark">
+      <p className="font-display text-bark mt-2 text-4xl">
         £5
-        <span className="ml-1 font-sans text-sm text-muted">/ month</span>
+        <span className="text-muted ml-1 font-sans text-sm">/ month</span>
       </p>
-      <p className="mt-1 text-sm text-bark-light">
+      <p className="text-bark-light mt-1 text-sm">
         Everything included. No tiers, no add-ons.
       </p>
 
-      <ul className="mt-4 space-y-2 text-sm text-bark">
+      <ul className="text-bark mt-4 space-y-2 text-sm">
         {INCLUDED.map((feature) => (
           <li key={feature} className="flex items-start gap-2">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-moss" />
+            <span className="bg-moss mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
             {feature}
           </li>
         ))}
@@ -113,16 +116,15 @@ export function PlanSelector({
       {onTrial ? (
         <>
           {trialExpired ? (
-            <p className="mt-5 rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber-dark">
-              Your free trial ended{trialEnd ? ` on ${trialEnd}` : ""} —
-              Tending is read-only until you subscribe. Everything you
-              planted is safe.
+            <p className="bg-amber/10 text-amber-dark mt-5 rounded-lg px-3 py-2 text-xs">
+              Your free trial ended{trialEnd ? ` on ${trialEnd}` : ""} — Tending
+              is read-only until you subscribe. Everything you planted is safe.
             </p>
           ) : (
             trialEnd && (
-              <p className="mt-5 rounded-lg bg-moss/10 px-3 py-2 text-xs text-moss-dark">
-                You&apos;re on the free trial — every feature, no card
-                needed. It ends on {trialEnd}.
+              <p className="bg-moss/10 text-moss-dark mt-5 rounded-lg px-3 py-2 text-xs">
+                You&apos;re on the free trial — every feature, no card needed.
+                It ends on {trialEnd}.
               </p>
             )
           )}
@@ -130,21 +132,21 @@ export function PlanSelector({
             type="button"
             onClick={startCheckout}
             disabled={isLoading}
-            className="mt-4 w-full rounded-full bg-gradient-to-r from-green to-moss px-5 py-2.5 text-sm font-semibold text-white shadow-lift transition-all hover:brightness-105 disabled:opacity-50"
+            className="from-green-dark to-moss-dark shadow-lift mt-4 w-full rounded-full bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-105 disabled:opacity-50"
           >
             {isLoading ? "One moment…" : "Subscribe — £5/month"}
           </button>
         </>
       ) : (
         <>
-          <p className="mt-5 rounded-lg bg-moss/10 px-3 py-2 text-xs text-moss-dark">
+          <p className="bg-moss/10 text-moss-dark mt-5 rounded-lg px-3 py-2 text-xs">
             You&apos;re subscribed. Thank you for tending with us.
           </p>
           <button
             type="button"
             onClick={openBillingPortal}
             disabled={isLoading}
-            className="mt-4 w-full rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium text-bark transition-colors hover:bg-cream-dark disabled:opacity-50"
+            className="border-border bg-surface text-bark hover:bg-cream-dark mt-4 w-full rounded-full border px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
           >
             {isLoading ? "One moment…" : "Manage billing"}
           </button>

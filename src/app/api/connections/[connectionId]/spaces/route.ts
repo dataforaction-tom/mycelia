@@ -4,6 +4,7 @@ import { connectionSpaces, spaces } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { linkSpacesSchema } from "@/lib/validators/spaces";
+import { ownedSpaceIds, isConnectionInOrg } from "@/lib/db/scope";
 import { and, eq } from "drizzle-orm";
 
 type Params = { params: Promise<{ connectionId: string }> };
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 export async function POST(request: NextRequest, { params }: Params) {
   try {
-    const { membership } = await getOrgContext(request);
+    const { membership, organisationId } = await getOrgContext(request);
     const { connectionId } = await params;
 
     if (!hasMinRole(membership.role, "contributor")) {
@@ -58,14 +59,25 @@ export async function POST(request: NextRequest, { params }: Params) {
       return errorResponse(parsed.error.issues[0].message, 422);
     }
 
-    const values = parsed.data.spaceIds.map((spaceId) => ({
+    // Cross-tenant write guard: the connection and every space must belong
+    // to the caller's org before we link them (an insert has no natural
+    // org scope).
+    if (!(await isConnectionInOrg(connectionId, organisationId))) {
+      return errorResponse("Connection not found", 404);
+    }
+    const owned = await ownedSpaceIds(parsed.data.spaceIds, organisationId);
+    if (owned.length !== parsed.data.spaceIds.length) {
+      return errorResponse("One or more spaces not found", 404);
+    }
+
+    const values = owned.map((spaceId) => ({
       connectionId,
       spaceId,
     }));
 
     await db.insert(connectionSpaces).values(values).onConflictDoNothing();
 
-    return successResponse({ linked: parsed.data.spaceIds.length }, 201);
+    return successResponse({ linked: owned.length }, 201);
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const { membership } = await getOrgContext(request);
+    const { membership, organisationId } = await getOrgContext(request);
     const { connectionId } = await params;
 
     if (!hasMinRole(membership.role, "contributor")) {
@@ -90,6 +102,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     if (!parsed.success) {
       return errorResponse(parsed.error.issues[0].message, 422);
+    }
+
+    // Confirm the connection belongs to the caller's org before mutating
+    // its space links.
+    if (!(await isConnectionInOrg(connectionId, organisationId))) {
+      return errorResponse("Connection not found", 404);
     }
 
     for (const spaceId of parsed.data.spaceIds) {

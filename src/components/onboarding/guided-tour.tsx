@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface GuidedTourProps {
@@ -59,6 +59,11 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
   const step = STEPS[stepIndex];
   const isFinal = stepIndex === STEPS.length - 1;
 
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = "guided-tour-title";
+  const bodyId = "guided-tour-body";
+
   const measure = useCallback(() => {
     if (!step.target) {
       setRect(null);
@@ -78,6 +83,49 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
+
+  // Remember what had focus when the tour opened, and restore it when the
+  // tour closes so keyboard focus isn't dumped at the top of the page.
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    return () => previousFocusRef.current?.focus?.();
+  }, []);
+
+  // Move focus into the card on open and on every step change, so a screen
+  // reader announces the new step and Tab stays within the dialog.
+  useEffect(() => {
+    cardRef.current?.focus();
+  }, [stepIndex]);
+
+  // Trap Tab within the card and let Escape dismiss the tour (WCAG 2.1.2,
+  // 2.4.3). The overlay is modal, so focus must not reach the page behind it.
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      finish(false);
+      return;
+    }
+    if (event.key !== "Tab" || !cardRef.current) return;
+
+    const focusable = Array.from(
+      cardRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || active === cardRef.current)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   async function finish(clearDemo: boolean) {
     if (isFinishing) return;
@@ -122,7 +170,14 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
     : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 
   return (
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-label="Guided tour">
+    <div
+      className="fixed inset-0 z-[60]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={bodyId}
+      onKeyDown={handleKeyDown}
+    >
       {/* Backdrop / spotlight cutout */}
       {hasSpotlight ? (
         <div
@@ -141,27 +196,34 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
 
       {/* Step card */}
       <div
-        className="fixed w-[min(24rem,calc(100vw-2rem))] rounded-2xl bg-cream p-5 shadow-[0_24px_70px_rgba(27,19,10,0.5)]"
+        ref={cardRef}
+        tabIndex={-1}
+        className="bg-cream fixed w-[min(24rem,calc(100vw-2rem))] rounded-2xl p-5 shadow-[0_24px_70px_rgba(27,19,10,0.5)] focus:outline-none"
         style={cardStyle}
       >
+        <span className="sr-only">
+          Step {stepIndex + 1} of {STEPS.length}
+        </span>
         <div className="flex items-start justify-between gap-3">
-          <p className="font-display text-xl text-bark">{step.title}</p>
+          <p id={titleId} className="font-display text-bark text-xl">
+            {step.title}
+          </p>
           {!isFinal && (
             <button
               type="button"
               onClick={() => finish(false)}
-              className="shrink-0 text-xs text-muted transition-colors hover:text-bark"
+              className="text-muted hover:text-bark shrink-0 text-xs transition-colors"
             >
               Skip
             </button>
           )}
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-bark-light">
+        <p id={bodyId} className="text-bark-light mt-2 text-sm leading-relaxed">
           {step.body}
         </p>
 
         <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex gap-1">
+          <div className="flex gap-1" aria-hidden="true">
             {STEPS.map((_, i) => (
               <span
                 key={i}
@@ -178,7 +240,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
                 type="button"
                 onClick={() => finish(true)}
                 disabled={isFinishing}
-                className="rounded-full border border-border-strong px-4 py-2 text-xs font-medium text-bark-light transition-colors hover:bg-cream-dark disabled:opacity-50"
+                className="border-border-strong text-bark-light hover:bg-cream-dark rounded-full border px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
               >
                 Clear it — start fresh
               </button>
@@ -186,7 +248,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
                 type="button"
                 onClick={() => finish(false)}
                 disabled={isFinishing}
-                className="rounded-full bg-gradient-to-r from-green to-moss px-4 py-2 text-xs font-semibold text-white shadow-lift transition-all hover:brightness-105 disabled:opacity-50"
+                className="from-green-dark to-moss-dark shadow-lift rounded-full bg-gradient-to-r px-4 py-2 text-xs font-semibold text-white transition-all hover:brightness-105 disabled:opacity-50"
               >
                 Keep exploring
               </button>
@@ -197,7 +259,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
                 <button
                   type="button"
                   onClick={() => setStepIndex((i) => i - 1)}
-                  className="rounded-full px-3 py-2 text-xs font-medium text-muted transition-colors hover:text-bark"
+                  className="text-muted hover:text-bark rounded-full px-3 py-2 text-xs font-medium transition-colors"
                 >
                   Back
                 </button>
@@ -205,7 +267,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
               <button
                 type="button"
                 onClick={() => setStepIndex((i) => i + 1)}
-                className="rounded-full bg-gradient-to-r from-green to-moss px-4 py-2 text-xs font-semibold text-white shadow-lift transition-all hover:brightness-105"
+                className="from-green-dark to-moss-dark shadow-lift rounded-full bg-gradient-to-r px-4 py-2 text-xs font-semibold text-white transition-all hover:brightness-105"
               >
                 {stepIndex === 0 ? "Take the walk" : "Next"}
               </button>

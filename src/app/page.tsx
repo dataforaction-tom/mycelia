@@ -72,7 +72,7 @@ export default async function HomePage() {
       .from(organisationMemberships)
       .innerJoin(
         organisations,
-        eq(organisationMemberships.organisationId, organisations.id),
+        eq(organisationMemberships.organisationId, organisations.id)
       )
       .where(eq(organisationMemberships.userId, session.user.id))
       .limit(1);
@@ -100,24 +100,24 @@ export default async function HomePage() {
 
         <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-6 py-12 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <h1 className="font-display text-5xl leading-[1.1] text-soil-ink sm:text-6xl">
+            <h1 className="font-display text-soil-ink text-5xl leading-[1.1] sm:text-6xl">
               Relationships are living things.
             </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-soil-ink-soft">
+            <p className="text-soil-ink-soft mt-6 max-w-lg text-lg leading-relaxed">
               Beneath every social purpose organisation is a living network of
-              people, trust and shared history. Tending helps you see it —
-              and tend it. Not a CRM. A garden.
+              people, trust and shared history. Tending helps you see it — and
+              tend it. Not a CRM. A garden.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 href="/sign-in"
-                className="rounded-full bg-gradient-to-r from-green to-moss px-7 py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_rgba(111,154,79,0.45)] transition-all hover:brightness-105"
+                className="from-green-dark to-moss-dark rounded-full bg-gradient-to-r px-7 py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_rgba(111,154,79,0.45)] transition-all hover:brightness-105"
               >
                 Start tending — free for 30 days
               </Link>
               <Link
                 href="/pricing"
-                className="text-sm text-soil-ink-soft underline decoration-spore/40 decoration-dotted underline-offset-4 transition-colors hover:text-soil-ink"
+                className="text-soil-ink-soft decoration-spore/40 hover:text-soil-ink text-sm underline decoration-dotted underline-offset-4 transition-colors"
               >
                 £5 a month after. That&apos;s the whole pricing page.
               </Link>
@@ -125,11 +125,7 @@ export default async function HomePage() {
           </div>
 
           {/* The living network, hand-composed per the prototype */}
-          <svg
-            viewBox="0 0 540 480"
-            className="w-full"
-            aria-hidden="true"
-          >
+          <svg viewBox="0 0 540 480" className="w-full" aria-hidden="true">
             <g
               stroke="var(--spore)"
               strokeOpacity="0.3"
@@ -183,7 +179,7 @@ export default async function HomePage() {
           </svg>
         </div>
 
-        <p className="relative z-10 pb-8 text-center text-xs uppercase tracking-[0.2em] text-soil-ink-soft/70">
+        <p className="text-soil-ink-soft/70 relative z-10 pb-8 text-center text-xs tracking-[0.2em] uppercase">
           Under the soil — your living network
         </p>
       </section>
@@ -192,20 +188,20 @@ export default async function HomePage() {
       <section className="relative overflow-hidden px-6 py-20 sm:py-28">
         <div
           aria-hidden="true"
-          className="animate-hue pointer-events-none absolute -right-32 -top-44 h-[560px] w-[560px] rounded-full"
+          className="animate-hue pointer-events-none absolute -top-44 -right-32 h-[560px] w-[560px] rounded-full"
           style={{
             background:
               "radial-gradient(circle, rgba(173,184,120,0.35), transparent 65%)",
           }}
         />
         <div className="relative mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-4xl text-bark">
+          <h2 className="font-display text-bark text-4xl">
             Write it as you&apos;d tell a colleague
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted">
-            No forms, no fields, no filing. One sentence — spoken or typed —
-            and tending recognises who was there, where it happened, and
-            grows the threads between them.
+          <p className="text-muted mx-auto mt-4 max-w-xl">
+            No forms, no fields, no filing. One sentence — spoken or typed — and
+            tending recognises who was there, where it happened, and grows the
+            threads between them.
           </p>
         </div>
         <div className="relative mt-12">
@@ -213,22 +209,22 @@ export default async function HomePage() {
         </div>
         <div className="mx-auto mt-12 grid max-w-4xl gap-6 text-sm sm:grid-cols-3">
           <div className="text-center">
-            <p className="font-semibold text-bark">Recognised, not filed</p>
-            <p className="mt-1.5 text-muted">
+            <p className="text-bark font-semibold">Recognised, not filed</p>
+            <p className="text-muted mt-1.5">
               People, organisations and places are picked out as you type —
               instantly, on your own roster.
             </p>
           </div>
           <div className="text-center">
-            <p className="font-semibold text-bark">Speak it</p>
-            <p className="mt-1.5 text-muted">
-              On the way back from the meeting, just say what happened.
-              Tending transcribes and plants it.
+            <p className="text-bark font-semibold">Speak it</p>
+            <p className="text-muted mt-1.5">
+              On the way back from the meeting, just say what happened. Tending
+              transcribes and plants it.
             </p>
           </div>
           <div className="text-center">
-            <p className="font-semibold text-bark">Threads grow</p>
-            <p className="mt-1.5 text-muted">
+            <p className="text-bark font-semibold">Threads grow</p>
+            <p className="text-muted mt-1.5">
               Every moment strengthens the network — no extra admin, ever.
             </p>
           </div>
@@ -238,11 +234,11 @@ export default async function HomePage() {
       {/* ===== Three worlds ===== */}
       <section className="mx-auto max-w-6xl px-6 pb-20 sm:pb-28">
         <div className="grid gap-5 md:grid-cols-3">
-          <div className="rounded-[20px] border border-border bg-white/80 p-7 shadow-lift">
-            <h3 className="font-display text-2xl text-bark">
+          <div className="border-border shadow-lift rounded-[20px] border bg-white/80 p-7">
+            <h3 className="font-display text-bark text-2xl">
               The river of moments
             </h3>
-            <p className="mt-3 text-sm leading-relaxed text-bark-light">
+            <p className="text-bark-light mt-3 text-sm leading-relaxed">
               Everything that happened, as it flowed. First meetings, growing
               trust, wobbles cleared over coffee — the real texture of your
               work, kept.
@@ -251,21 +247,21 @@ export default async function HomePage() {
           <div className="underground relative overflow-hidden rounded-[20px] p-7">
             <Filaments width={400} height={70} count={5} seed={13} />
             <Spores count={3} seed={13} />
-            <h3 className="relative font-display text-2xl text-soil-ink">
+            <h3 className="font-display text-soil-ink relative text-2xl">
               Under the soil
             </h3>
-            <p className="relative mt-3 text-sm leading-relaxed text-soil-ink-soft">
+            <p className="text-soil-ink-soft relative mt-3 text-sm leading-relaxed">
               The living network itself — breathing nodes, flowing threads.
-              Brighter means warmer, closer means stronger. Quiet
-              relationships fade so you notice before they&apos;re gone.
+              Brighter means warmer, closer means stronger. Quiet relationships
+              fade so you notice before they&apos;re gone.
             </p>
           </div>
-          <div className="rounded-[20px] border border-border bg-white/80 p-7 shadow-lift">
-            <h3 className="font-display text-2xl text-bark">Field notes</h3>
-            <p className="mt-3 text-sm leading-relaxed text-bark-light">
-              Patterns the network shows you — noticed, not measured. A
-              cluster quietly forming. A thread going quiet. A relationship
-              that depends entirely on one person.
+          <div className="border-border shadow-lift rounded-[20px] border bg-white/80 p-7">
+            <h3 className="font-display text-bark text-2xl">Field notes</h3>
+            <p className="text-bark-light mt-3 text-sm leading-relaxed">
+              Patterns the network shows you — noticed, not measured. A cluster
+              quietly forming. A thread going quiet. A relationship that depends
+              entirely on one person.
             </p>
           </div>
         </div>
@@ -274,7 +270,7 @@ export default async function HomePage() {
       {/* ===== Pricing ===== */}
       <section className="px-6 pb-24">
         <div className="mx-auto mb-10 max-w-lg text-center">
-          <h2 className="font-display text-4xl text-bark">
+          <h2 className="font-display text-bark text-4xl">
             One plan. Five pounds.
           </h2>
         </div>

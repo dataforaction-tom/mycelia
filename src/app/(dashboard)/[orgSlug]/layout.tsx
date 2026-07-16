@@ -54,17 +54,17 @@ export default async function OrgLayout({
         <div className="underground relative mb-8 overflow-hidden rounded-2xl p-6">
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="font-display text-xl text-soil-ink">
+              <p className="font-display text-soil-ink text-xl">
                 Your free trial has ended
               </p>
-              <p className="mt-1 max-w-xl text-sm text-soil-ink-soft">
-                Tending is read-only for now — everything you planted is
-                safe. Subscribe for £5 a month to keep tending.
+              <p className="text-soil-ink-soft mt-1 max-w-xl text-sm">
+                Tending is read-only for now — everything you planted is safe.
+                Subscribe for £5 a month to keep tending.
               </p>
             </div>
             <Link
               href={`/${orgSlug}/settings/billing`}
-              className="shrink-0 rounded-full bg-gradient-to-r from-green to-moss px-5 py-2.5 text-sm font-semibold text-white shadow-lift transition-all hover:brightness-105"
+              className="from-green-dark to-moss-dark shadow-lift shrink-0 rounded-full bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-105"
             >
               Subscribe — £5/month
             </Link>
@@ -73,15 +73,14 @@ export default async function OrgLayout({
       )}
 
       {state === "trialing" && daysLeft <= TRIAL_WARNING_DAYS && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber/30 bg-amber/10 px-4 py-3">
-          <p className="text-sm text-bark">
-            Your free trial ends in {daysLeft}{" "}
-            {daysLeft === 1 ? "day" : "days"} — £5 a month after, everything
-            included.
+        <div className="border-amber/30 bg-amber/10 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3">
+          <p className="text-bark text-sm">
+            Your free trial ends in {daysLeft} {daysLeft === 1 ? "day" : "days"}{" "}
+            — £5 a month after, everything included.
           </p>
           <Link
             href={`/${orgSlug}/settings/billing`}
-            className="text-sm font-medium text-amber-dark underline decoration-amber/50 underline-offset-2 transition-colors hover:text-bark"
+            className="text-amber-dark decoration-amber/50 hover:text-bark text-sm font-medium underline underline-offset-2 transition-colors"
           >
             Subscribe
           </Link>

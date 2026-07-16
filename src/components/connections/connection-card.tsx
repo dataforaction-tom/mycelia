@@ -21,7 +21,7 @@ interface Connection {
 const VITALITY_TEXT: Record<string, string> = {
   fresh: "text-moss-dark",
   active: "text-moss-dark",
-  fading: "text-amber",
+  fading: "text-amber-dark",
   dormant: "text-muted",
 };
 
@@ -56,7 +56,7 @@ export function ConnectionCard({
     <Link
       href={`/${orgSlug}/connections/${connection.id}`}
       className={cn(
-        "flex flex-col rounded-xl border border-border bg-surface p-4 shadow-lift transition-all hover:-translate-y-0.5 hover:border-terracotta/30 hover:shadow-hover",
+        "border-border bg-surface shadow-lift hover:border-terracotta/30 hover:shadow-hover flex flex-col rounded-xl border p-4 transition-all hover:-translate-y-0.5",
         // Dormant relationships rest: quieter, but never hidden
         vitality === "dormant" && "opacity-80 saturate-[.85]"
       )}
@@ -74,20 +74,20 @@ export function ConnectionCard({
           {initialsOf(connection.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-bark">
+          <h3 className="text-bark truncate font-semibold">
             {connection.name}
           </h3>
-          <p className="text-xs capitalize text-muted">{connection.type}</p>
+          <p className="text-muted text-xs capitalize">{connection.type}</p>
         </div>
       </div>
 
       {connection.threadSummary && (
-        <p className="mt-3 line-clamp-2 font-serif text-sm italic leading-relaxed text-bark-light">
+        <p className="text-bark-light mt-3 line-clamp-2 font-serif text-sm leading-relaxed italic">
           {connection.threadSummary}
         </p>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
+      <div className="border-border/60 mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs">
         <span
           className={cn(
             "flex items-center gap-1.5 font-medium",
@@ -100,7 +100,7 @@ export function ConnectionCard({
           />
           {vitalityLabel(connection.lastMomentDate)}
         </span>
-        <span className="font-mono text-muted">
+        <span className="text-muted font-mono">
           {connection.momentCount}{" "}
           {connection.momentCount === 1 ? "moment" : "moments"}
         </span>

@@ -93,6 +93,16 @@ function isPrivateIpv6(hostname: string): boolean {
     if (normalised === "::1") return true;
     // fc00::/7 — unique-local addresses start with fc or fd.
     if (normalised.startsWith("fc") || normalised.startsWith("fd")) return true;
+    // fe80::/10 link-local (includes the IPv6 metadata/router-local range).
+    if (
+      normalised.startsWith("fe8") ||
+      normalised.startsWith("fe9") ||
+      normalised.startsWith("fea") ||
+      normalised.startsWith("feb")
+    )
+      return true;
+    // ff00::/8 multicast.
+    if (normalised.startsWith("ff")) return true;
 
     // IPv4-mapped (::ffff:0:0/96) and NAT64 (64:ff9b::/96) both embed an IPv4
     // address in their last 32 bits. Attackers use these to wrap an internal
@@ -114,10 +124,10 @@ function isPrivateIpv6(hostname: string): boolean {
   }
 }
 
-// NOTE: this validates the hostname string, not the IP that fetch() ultimately
-// resolves to. A DNS-rebinding attacker (hostname public at create time, private
-// at delivery time) is therefore not caught here; a future hardening could
-// resolve the hostname and pin/re-check the IP at delivery.
+// NOTE: this validates the hostname *string*, not the IP that fetch() ultimately
+// resolves to. A DNS-based SSRF (public-looking hostname that resolves to a
+// private IP) is caught by `resolvedHostIsPublic` below, which must be called at
+// delivery time in addition to this string check.
 export function isSafeWebhookUrl(url: string): boolean {
   let parsed: URL;
   try {
@@ -148,10 +158,50 @@ export function isSafeWebhookUrl(url: string): boolean {
     return false;
   }
 
-  // Reject IP literals in private / loopback / link-local ranges.
-  if (isPrivateIpv4(hostname) || isPrivateIpv6(hostname)) {
+  // Reject IP literals in private / loopback / link-local ranges. Only run the
+  // IPv6 guard on actual IPv6 literals (which contain a colon) — otherwise
+  // ordinary domains such as "fcbarcelona.com" match the fc00::/7 prefix test
+  // and are wrongly rejected.
+  const looksLikeIpv6 = hostname.includes(":");
+  if (isPrivateIpv4(hostname) || (looksLikeIpv6 && isPrivateIpv6(hostname))) {
     return false;
   }
 
+  return true;
+}
+
+/**
+ * Resolve `hostname` and confirm no A/AAAA record points at a private,
+ * loopback, or link-local address. This is the DNS-based-SSRF guard that
+ * `isSafeWebhookUrl` (a pure string check) cannot provide: an attacker can
+ * register `https://public.example` that resolves to 169.254.169.254 or
+ * 127.0.0.1. Call this immediately before connecting.
+ *
+ * A narrow TOCTOU window remains between this lookup and the socket connect
+ * (a rebind could swap the record in between); fully closing it requires
+ * pinning the connection to the vetted IP via a custom dispatcher.
+ */
+export async function resolvedHostIsPublic(hostname: string): Promise<boolean> {
+  // Strip brackets from IPv6 literals; a literal is already fully covered by
+  // the string guard, so there is nothing to resolve.
+  const host = hostname.replace(/^\[/, "").replace(/\]$/, "");
+  if (isPrivateIpv4(host) || (host.includes(":") && isPrivateIpv6(host))) {
+    return false;
+  }
+
+  const { lookup } = await import("node:dns/promises");
+  let addresses: { address: string; family: number }[];
+  try {
+    addresses = await lookup(host, { all: true });
+  } catch {
+    // Unresolvable host cannot be a valid public destination.
+    return false;
+  }
+  if (addresses.length === 0) return false;
+
+  for (const { address, family } of addresses) {
+    if (family === 4 && isPrivateIpv4(address)) return false;
+    if (family === 6 && isPrivateIpv6(address.toLowerCase())) return false;
+  }
   return true;
 }

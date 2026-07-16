@@ -42,81 +42,77 @@ export default async function OrgDashboard({
 
   if (!org) return null;
 
-  const [connectionCount] = await db
-    .select({ value: count() })
-    .from(connections)
-    .where(eq(connections.organisationId, org.id));
-
-  const [momentCount] = await db
-    .select({ value: count() })
-    .from(moments)
-    .where(eq(moments.organisationId, org.id));
-
-  // Week-over-week trend
+  // Week-over-week / month windows for the trend + team-activity queries.
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [thisWeek] = await db
-    .select({ value: count() })
-    .from(moments)
-    .where(
-      and(
-        eq(moments.organisationId, org.id),
-        gte(moments.createdAt, oneWeekAgo)
+  // Level 1: every query here depends only on org.id, so they run
+  // concurrently instead of as ~9 serial Neon round-trips (was the dominant
+  // cost of the dashboard's TTFB).
+  const [
+    [connectionCount],
+    [momentCount],
+    [thisWeek],
+    [newThreadsThisWeek],
+    [lastWeek],
+    unresolvedObservations,
+    upcomingRemindersRaw,
+    recentMoments,
+    teamActivity,
+  ] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(connections)
+      .where(eq(connections.organisationId, org.id)),
+    db
+      .select({ value: count() })
+      .from(moments)
+      .where(eq(moments.organisationId, org.id)),
+    db
+      .select({ value: count() })
+      .from(moments)
+      .where(
+        and(
+          eq(moments.organisationId, org.id),
+          gte(moments.createdAt, oneWeekAgo)
+        )
+      ),
+    db
+      .select({ value: count() })
+      .from(connections)
+      .where(
+        and(
+          eq(connections.organisationId, org.id),
+          gte(connections.createdAt, oneWeekAgo)
+        )
+      ),
+    db
+      .select({ value: count() })
+      .from(moments)
+      .where(
+        and(
+          eq(moments.organisationId, org.id),
+          gte(moments.createdAt, twoWeeksAgo),
+          lt(moments.createdAt, oneWeekAgo)
+        )
+      ),
+    // Attention list: unresolved observations, most severe/recent first
+    db
+      .select()
+      .from(observations)
+      .where(
+        and(
+          eq(observations.organisationId, org.id),
+          inArray(observations.status, ["new", "seen"])
+        )
       )
-    );
-
-  const [newThreadsThisWeek] = await db
-    .select({ value: count() })
-    .from(connections)
-    .where(
-      and(
-        eq(connections.organisationId, org.id),
-        gte(connections.createdAt, oneWeekAgo)
-      )
-    );
-
-  const [lastWeek] = await db
-    .select({ value: count() })
-    .from(moments)
-    .where(
-      and(
-        eq(moments.organisationId, org.id),
-        gte(moments.createdAt, twoWeeksAgo),
-        lt(moments.createdAt, oneWeekAgo)
-      )
-    );
-
-  const trend =
-    thisWeek.value > lastWeek.value
-      ? "up"
-      : thisWeek.value < lastWeek.value
-        ? "down"
-        : "steady";
-
-  // Attention list: unresolved observations, most severe/recent first
-  const unresolvedObservations = await db
-    .select()
-    .from(observations)
-    .where(
-      and(
-        eq(observations.organisationId, org.id),
-        inArray(observations.status, ["new", "seen"])
-      )
-    )
-    .orderBy(desc(observations.createdAt));
-
-  unresolvedObservations.sort(
-    (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]
-  );
-  const attentionList = unresolvedObservations.slice(0, 5);
-
-  // Upcoming reminders: follow-ups still waiting on their due date, soonest
-  // first. These are deliberately excluded from every other surface until the
-  // cron flips them to "new" — this is the one place a pending one is visible.
-  const upcomingReminders = (
-    await db
+      .orderBy(desc(observations.createdAt)),
+    // Upcoming reminders: follow-ups still waiting on their due date, soonest
+    // first. Deliberately excluded from every other surface until the cron
+    // flips them to "new" — this is the one place a pending one is visible.
+    db
       .select({
         id: observations.id,
         note: observations.content,
@@ -132,9 +128,55 @@ export default async function OrgDashboard({
         )
       )
       .orderBy(asc(observations.dueAt))
-      .limit(5)
-  ).filter((reminder): reminder is typeof reminder & { dueAt: Date } =>
-    Boolean(reminder.dueAt)
+      .limit(5),
+    // Recent moments
+    db
+      .select({
+        id: moments.id,
+        content: moments.content,
+        source: moments.source,
+        createdAt: moments.createdAt,
+        eventDate: moments.eventDate,
+      })
+      .from(moments)
+      .where(eq(moments.organisationId, org.id))
+      .orderBy(desc(moments.createdAt))
+      .limit(6),
+    // Team activity: moments per author, last 30 days
+    db
+      .select({
+        authorId: moments.authorId,
+        name: users.name,
+        email: users.email,
+        momentCount: count(moments.id),
+      })
+      .from(moments)
+      .innerJoin(users, eq(users.id, moments.authorId))
+      .where(
+        and(
+          eq(moments.organisationId, org.id),
+          gte(moments.createdAt, thirtyDaysAgo)
+        )
+      )
+      .groupBy(moments.authorId, users.name, users.email)
+      .orderBy(desc(count(moments.id))),
+  ]);
+
+  const trend =
+    thisWeek.value > lastWeek.value
+      ? "up"
+      : thisWeek.value < lastWeek.value
+        ? "down"
+        : "steady";
+
+  unresolvedObservations.sort(
+    (a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]
+  );
+  const attentionList = unresolvedObservations.slice(0, 5);
+
+  const upcomingReminders = upcomingRemindersRaw.filter(
+    (reminder): reminder is typeof reminder & { dueAt: Date } =>
+      Boolean(reminder.dueAt)
   );
 
   const attentionConnectionIds = [
@@ -143,47 +185,54 @@ export default async function OrgDashboard({
       ...upcomingReminders.flatMap((r) => r.connections),
     ]),
   ];
-  const attentionConnections = attentionConnectionIds.length
-    ? await db
-        .select({ id: connections.id, name: connections.name, type: connections.type })
-        .from(connections)
-        .where(inArray(connections.id, attentionConnectionIds))
-    : [];
+
+  // Level 2: these two depend on level-1 results (attention IDs / recent
+  // moment IDs), but are independent of each other.
+  const [attentionConnections, recentMomentLinks] = await Promise.all([
+    attentionConnectionIds.length
+      ? db
+          .select({
+            id: connections.id,
+            name: connections.name,
+            type: connections.type,
+          })
+          .from(connections)
+          // Scope to this org: observation `connections` arrays are resolved
+          // here, so an org filter ensures a stray/foreign ID can never surface
+          // another org's connection name/type on the dashboard.
+          .where(
+            and(
+              inArray(connections.id, attentionConnectionIds),
+              eq(connections.organisationId, org.id)
+            )
+          )
+      : Promise.resolve([]),
+    recentMoments.length
+      ? db
+          .select({
+            momentId: momentConnections.momentId,
+            id: connections.id,
+            name: connections.name,
+            type: connections.type,
+          })
+          .from(momentConnections)
+          .innerJoin(
+            connections,
+            eq(momentConnections.connectionId, connections.id)
+          )
+          .where(
+            inArray(
+              momentConnections.momentId,
+              recentMoments.map((m) => m.id)
+            )
+          )
+      : Promise.resolve([]),
+  ]);
+
   const attentionConnectionById = new Map(
     attentionConnections.map((c) => [c.id, c])
   );
 
-  // Recent moments
-  const recentMoments = await db
-    .select({
-      id: moments.id,
-      content: moments.content,
-      source: moments.source,
-      createdAt: moments.createdAt,
-      eventDate: moments.eventDate,
-    })
-    .from(moments)
-    .where(eq(moments.organisationId, org.id))
-    .orderBy(desc(moments.createdAt))
-    .limit(6);
-
-  const recentMomentLinks = recentMoments.length
-    ? await db
-        .select({
-          momentId: momentConnections.momentId,
-          id: connections.id,
-          name: connections.name,
-          type: connections.type,
-        })
-        .from(momentConnections)
-        .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
-        .where(
-          inArray(
-            momentConnections.momentId,
-            recentMoments.map((m) => m.id)
-          )
-        )
-    : [];
   const recentMomentConnectionsByMoment = new Map<
     string,
     { id: string; name: string; type: string }[]
@@ -193,26 +242,6 @@ export default async function OrgDashboard({
     list.push({ id: link.id, name: link.name, type: link.type });
     recentMomentConnectionsByMoment.set(link.momentId, list);
   }
-
-  // Team activity: moments per author, last 30 days
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const teamActivity = await db
-    .select({
-      authorId: moments.authorId,
-      name: users.name,
-      email: users.email,
-      momentCount: count(moments.id),
-    })
-    .from(moments)
-    .innerJoin(users, eq(users.id, moments.authorId))
-    .where(
-      and(
-        eq(moments.organisationId, org.id),
-        gte(moments.createdAt, thirtyDaysAgo)
-      )
-    )
-    .groupBy(moments.authorId, users.name, users.email)
-    .orderBy(desc(count(moments.id)));
 
   // The pulse: one human sentence about how the ecosystem is moving
   const resting = thisWeek.value === 0;
@@ -241,14 +270,12 @@ export default async function OrgDashboard({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-4xl text-bark">
-              {pulseHeadline}
-            </h1>
-            <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-medium capitalize text-muted">
+            <h1 className="font-display text-bark text-4xl">{pulseHeadline}</h1>
+            <span className="border-border bg-surface text-muted rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize">
               {org.plan}
             </span>
           </div>
-          <p className="mt-2 text-muted">{pulseDetail}</p>
+          <p className="text-muted mt-2">{pulseDetail}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span data-tour="composer">
@@ -262,68 +289,67 @@ export default async function OrgDashboard({
         <div className="grid gap-4 sm:grid-cols-3" data-tour="stats">
           <Link
             href={`/${orgSlug}/connections`}
-            className="rounded-[18px] border border-border bg-white/75 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.1)] backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-hover"
+            className="border-border hover:shadow-hover rounded-[18px] border bg-white/75 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.1)] backdrop-blur transition-all hover:-translate-y-0.5"
           >
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
+            <p className="text-muted text-xs font-medium tracking-[0.12em] uppercase">
               Living threads
             </p>
-            <p className="mt-1 font-display text-3xl text-bark">
+            <p className="font-display text-bark mt-1 text-3xl">
               {connectionCount.value}
             </p>
             {newThreadsThisWeek.value > 0 && (
-              <p className="mt-1 text-xs text-green-dark">
+              <p className="text-green-dark mt-1 text-xs">
                 {newThreadsThisWeek.value} new this week
               </p>
             )}
           </Link>
           <Link
             href={`/${orgSlug}/moments`}
-            className="rounded-[18px] border border-border bg-white/75 p-5 shadow-[0_6px_24px_rgba(138,154,86,0.1)] backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-hover"
+            className="border-border hover:shadow-hover rounded-[18px] border bg-white/75 p-5 shadow-[0_6px_24px_rgba(138,154,86,0.1)] backdrop-blur transition-all hover:-translate-y-0.5"
           >
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
+            <p className="text-muted text-xs font-medium tracking-[0.12em] uppercase">
               Moments gathered
             </p>
-            <p className="mt-1 font-display text-3xl text-bark">
+            <p className="font-display text-bark mt-1 text-3xl">
               {momentCount.value}
             </p>
-            <p className="mt-1 text-xs text-green-dark">
+            <p className="text-green-dark mt-1 text-xs">
               {thisWeek.value} this week ↑
             </p>
           </Link>
           <Link
             href={`/${orgSlug}/observations`}
-            className="rounded-[18px] border border-amber/30 bg-gradient-to-br from-amber/15 to-white/80 p-5 backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-hover"
+            className="border-amber/30 from-amber/15 hover:shadow-hover rounded-[18px] border bg-gradient-to-br to-white/80 p-5 backdrop-blur transition-all hover:-translate-y-0.5"
           >
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-amber-dark">
+            <p className="text-amber-dark text-xs font-medium tracking-[0.12em] uppercase">
               Needs tending
             </p>
-            <p className="mt-1 font-display text-3xl text-bark">
+            <p className="font-display text-bark mt-1 text-3xl">
               {attentionList.length}
             </p>
-            <p className="mt-1 text-xs text-amber-dark">threads going quiet</p>
+            <p className="text-amber-dark mt-1 text-xs">threads going quiet</p>
           </Link>
         </div>
       )}
 
       {connectionCount.value === 0 ? (
         /* First-run invitation: an empty ecosystem is a beginning, not a blank */
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-8 shadow-lift sm:p-12">
+        <section className="border-border bg-surface shadow-lift relative overflow-hidden rounded-2xl border p-8 sm:p-12">
           <div className="relative z-10 max-w-lg">
-            <h2 className="font-display text-3xl text-bark">
+            <h2 className="font-display text-bark text-3xl">
               Every ecosystem starts with a single thread
             </h2>
-            <p className="mt-3 text-muted">
+            <p className="text-muted mt-3">
               Add the people, organisations, and communities you&apos;re in
               relationship with. Then record moments — conversations, meetings,
-              messages — and Tending will grow the living network between
-              them.
+              messages — and Tending will grow the living network between them.
             </p>
             <div className="mt-6">
               <AddConnectionButton label="Add your first connection" />
             </div>
           </div>
           <svg
-            className="pointer-events-none absolute -right-8 bottom-0 h-56 w-72 text-moss/15"
+            className="text-moss/15 pointer-events-none absolute -right-8 bottom-0 h-56 w-72"
             viewBox="0 0 280 200"
             fill="none"
             stroke="currentColor"
@@ -359,7 +385,7 @@ export default async function OrgDashboard({
           </div>
 
           <section className="flex min-h-0 flex-col gap-3" data-tour="whispers">
-            <h2 className="text-sm font-semibold text-bark">
+            <h2 className="text-bark text-sm font-semibold">
               Whispers from the network
             </h2>
             {attentionList.length > 0 ? (
@@ -377,8 +403,8 @@ export default async function OrgDashboard({
                   />
                 ))
             ) : (
-              <div className="rounded-xl border border-dashed border-border bg-surface/60 p-6 text-center">
-                <p className="text-sm text-muted">
+              <div className="border-border bg-surface/60 rounded-xl border border-dashed p-6 text-center">
+                <p className="text-muted text-sm">
                   Nothing to report yet — keep recording moments and patterns
                   will surface here.
                 </p>
@@ -387,7 +413,7 @@ export default async function OrgDashboard({
             {attentionList.length > 0 && (
               <Link
                 href={`/${orgSlug}/observations`}
-                className="text-sm font-medium text-terracotta transition-colors hover:text-terracotta-dark"
+                className="text-terracotta hover:text-terracotta-dark text-sm font-medium transition-colors"
               >
                 View all observations →
               </Link>
@@ -414,10 +440,10 @@ export default async function OrgDashboard({
           threaded view — the day's texture at a glance. */}
       <section>
         <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-xl text-bark">Fresh moments</h2>
+          <h2 className="font-display text-bark text-xl">Fresh moments</h2>
           <Link
             href={`/${orgSlug}/moments`}
-            className="text-sm font-medium text-terracotta transition-colors hover:text-terracotta-dark"
+            className="text-terracotta hover:text-terracotta-dark text-sm font-medium transition-colors"
           >
             View the river
           </Link>
@@ -434,11 +460,11 @@ export default async function OrgDashboard({
             ))}
           </div>
         ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-border bg-surface/60 p-8 text-center">
-            <p className="font-display text-lg text-bark">
+          <div className="border-border bg-surface/60 mt-4 rounded-xl border border-dashed p-8 text-center">
+            <p className="font-display text-bark text-lg">
               Nothing in the river yet
             </p>
-            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
+            <p className="text-muted mx-auto mt-1.5 max-w-sm text-sm">
               Record the first moment and the story starts.
             </p>
           </div>
@@ -447,16 +473,16 @@ export default async function OrgDashboard({
 
       {teamActivity.length > 0 && (
         <section>
-          <h2 className="font-display text-xl text-bark">Team activity</h2>
-          <p className="mt-1 text-sm text-muted">Last 30 days</p>
-          <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-white/80 shadow-lift">
+          <h2 className="font-display text-bark text-xl">Team activity</h2>
+          <p className="text-muted mt-1 text-sm">Last 30 days</p>
+          <div className="divide-border border-border shadow-lift mt-4 divide-y rounded-xl border bg-white/80">
             {teamActivity.map((member) => (
               <div
                 key={member.authorId}
                 className="flex items-center justify-between gap-3 p-3.5 text-sm"
               >
                 <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-moss/15 text-xs font-semibold text-moss-dark">
+                  <span className="bg-moss/15 text-moss-dark flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
                     {(member.name ?? member.email ?? "?")
                       .split(" ")
                       .map((part) => part[0])
@@ -464,11 +490,11 @@ export default async function OrgDashboard({
                       .toUpperCase()
                       .slice(0, 2)}
                   </span>
-                  <span className="truncate text-bark">
+                  <span className="text-bark truncate">
                     {member.name ?? member.email}
                   </span>
                 </span>
-                <span className="shrink-0 font-mono text-xs text-muted">
+                <span className="text-muted shrink-0 font-mono text-xs">
                   {member.momentCount}{" "}
                   {member.momentCount === 1 ? "moment" : "moments"}
                 </span>

@@ -19,7 +19,7 @@ interface Segment {
 
 function buildSegments(
   content: string,
-  entities: RecognisedEntity[],
+  entities: RecognisedEntity[]
 ): Segment[] {
   const segments: Segment[] = [];
   let pos = 0;
@@ -85,11 +85,11 @@ export function EntityRecognitionOverlay({
   const segments = buildSegments(value, entities);
 
   return (
-    <div className="relative min-h-[96px] rounded-2xl border border-border-strong bg-white">
+    <div className="border-border-strong relative min-h-[96px] rounded-2xl border bg-white">
       <div
         ref={overlayRef}
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap px-4 py-3 text-bark"
+        className="text-bark pointer-events-none absolute inset-0 overflow-hidden px-4 py-3 whitespace-pre-wrap"
         style={sharedTextStyle}
       >
         {value.length === 0 && placeholder && (
@@ -102,7 +102,7 @@ export function EntityRecognitionOverlay({
             </span>
           ) : (
             <span key={i}>{seg.text}</span>
-          ),
+          )
         )}
       </div>
       <textarea
@@ -112,7 +112,11 @@ export function EntityRecognitionOverlay({
         onScroll={syncScroll}
         onKeyDown={onKeyDown}
         rows={4}
-        className="relative w-full resize-none bg-transparent px-4 py-3 text-transparent caret-bark outline-none"
+        // The visible placeholder lives in the aria-hidden overlay above and
+        // the text is transparent, so the control has no accessible name of
+        // its own — expose the placeholder as its label.
+        aria-label={placeholder}
+        className="caret-bark focus-visible:ring-terracotta relative w-full resize-none rounded-2xl bg-transparent px-4 py-3 text-transparent outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
         style={sharedTextStyle}
         autoFocus
       />

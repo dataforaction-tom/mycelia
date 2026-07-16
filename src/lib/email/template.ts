@@ -34,10 +34,14 @@ const COLOURS = {
 };
 
 function escapeHtml(value: string): string {
+  // Escapes quotes too, so an escaped value is safe in an attribute context
+  // (e.g. href="...") and not only in element text. & must be replaced first.
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 export function renderEmail({
@@ -58,7 +62,7 @@ export function renderEmail({
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 6px 0;">
         <tr>
           <td style="border-radius:999px;background:${COLOURS.green};">
-            <a href="${cta.url}" style="display:inline-block;padding:13px 30px;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">${escapeHtml(cta.label)}</a>
+            <a href="${escapeHtml(cta.url)}" style="display:inline-block;padding:13px 30px;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">${escapeHtml(cta.label)}</a>
           </td>
         </tr>
       </table>`

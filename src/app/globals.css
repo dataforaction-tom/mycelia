@@ -17,13 +17,16 @@
   --surface-sunken: #f0e8da;
   --terracotta: #c97b47;
   --terracotta-light: #d9986c;
-  --terracotta-dark: #b06034;
+  /* The -dark accent tokens double as button/badge fills (white text on them)
+   * and as text/icon colours on light surfaces. Both uses need WCAG AA 4.5:1,
+   * so each is tuned to clear 4.5:1 against BOTH white and the cream surface. */
+  --terracotta-dark: #a45930;
   --moss: #8a9a56;
   --moss-light: #adb878;
-  --moss-dark: #6d7c42;
+  --moss-dark: #667240;
   --green: #6f9a4f; /* growth/deepening accent, distinct from moss */
   --green-light: #8aad6f;
-  --green-dark: #5c7f3f;
+  --green-dark: #54753c;
   --bark: #4c4028;
   --bark-light: #786a4c;
   --bark-dark: #33291a;
@@ -31,13 +34,19 @@
   --cream-dark: #ecdcae;
   --amber: #c9962e;
   --amber-light: #e0b563;
-  --amber-dark: #b07c1c;
+  --amber-dark: #8b6720;
   --sky: #6ba3be;
   --sky-light: #8ebfd4;
-  --muted: #988a66;
-  --muted-light: #a3966f;
+  --sky-dark: #4b7285;
+  /* Secondary text — darkened from the original #988a66/#a3966f, which sat at
+   * ~2.6–3.0:1 on cream (below AA). Still visibly de-emphasised, now readable. */
+  --muted: #6b6046;
+  --muted-light: #736852;
   --border: rgba(62, 50, 30, 0.07);
   --border-strong: rgba(62, 50, 30, 0.12);
+  /* Form-control boundary — solid so it reaches the 3:1 non-text contrast
+   * (WCAG 1.4.11) the translucent --border tokens cannot. */
+  --border-input: #8a7a55;
   --destructive: #c04b3d;
 
   /* The underground — where the network lives */
@@ -80,10 +89,12 @@
   --color-amber-dark: var(--amber-dark);
   --color-sky: var(--sky);
   --color-sky-light: var(--sky-light);
+  --color-sky-dark: var(--sky-dark);
   --color-muted: var(--muted);
   --color-muted-light: var(--muted-light);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-input: var(--border-input);
   --color-destructive: var(--destructive);
   --color-soil: var(--soil);
   --color-soil-mid: var(--soil-mid);

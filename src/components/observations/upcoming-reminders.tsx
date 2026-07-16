@@ -48,7 +48,9 @@ export function UpcomingReminders({
   // and stays gone across the router.refresh() (client state survives it).
   const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set());
 
-  const visible = reminders.filter((reminder) => !cancelledIds.has(reminder.id));
+  const visible = reminders.filter(
+    (reminder) => !cancelledIds.has(reminder.id)
+  );
   if (visible.length === 0) return null;
 
   async function cancel(id: string) {
@@ -83,18 +85,18 @@ export function UpcomingReminders({
 
   return (
     <section>
-      <h2 className="font-display text-xl text-bark">Upcoming reminders</h2>
-      <p className="mt-1 text-sm text-muted">
+      <h2 className="font-display text-bark text-xl">Upcoming reminders</h2>
+      <p className="text-muted mt-1 text-sm">
         Nudges waiting to surface — you&apos;ll be reminded when each comes due
       </p>
-      <ul className="mt-4 divide-y divide-border rounded-xl border border-amber/25 bg-gradient-to-br from-amber/[0.06] to-white/80 shadow-lift">
+      <ul className="divide-border border-amber/25 from-amber/[0.06] shadow-lift mt-4 divide-y rounded-xl border bg-gradient-to-br to-white/80">
         {visible.map((reminder) => (
           <li
             key={reminder.id}
             className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3.5"
           >
             <span aria-hidden="true">🔔</span>
-            <span className="min-w-0 flex-1 text-sm text-bark">
+            <span className="text-bark min-w-0 flex-1 text-sm">
               {reminder.note}
               {reminder.connections.length > 0 && (
                 <span className="text-muted">
@@ -103,7 +105,7 @@ export function UpcomingReminders({
                     <span key={connection.id}>
                       <Link
                         href={`/${orgSlug}/connections/${connection.id}`}
-                        className="text-terracotta-dark underline decoration-terracotta/40 decoration-dotted underline-offset-2 hover:decoration-terracotta"
+                        className="text-terracotta-dark decoration-terracotta/40 hover:decoration-terracotta underline decoration-dotted underline-offset-2"
                       >
                         {connection.name}
                       </Link>
@@ -113,7 +115,7 @@ export function UpcomingReminders({
                 </span>
               )}
             </span>
-            <span className="shrink-0 rounded-full bg-amber/15 px-2.5 py-0.5 text-xs font-medium text-amber-dark">
+            <span className="bg-amber/15 text-amber-dark shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium">
               {dueLabel(reminder.dueAt)}
             </span>
             <button
@@ -121,7 +123,7 @@ export function UpcomingReminders({
               onClick={() => cancel(reminder.id)}
               aria-label="Cancel reminder"
               title="Cancel reminder"
-              className="shrink-0 text-muted transition-colors hover:text-terracotta-dark"
+              className="text-muted hover:text-terracotta-dark shrink-0 transition-colors"
             >
               ✕
             </button>

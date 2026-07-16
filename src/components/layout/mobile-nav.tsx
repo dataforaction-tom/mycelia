@@ -41,17 +41,17 @@ function MobileNav({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
-            "fixed inset-0 z-50 bg-bark/40 backdrop-blur-sm md:hidden",
+            "bg-bark/40 fixed inset-0 z-50 backdrop-blur-sm md:hidden",
             "data-[state=open]:animate-in data-[state=open]:fade-in-0",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
           )}
         />
         <DialogPrimitive.Content
           className={cn(
-            "fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col bg-surface-sunken shadow-xl shadow-bark/10 md:hidden",
+            "bg-surface-sunken shadow-bark/10 fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col shadow-xl md:hidden",
             "data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
             "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left",
-            "duration-300",
+            "duration-300"
           )}
         >
           <DialogPrimitive.Title className="sr-only">
@@ -62,8 +62,8 @@ function MobileNav({
           </DialogPrimitive.Description>
 
           {/* Header */}
-          <div className="flex h-12 items-center justify-end border-b border-border px-4">
-            <DialogPrimitive.Close className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-bark transition-colors hover:bg-cream-dark">
+          <div className="border-border flex h-12 items-center justify-end border-b px-4">
+            <DialogPrimitive.Close className="text-bark hover:bg-cream-dark inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -97,10 +97,10 @@ function MobileNav({
           </nav>
 
           {/* User section */}
-          <div className="border-t border-border p-3">
+          <div className="border-border border-t p-3">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface/70 focus:outline-none">
+                <button className="hover:bg-surface/70 focus-visible:ring-terracotta flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white">
                   <Avatar className="h-8 w-8">
                     {userImage && (
                       <AvatarImage src={userImage} alt={userName ?? ""} />
@@ -118,12 +118,12 @@ function MobileNav({
                   </Avatar>
                   <div className="flex min-w-0 flex-col">
                     {userName && (
-                      <span className="truncate text-sm font-medium text-bark">
+                      <span className="text-bark truncate text-sm font-medium">
                         {userName}
                       </span>
                     )}
                     {userEmail && (
-                      <span className="truncate text-xs text-muted">
+                      <span className="text-muted truncate text-xs">
                         {userEmail}
                       </span>
                     )}
@@ -136,11 +136,11 @@ function MobileNav({
                   align="start"
                   side="top"
                   sideOffset={8}
-                  className="z-50 min-w-[200px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
+                  className="border-border bg-surface shadow-hover z-50 min-w-[200px] rounded-xl border p-1.5"
                 >
                   <DropdownMenu.Item
                     onSelect={() => signOut({ callbackUrl: "/" })}
-                    className="cursor-pointer rounded-md px-3 py-2 text-sm text-bark outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+                    className="text-bark hover:bg-cream-dark focus:bg-cream-dark cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
                   >
                     Sign out
                   </DropdownMenu.Item>

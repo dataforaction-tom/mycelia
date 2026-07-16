@@ -70,19 +70,22 @@ export function NewConnectionSuggestionsToggle({
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-6">
+    <div className="border-border space-y-3 border-t pt-6">
       <div>
-        <h2 className="text-sm font-semibold text-bark">
+        <h2 className="text-bark text-sm font-semibold">
           New connections in moments
         </h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="text-muted mt-1 text-sm">
           When a moment mentions someone who isn&apos;t a connection yet, how
           should the composer treat the suggestion?
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
@@ -99,14 +102,14 @@ export function NewConnectionSuggestionsToggle({
               aria-pressed={selected}
               className={`rounded-lg border p-4 text-left transition-colors disabled:opacity-60 ${
                 selected
-                  ? "border-terracotta bg-terracotta/5 ring-1 ring-terracotta"
-                  : "border-border bg-white hover:border-terracotta/50"
+                  ? "border-terracotta bg-terracotta/5 ring-terracotta ring-1"
+                  : "border-border hover:border-terracotta/50 bg-white"
               }`}
             >
-              <span className="block text-sm font-medium text-bark">
+              <span className="text-bark block text-sm font-medium">
                 {option.label}
               </span>
-              <span className="mt-1 block text-xs text-muted">
+              <span className="text-muted mt-1 block text-xs">
                 {option.hint}
               </span>
             </button>

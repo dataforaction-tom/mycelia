@@ -141,18 +141,18 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
     <div className="space-y-8">
       {/* One-time secret callout after a successful create. */}
       {newSecret && (
-        <div className="rounded-xl border border-amber/40 bg-amber/10 p-4">
-          <p className="text-sm font-semibold text-bark">
+        <div className="border-amber/40 bg-amber/10 rounded-xl border p-4">
+          <p className="text-bark text-sm font-semibold">
             Copy this key now — it won&apos;t be shown again
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 overflow-x-auto rounded-lg border border-border bg-white px-3 py-2 font-mono text-xs text-bark">
+            <code className="border-border text-bark flex-1 overflow-x-auto rounded-lg border bg-white px-3 py-2 font-mono text-xs">
               {newSecret}
             </code>
             <button
               type="button"
               onClick={copySecret}
-              className="shrink-0 rounded-lg border border-border bg-white px-3 py-2 text-sm text-bark hover:bg-cream"
+              className="border-border text-bark hover:bg-cream shrink-0 rounded-lg border bg-white px-3 py-2 text-sm"
             >
               {copied ? "Copied" : "Copy"}
             </button>
@@ -160,7 +160,7 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
           <button
             type="button"
             onClick={() => setNewSecret(null)}
-            className="mt-3 text-xs text-muted hover:text-bark"
+            className="text-muted hover:text-bark mt-3 text-xs"
           >
             Dismiss
           </button>
@@ -170,16 +170,16 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
       {/* Existing keys. */}
       <section className="space-y-3">
         {listError && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
             {listError}
           </div>
         )}
 
         {loading ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <p className="text-muted text-sm">Loading…</p>
         ) : keys.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center">
-            <p className="text-sm text-muted">
+          <div className="border-border rounded-xl border border-dashed bg-white p-8 text-center">
+            <p className="text-muted text-sm">
               No API keys yet. Create one below to authenticate API requests.
             </p>
           </div>
@@ -188,22 +188,22 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
             {keys.map((key) => (
               <li
                 key={key.id}
-                className="rounded-xl border border-border bg-surface p-4 shadow-lift"
+                className="border-border bg-surface shadow-lift rounded-xl border p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-sm font-medium text-bark">
+                      <p className="text-bark truncate text-sm font-medium">
                         {key.name}
                       </p>
-                      <span className="rounded-full bg-moss/15 px-2 py-0.5 text-xs text-moss">
+                      <span className="bg-moss/15 text-moss-dark rounded-full px-2 py-0.5 text-xs">
                         {SCOPE_LABELS[key.scope]}
                       </span>
                     </div>
-                    <p className="mt-2 font-mono text-sm text-muted">
+                    <p className="text-muted mt-2 font-mono text-sm">
                       {key.prefix}…
                     </p>
-                    <p className="mt-2 text-xs text-muted">
+                    <p className="text-muted mt-2 text-xs">
                       {key.lastUsedAt
                         ? `Last used: ${new Date(
                             key.lastUsedAt
@@ -218,7 +218,7 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
                       type="button"
                       onClick={() => handleRevoke(key)}
                       disabled={busyId === key.id}
-                      className="text-xs text-destructive hover:opacity-80 disabled:opacity-50"
+                      className="text-destructive text-xs hover:opacity-80 disabled:opacity-50"
                     >
                       Revoke
                     </button>
@@ -231,11 +231,14 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
       </section>
 
       {/* Create key. */}
-      <section className="rounded-xl border border-border bg-surface p-5 shadow-lift">
-        <h2 className="text-sm font-semibold text-bark">Create key</h2>
+      <section className="border-border bg-surface shadow-lift rounded-xl border p-5">
+        <h2 className="text-bark text-sm font-semibold">Create key</h2>
         <form onSubmit={handleCreate} className="mt-4 space-y-4">
           <div>
-            <label htmlFor="api-key-name" className="mb-1 block text-sm text-bark">
+            <label
+              htmlFor="api-key-name"
+              className="text-bark mb-1 block text-sm"
+            >
               Name
             </label>
             <input
@@ -253,7 +256,7 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
           <div>
             <label
               htmlFor="api-key-scope"
-              className="mb-1 block text-sm text-bark"
+              className="text-bark mb-1 block text-sm"
             >
               Scope
             </label>
@@ -269,7 +272,7 @@ export function ApiKeyManager({ organisationId }: ApiKeyManagerProps) {
           </div>
 
           {formError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
               {formError}
             </div>
           )}

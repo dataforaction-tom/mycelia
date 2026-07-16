@@ -26,20 +26,24 @@ export default async function BillingPage({
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-bark">Billing</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="font-display text-bark text-2xl">Billing</h1>
+        <p className="text-muted mt-1 text-sm">
           One flat plan — £5 a month, everything included
         </p>
       </div>
 
       {success && (
-        <div className="rounded-lg border border-moss/30 bg-moss/10 p-4 text-sm text-moss-dark">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-moss/30 bg-moss/10 text-moss-dark rounded-lg border p-4 text-sm"
+        >
           Your subscription has been activated successfully.
         </div>
       )}
 
       {cancelled && (
-        <div className="rounded-lg border border-amber/30 bg-amber/10 p-4 text-sm text-bark">
+        <div className="border-amber/30 bg-amber/10 text-bark rounded-lg border p-4 text-sm">
           Checkout was cancelled. No charges were made.
         </div>
       )}

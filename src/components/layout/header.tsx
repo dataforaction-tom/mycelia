@@ -12,14 +12,14 @@ function Header({ orgName = "tending", onMenuClick }: HeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-cream px-4",
-        "md:hidden",
+        "border-border bg-cream sticky top-0 z-40 flex h-14 items-center gap-3 border-b px-4",
+        "md:hidden"
       )}
     >
       <button
         type="button"
         onClick={onMenuClick}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-bark transition-colors hover:bg-cream-dark"
+        className="text-bark hover:bg-cream-dark inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
         aria-label="Open navigation menu"
       >
         <svg
@@ -40,7 +40,7 @@ function Header({ orgName = "tending", onMenuClick }: HeaderProps) {
       </button>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-terracotta to-amber text-white">
+        <div className="from-terracotta to-amber flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br text-white">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"
@@ -61,7 +61,7 @@ function Header({ orgName = "tending", onMenuClick }: HeaderProps) {
             <circle cx="12" cy="3" r="1.4" fill="currentColor" stroke="none" />
           </svg>
         </div>
-        <span className="font-display text-base font-semibold text-bark">
+        <span className="font-display text-bark text-base font-semibold">
           {orgName}
         </span>
       </div>

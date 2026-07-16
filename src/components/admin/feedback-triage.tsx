@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import type {
-  FeedbackStatus,
-  FeedbackPriority,
-} from "@/lib/admin/feedback";
+import type { FeedbackStatus, FeedbackPriority } from "@/lib/admin/feedback";
 
 const STATUS_OPTIONS: FeedbackStatus[] = [
   "new",
@@ -80,12 +77,19 @@ export function FeedbackTriage({
   return (
     <div className="space-y-4">
       {notice && (
-        <div className="rounded-lg border border-moss/30 bg-moss/10 px-3 py-2 text-sm text-bark">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-moss/30 bg-moss/10 text-bark rounded-lg border px-3 py-2 text-sm"
+        >
           {notice}
         </div>
       )}
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm"
+        >
           {error}
         </div>
       )}
@@ -97,7 +101,9 @@ export function FeedbackTriage({
             id="status"
             className={SELECT_CLASS}
             value={status}
-            onChange={(event) => setStatus(event.target.value as FeedbackStatus)}
+            onChange={(event) =>
+              setStatus(event.target.value as FeedbackStatus)
+            }
           >
             {STATUS_OPTIONS.map((value) => (
               <option key={value} value={value}>

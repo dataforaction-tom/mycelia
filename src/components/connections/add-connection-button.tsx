@@ -18,8 +18,8 @@ export function AddConnectionButton({
       onClick={openConnectionComposer}
       className={
         variant === "primary"
-          ? "rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
-          : "rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-bark transition-colors hover:bg-cream-dark"
+          ? "bg-terracotta shadow-lift hover:bg-terracotta-dark hover:shadow-hover rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
+          : "border-border bg-surface text-bark hover:bg-cream-dark rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
       }
     >
       {label}

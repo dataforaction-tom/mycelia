@@ -28,9 +28,9 @@ interface ObservationCardProps {
 }
 
 const severityColors: Record<string, string> = {
-  gentle: "bg-sky/10 text-sky",
-  noteworthy: "bg-amber/10 text-amber",
-  important: "bg-terracotta/10 text-terracotta",
+  gentle: "bg-sky/10 text-sky-dark",
+  noteworthy: "bg-amber/10 text-amber-dark",
+  important: "bg-terracotta/10 text-terracotta-dark",
 };
 
 // A soft severity accent along the card's left edge — colour does the
@@ -102,10 +102,10 @@ export function ObservationCard({
         <Filaments width={400} height={70} count={5} seed={id.length} />
         <Spores count={3} seed={id.length} />
         <div className="relative">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-soil-ink-soft">
+          <p className="text-soil-ink-soft text-xs font-medium tracking-[0.12em] uppercase">
             Emerging pattern
           </p>
-          <p className="mt-2 font-display text-2xl leading-snug text-soil-ink">
+          <p className="font-display text-soil-ink mt-2 text-2xl leading-snug">
             {content}
           </p>
 
@@ -113,7 +113,7 @@ export function ObservationCard({
             <div className="mt-4 flex flex-wrap gap-1.5">
               {connections.map((c) => (
                 <Link key={c.id} href={`/${orgSlug}/connections/${c.id}`}>
-                  <span className="inline-flex cursor-pointer items-center rounded-full border border-spore/25 bg-spore/10 px-2.5 py-0.5 text-xs text-soil-ink transition-colors hover:bg-spore/20">
+                  <span className="border-spore/25 bg-spore/10 text-soil-ink hover:bg-spore/20 inline-flex cursor-pointer items-center rounded-full border px-2.5 py-0.5 text-xs transition-colors">
                     {c.name}
                   </span>
                 </Link>
@@ -121,7 +121,7 @@ export function ObservationCard({
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-2 text-xs text-soil-ink-soft">
+          <div className="text-soil-ink-soft mt-4 flex items-center gap-2 text-xs">
             <span className="capitalize">{type.replace("_", " ")}</span>
             {isResolved && (
               <span className="capitalize">
@@ -130,7 +130,11 @@ export function ObservationCard({
             )}
           </div>
 
-          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="text-destructive mt-2 text-sm">
+              {error}
+            </p>
+          )}
 
           {!isResolved && (
             <div className="mt-4 flex gap-2">
@@ -138,7 +142,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => updateStatus("acted_on")}
                 disabled={isSubmitting}
-                className="rounded-full border border-spore/35 px-3 py-1.5 text-xs font-medium text-spore transition-colors hover:bg-spore/10 disabled:opacity-50"
+                className="border-spore/35 text-spore hover:bg-spore/10 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               >
                 Mark as acted on
               </button>
@@ -146,7 +150,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => updateStatus("dismissed")}
                 disabled={isSubmitting}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-soil-ink-soft transition-colors hover:text-soil-ink disabled:opacity-50"
+                className="text-soil-ink-soft hover:text-soil-ink rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               >
                 Dismiss
               </button>
@@ -159,10 +163,10 @@ export function ObservationCard({
 
   return (
     <div
-      className={`rounded-xl border border-border bg-white/85 p-4 shadow-lift border-l-2 ${severityAccents[severity] ?? "border-l-border"}`}
+      className={`border-border shadow-lift rounded-xl border border-l-2 bg-white/85 p-4 ${severityAccents[severity] ?? "border-l-border"}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-bark">{content}</p>
+        <p className="text-bark text-sm">{content}</p>
         <Badge className={severityColors[severity] ?? ""}>{severity}</Badge>
       </div>
 
@@ -181,7 +185,7 @@ export function ObservationCard({
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+      <div className="text-muted mt-3 flex items-center gap-2 text-xs">
         <span className="capitalize">{type.replace("_", " ")}</span>
         {isResolved && (
           <span className="capitalize">
@@ -190,7 +194,11 @@ export function ObservationCard({
         )}
       </div>
 
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive mt-2 text-sm">
+          {error}
+        </p>
+      )}
 
       {!isResolved && (
         <div className="mt-3 space-y-2">
@@ -201,13 +209,13 @@ export function ObservationCard({
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="What did you do about this? (optional)"
-                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+                className="border-border bg-surface text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta flex-1 rounded-lg border px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => updateStatus("acted_on", response || undefined)}
                 disabled={isSubmitting}
-                className="shrink-0 rounded-full bg-moss px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+                className="bg-moss hover:bg-moss-dark shrink-0 rounded-full px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? "Saving…" : "Save"}
               </button>
@@ -218,7 +226,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => setShowResponseInput(true)}
                 disabled={isSubmitting}
-                className="rounded-full border border-moss/40 px-3 py-1.5 text-xs font-medium text-moss-dark transition-colors hover:bg-moss/10 disabled:opacity-50"
+                className="border-moss/40 text-moss-dark hover:bg-moss/10 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               >
                 Mark as acted on
               </button>
@@ -226,7 +234,7 @@ export function ObservationCard({
                 type="button"
                 onClick={() => updateStatus("dismissed")}
                 disabled={isSubmitting}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-cream-dark hover:text-bark disabled:opacity-50"
+                className="text-muted hover:bg-cream-dark hover:text-bark rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               >
                 Dismiss
               </button>

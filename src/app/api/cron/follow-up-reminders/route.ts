@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { observations } from "@/lib/db/schema";
+import { isValidBearer } from "@/lib/auth/timing";
 import { successResponse, errorResponse } from "@/lib/utils/api";
 import { and, eq, lte } from "drizzle-orm";
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (!secret) {
     return errorResponse("Cron is not configured", 503);
   }
-  if (request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isValidBearer(request.headers.get("authorization"), secret)) {
     return errorResponse("Unauthorized", 401);
   }
 

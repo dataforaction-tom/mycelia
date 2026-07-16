@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -8,6 +9,7 @@ import {
   spaces,
 } from "@/lib/db/schema";
 import { strengthenLinksForMoment } from "@/lib/network/infer-links";
+import { ownedConnectionIds } from "@/lib/db/scope";
 import { inferQualitiesForMoment } from "@/lib/ai/quality-inference";
 import { synthesizeThread } from "@/lib/ai/thread-synthesis";
 import { emitEvent } from "@/lib/webhooks/emit";
@@ -29,11 +31,15 @@ type MomentRow = typeof moments.$inferSelect;
  * callers is `actor` — a user for session writes, a system/API-key actor for
  * integration writes.
  *
- * Failure semantics mirror the original session route exactly:
- * - `strengthenLinksForMoment` is deterministic with no external dependency,
- *   so it is allowed to throw and fail the whole request like any DB write.
- * - Quality inference, thread synthesis, and webhook emission each get their
- *   own try/catch and must NEVER fail moment creation.
+ * Failure semantics:
+ * - The connection link + `strengthenLinksForMoment` run inline on the
+ *   request path (fast, deterministic, and needed so the moment is
+ *   consistently linked the instant it's created); they may throw and fail
+ *   the request like any DB write.
+ * - The latency-heavy best-effort work (quality inference, thread synthesis,
+ *   and webhook emission — 1 + N AI/network round-trips) is deferred via
+ *   `after()` so it runs AFTER the response is sent. It must never fail
+ *   moment creation, and each step keeps its own try/catch.
  */
 export async function applyMomentSideEffects({
   organisationId,
@@ -46,7 +52,22 @@ export async function applyMomentSideEffects({
   connectionIds: string[];
   actor: EnvelopeActor;
 }): Promise<void> {
-  // Link connections if provided
+  // Cross-tenant write guard: only ever operate on connections that belong
+  // to this org. A caller (session route or API-key route) could otherwise
+  // supply another org's connection UUIDs, which would corrupt/read their
+  // data via the link, quality-inference, and thread-synthesis writes below.
+  if (connectionIds.length) {
+    const owned = await ownedConnectionIds(connectionIds, organisationId);
+    if (owned.length !== connectionIds.length) {
+      console.warn(
+        `Dropped ${connectionIds.length - owned.length} connection ID(s) not in org ${organisationId} while applying side effects for moment ${moment.id}`
+      );
+    }
+    connectionIds = owned;
+  }
+
+  // Link connections + deterministic strengthening — kept on the request
+  // path so the moment is linked as soon as it exists.
   if (connectionIds.length) {
     await db.insert(momentConnections).values(
       connectionIds.map((connectionId) => ({
@@ -55,12 +76,42 @@ export async function applyMomentSideEffects({
       }))
     );
 
-    // Deterministic, no external dependency — allowed to fail the
-    // whole request like any other DB write.
     if (connectionIds.length >= 2) {
       await strengthenLinksForMoment(organisationId, connectionIds);
     }
+  }
 
+  // Defer the expensive best-effort work off the request path so "save
+  // moment" returns immediately instead of blocking on the AI calls.
+  const linkedConnectionIds = connectionIds;
+  after(() =>
+    runDeferredMomentSideEffects({
+      organisationId,
+      moment,
+      connectionIds: linkedConnectionIds,
+      actor,
+    })
+  );
+}
+
+/**
+ * The deferred, best-effort half of {@link applyMomentSideEffects}: infer
+ * qualities, synthesise per-connection threads, and emit outbound webhooks.
+ * Runs after the response via `after()`; never throws (every step is
+ * individually guarded) so a failure here cannot affect the created moment.
+ */
+async function runDeferredMomentSideEffects({
+  organisationId,
+  moment,
+  connectionIds,
+  actor,
+}: {
+  organisationId: string;
+  moment: MomentRow;
+  connectionIds: string[];
+  actor: EnvelopeActor;
+}): Promise<void> {
+  if (connectionIds.length) {
     // Best-effort — depends on an optional external AI service that
     // predictably has no credentials in many dev/test environments,
     // so it gets its own try/catch and must never fail moment creation.
@@ -140,54 +191,56 @@ export async function applyMomentSideEffects({
       console.error("Quality inference failed for moment", moment.id, aiError);
     }
 
-    // Best-effort, independent of the quality-inference call above —
-    // one connection's thread-synthesis failure shouldn't skip
-    // synthesis for the moment's other linked connections either.
-    for (const connectionId of connectionIds) {
-      try {
-        const [connectionRow] = await db
-          .select({
-            name: connections.name,
-            threadSummary: connections.threadSummary,
-          })
-          .from(connections)
-          .where(eq(connections.id, connectionId))
-          .limit(1);
+    // Best-effort, and each connection's synthesis is independent — run them
+    // concurrently rather than serially (they're the dominant cost of the
+    // deferred work). One connection's failure never skips the others.
+    await Promise.all(
+      connectionIds.map(async (connectionId) => {
+        try {
+          const [connectionRow] = await db
+            .select({
+              name: connections.name,
+              threadSummary: connections.threadSummary,
+            })
+            .from(connections)
+            .where(eq(connections.id, connectionId))
+            .limit(1);
 
-        if (!connectionRow) continue;
+          if (!connectionRow) return;
 
-        const recentMomentsDesc = await db
-          .select({
-            content: moments.content,
-            eventDate: moments.eventDate,
-            createdAt: moments.createdAt,
-          })
-          .from(momentConnections)
-          .innerJoin(moments, eq(momentConnections.momentId, moments.id))
-          .where(eq(momentConnections.connectionId, connectionId))
-          .orderBy(desc(moments.createdAt))
-          .limit(20);
+          const recentMomentsDesc = await db
+            .select({
+              content: moments.content,
+              eventDate: moments.eventDate,
+              createdAt: moments.createdAt,
+            })
+            .from(momentConnections)
+            .innerJoin(moments, eq(momentConnections.momentId, moments.id))
+            .where(eq(momentConnections.connectionId, connectionId))
+            .orderBy(desc(moments.createdAt))
+            .limit(20);
 
-        if (recentMomentsDesc.length < 2) continue;
+          if (recentMomentsDesc.length < 2) return;
 
-        const threadSummary = await synthesizeThread(
-          connectionRow.name,
-          connectionRow.threadSummary,
-          recentMomentsDesc.slice().reverse()
-        );
+          const threadSummary = await synthesizeThread(
+            connectionRow.name,
+            connectionRow.threadSummary,
+            recentMomentsDesc.slice().reverse()
+          );
 
-        await db
-          .update(connections)
-          .set({ threadSummary, threadUpdatedAt: new Date() })
-          .where(eq(connections.id, connectionId));
-      } catch (aiError) {
-        console.error(
-          "Thread synthesis failed for connection",
-          connectionId,
-          aiError
-        );
-      }
-    }
+          await db
+            .update(connections)
+            .set({ threadSummary, threadUpdatedAt: new Date() })
+            .where(eq(connections.id, connectionId));
+        } catch (aiError) {
+          console.error(
+            "Thread synthesis failed for connection",
+            connectionId,
+            aiError
+          );
+        }
+      })
+    );
   }
 
   // Best-effort — emit an outbound webhook for subscribers. Its own

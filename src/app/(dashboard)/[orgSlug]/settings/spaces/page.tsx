@@ -31,14 +31,14 @@ export default async function SpacesSettingsPage({
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-bark">Spaces</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="text-bark text-2xl font-bold">Spaces</h1>
+          <p className="text-muted mt-1 text-sm">
             Group connections and moments around a project, idea, or theme
           </p>
         </div>
         <Link
           href={`/${orgSlug}/settings/spaces/new`}
-          className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
+          className="bg-terracotta hover:bg-terracotta-dark rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
           New space
         </Link>

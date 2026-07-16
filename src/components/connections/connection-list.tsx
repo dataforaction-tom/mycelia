@@ -33,10 +33,10 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
 
   if (connections.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface/60 p-12 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10">
+      <div className="border-border bg-surface/60 flex flex-col items-center rounded-xl border border-dashed p-12 text-center">
+        <div className="bg-terracotta/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
           <svg
-            className="h-6 w-6 text-terracotta"
+            className="text-terracotta h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -49,16 +49,14 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-bark">
-          No connections yet
-        </h3>
-        <p className="mt-2 max-w-sm text-sm text-muted">
+        <h3 className="text-bark text-lg font-semibold">No connections yet</h3>
+        <p className="text-muted mt-2 max-w-sm text-sm">
           Every relationship starts somewhere. Add your first connection to
           begin mapping your relational ecosystem.
         </p>
         <Link
           href={`/${orgSlug}/connections/new`}
-          className="mt-6 rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark"
+          className="bg-terracotta hover:bg-terracotta-dark mt-6 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
           Add your first connection
         </Link>
@@ -75,12 +73,12 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Find someone…"
-          className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border bg-surface text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
         />
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border bg-surface text-bark focus:border-terracotta focus:ring-terracotta rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
         >
           <option value="">All types</option>
           <option value="person">Person</option>
@@ -102,7 +100,7 @@ export function ConnectionList({ connections, orgSlug }: ConnectionListProps) {
       </div>
 
       {filtered.length === 0 && connections.length > 0 && (
-        <p className="text-center text-sm text-muted">
+        <p className="text-muted text-center text-sm">
           No connections match your search.
         </p>
       )}

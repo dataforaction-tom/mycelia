@@ -58,8 +58,8 @@ export default async function SpaceDetailPage({
     .where(
       and(
         eq(connectionSpaces.spaceId, spaceId),
-        eq(connections.organisationId, org.id),
-      ),
+        eq(connections.organisationId, org.id)
+      )
     )
     .orderBy(desc(connections.updatedAt));
 
@@ -84,7 +84,7 @@ export default async function SpaceDetailPage({
     momentStats.map((s) => [
       s.connectionId,
       { count: s.momentCount, lastDate: s.lastMomentDate },
-    ]),
+    ])
   );
 
   const connectionsWithStats = linkedConnections.map((c) => ({
@@ -103,7 +103,9 @@ export default async function SpaceDetailPage({
       eventDate: moments.eventDate,
     })
     .from(moments)
-    .where(and(eq(moments.spaceId, spaceId), eq(moments.organisationId, org.id)))
+    .where(
+      and(eq(moments.spaceId, spaceId), eq(moments.organisationId, org.id))
+    )
     .orderBy(desc(moments.createdAt));
 
   const momentIds = spaceMoments.map((m) => m.id);
@@ -118,8 +120,16 @@ export default async function SpaceDetailPage({
           type: connections.type,
         })
         .from(momentConnections)
-        .innerJoin(connections, eq(momentConnections.connectionId, connections.id))
-        .where(inArray(momentConnections.momentId, momentIds))
+        .innerJoin(
+          connections,
+          eq(momentConnections.connectionId, connections.id)
+        )
+        .where(
+          and(
+            inArray(momentConnections.momentId, momentIds),
+            eq(connections.organisationId, org.id)
+          )
+        )
     : [];
 
   const connectionsByMoment = new Map<
@@ -150,7 +160,7 @@ export default async function SpaceDetailPage({
       <div>
         <Link
           href={`/${orgSlug}/spaces`}
-          className="text-sm text-muted transition-colors hover:text-bark"
+          className="text-muted hover:text-bark text-sm transition-colors"
         >
           ← All spaces
         </Link>
@@ -159,9 +169,9 @@ export default async function SpaceDetailPage({
           <div className="flex items-center gap-4">
             <SpaceIcon seed={space.id} />
             <div>
-              <h1 className="font-display text-4xl text-bark">{space.name}</h1>
+              <h1 className="font-display text-bark text-4xl">{space.name}</h1>
               <div className="mt-2 flex items-center gap-2 text-sm">
-                <span className="rounded-full bg-green/10 px-2.5 py-0.5 text-[12px] text-green-dark">
+                <span className="bg-green/10 text-green-dark rounded-full px-2.5 py-0.5 text-[12px]">
                   {threadCount} {threadCount === 1 ? "thread" : "threads"}
                 </span>
                 <span className="text-muted-light">
@@ -174,21 +184,21 @@ export default async function SpaceDetailPage({
         </div>
 
         {space.description && (
-          <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-bark-light">
+          <p className="text-bark-light mt-4 max-w-2xl font-serif text-lg leading-relaxed">
             {space.description}
           </p>
         )}
       </div>
 
       <div>
-        <h2 className="font-display text-xl text-bark">Threads through here</h2>
-        <p className="mt-1 text-sm text-muted">
+        <h2 className="font-display text-bark text-xl">Threads through here</h2>
+        <p className="text-muted mt-1 text-sm">
           The connections that gather in this space
         </p>
         <div className="mt-4">
           {connectionsWithStats.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border bg-surface/60 p-8 text-center">
-              <p className="text-sm text-muted">
+            <div className="border-border bg-surface/60 rounded-xl border border-dashed p-8 text-center">
+              <p className="text-muted text-sm">
                 No threads pass through {space.name} yet. Link a connection to
                 this space from their story, or mention it in a moment.
               </p>
@@ -208,8 +218,8 @@ export default async function SpaceDetailPage({
       </div>
 
       <div>
-        <h2 className="font-display text-xl text-bark">Gatherings here</h2>
-        <p className="mt-1 text-sm text-muted">
+        <h2 className="font-display text-bark text-xl">Gatherings here</h2>
+        <p className="text-muted mt-1 text-sm">
           Moments that happened in this space
         </p>
         <div className="mt-4">

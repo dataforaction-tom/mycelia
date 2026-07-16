@@ -44,19 +44,20 @@ function NavDotLink({
     <Link
       href={item.href}
       onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all",
         isActive
-          ? "border-moss/25 bg-white font-semibold text-bark-dark shadow-[0_4px_18px_rgba(138,154,86,0.14)]"
-          : "border-transparent text-bark-light hover:bg-white/85",
+          ? "border-moss/25 text-bark-dark bg-white font-semibold shadow-[0_4px_18px_rgba(138,154,86,0.14)]"
+          : "text-bark-light border-transparent hover:bg-white/85"
       )}
     >
       <span
         className={cn(
           "inline-block h-2 w-2 shrink-0 rounded-full",
           isActive
-            ? "bg-gradient-to-br from-terracotta to-moss shadow-[0_0_8px_rgba(138,154,86,0.5)]"
-            : "bg-muted-light/50",
+            ? "from-terracotta to-moss bg-gradient-to-br shadow-[0_0_8px_rgba(138,154,86,0.5)]"
+            : "bg-muted-light/50"
         )}
         aria-hidden="true"
       />
@@ -85,11 +86,7 @@ interface SidebarProps {
   userImage?: string;
 }
 
-function Sidebar({
-  organisations = [],
-  userName,
-  userEmail,
-}: SidebarProps) {
+function Sidebar({ organisations = [], userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const orgSlug = pathname.split("/")[1] ?? "";
   const navItems = getNavItems(orgSlug);
@@ -105,7 +102,7 @@ function Sidebar({
     : "?";
 
   return (
-    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[236px] flex-col border-r border-border bg-white/60 px-[18px] py-[26px] backdrop-blur-xl md:flex">
+    <aside className="border-border fixed top-0 left-0 z-30 hidden h-screen w-[236px] flex-col border-r bg-white/60 px-[18px] py-[26px] backdrop-blur-xl md:flex">
       <OrgSwitcher organisations={organisations} currentSlug={orgSlug} />
 
       {/* Navigation */}
@@ -125,11 +122,11 @@ function Sidebar({
         {/* User */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-white/70 focus:outline-none">
-              <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber to-terracotta text-[11px] font-bold text-white">
+            <button className="focus-visible:ring-terracotta focus-visible:ring-offset-cream flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-white/70 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              <span className="from-amber to-terracotta flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white">
                 {initials}
               </span>
-              <span className="truncate text-xs text-bark-light">
+              <span className="text-bark-light truncate text-xs">
                 {userName ?? userEmail ?? "Account"}
               </span>
             </button>
@@ -140,14 +137,14 @@ function Sidebar({
               align="start"
               side="top"
               sideOffset={8}
-              className="z-50 min-w-[200px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
+              className="border-border bg-surface shadow-hover z-50 min-w-[200px] rounded-xl border p-1.5"
             >
               {userEmail && (
-                <div className="px-3 py-2 text-xs text-muted">{userEmail}</div>
+                <div className="text-muted px-3 py-2 text-xs">{userEmail}</div>
               )}
               <DropdownMenu.Item
                 onSelect={() => signOut({ callbackUrl: "/" })}
-                className="cursor-pointer rounded-md px-3 py-2 text-sm text-bark outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+                className="text-bark hover:bg-cream-dark focus:bg-cream-dark cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
               >
                 Sign out
               </DropdownMenu.Item>

@@ -33,8 +33,8 @@ export function MomentCard({
   const displayDate = moment.eventDate ?? moment.createdAt;
 
   return (
-    <div className="rounded-[18px] border border-border bg-white/85 p-4 shadow-lift transition-shadow hover:shadow-hover">
-      <p className="text-[15px] leading-relaxed text-bark">{moment.content}</p>
+    <div className="border-border shadow-lift hover:shadow-hover rounded-[18px] border bg-white/85 p-4 transition-shadow">
+      <p className="text-bark text-[15px] leading-relaxed">{moment.content}</p>
 
       {connections.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -51,7 +51,7 @@ export function MomentCard({
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+      <div className="text-muted mt-3 flex items-center gap-2 text-xs">
         <span className="font-mono">
           {displayDate.toLocaleDateString("en-GB", {
             day: "numeric",
@@ -60,7 +60,7 @@ export function MomentCard({
           })}
         </span>
         {moment.source !== "manual" && (
-          <span className="rounded bg-cream-dark px-1.5 py-0.5">
+          <span className="bg-cream-dark rounded px-1.5 py-0.5">
             {moment.source}
           </span>
         )}

@@ -13,32 +13,33 @@ interface WhisperCardProps {
 }
 
 // Prototype voice: each observation type whispers under its own kicker.
-const KICKERS: Record<string, { label: string; accent: string; card: string }> = {
-  dormant: {
-    label: "Going quiet",
-    accent: "text-terracotta-dark",
-    card: "border-terracotta/30 bg-gradient-to-r from-terracotta/10 to-white/85",
-  },
-  quality_shift: {
-    label: "Shifting",
-    accent: "text-moss",
-    card: "border-border bg-white/80",
-  },
-  dependency: {
-    label: "A gap you might not see",
-    accent: "text-terracotta-dark",
-    card: "border-border bg-white/80",
-  },
-  follow_up: {
-    label: "Time to check in",
-    accent: "text-amber-dark",
-    card: "border-amber/30 bg-gradient-to-r from-amber/10 to-white/85",
-  },
-};
+const KICKERS: Record<string, { label: string; accent: string; card: string }> =
+  {
+    dormant: {
+      label: "Going quiet",
+      accent: "text-terracotta-dark",
+      card: "border-terracotta/30 bg-gradient-to-r from-terracotta/10 to-white/85",
+    },
+    quality_shift: {
+      label: "Shifting",
+      accent: "text-moss-dark",
+      card: "border-border bg-white/80",
+    },
+    dependency: {
+      label: "A gap you might not see",
+      accent: "text-terracotta-dark",
+      card: "border-border bg-white/80",
+    },
+    follow_up: {
+      label: "Time to check in",
+      accent: "text-amber-dark",
+      card: "border-amber/30 bg-gradient-to-r from-amber/10 to-white/85",
+    },
+  };
 
 const FALLBACK_KICKER = {
   label: "Noticed",
-  accent: "text-moss",
+  accent: "text-moss-dark",
   card: "border-border bg-white/80",
 };
 
@@ -59,7 +60,7 @@ export function WhisperCard({
     // the connection links sit above it, so both stay reachable without
     // nesting anchors.
     <div
-      className={`relative rounded-2xl border p-4 transition-shadow hover:shadow-lift ${kicker.card}`}
+      className={`hover:shadow-lift relative rounded-2xl border p-4 transition-shadow ${kicker.card}`}
     >
       <Link
         href={`/${orgSlug}/observations`}
@@ -67,11 +68,11 @@ export function WhisperCard({
         className="absolute inset-0 rounded-2xl"
       />
       <p
-        className={`text-[11px] font-medium uppercase tracking-[0.1em] ${kicker.accent}`}
+        className={`text-[11px] font-medium tracking-[0.1em] uppercase ${kicker.accent}`}
       >
         {kicker.label}
       </p>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-bark">
+      <p className="text-bark mt-1.5 text-[13.5px] leading-relaxed">
         {content}
       </p>
       {connections.length > 0 && (
@@ -80,7 +81,7 @@ export function WhisperCard({
             <span key={c.id}>
               <Link
                 href={`/${orgSlug}/connections/${c.id}`}
-                className="text-terracotta-dark underline decoration-terracotta/40 decoration-dotted underline-offset-2 hover:decoration-terracotta"
+                className="text-terracotta-dark decoration-terracotta/40 hover:decoration-terracotta underline decoration-dotted underline-offset-2"
               >
                 {c.name}
               </Link>

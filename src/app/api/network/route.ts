@@ -31,42 +31,46 @@ export async function GET(request: NextRequest) {
 
     const { minStrength } = parsed.data;
 
-    const nodes = await db
-      .select({
-        id: connections.id,
-        name: connections.name,
-        type: connections.type,
-      })
-      .from(connections)
-      .where(eq(connections.organisationId, organisationId));
+    // These three reads are independent — run them concurrently rather than
+    // as three serial Neon round-trips (this endpoint is hit on every
+    // dashboard and network-page load).
+    const [nodes, edges, lastMoments] = await Promise.all([
+      db
+        .select({
+          id: connections.id,
+          name: connections.name,
+          type: connections.type,
+        })
+        .from(connections)
+        .where(eq(connections.organisationId, organisationId)),
+      db
+        .select({
+          id: networkLinks.id,
+          source: networkLinks.sourceConnectionId,
+          target: networkLinks.targetConnectionId,
+          strength: networkLinks.strength,
+          linkSource: networkLinks.source,
+        })
+        .from(networkLinks)
+        .where(
+          and(
+            eq(networkLinks.organisationId, organisationId),
+            gte(networkLinks.strength, minStrength)
+          )
+        ),
+      // Last recorded moment per connection — lets the views show life and
+      // dormancy (fresh nodes flare, quiet ones fade)
+      db
+        .select({
+          connectionId: momentConnections.connectionId,
+          lastMomentAt: max(moments.createdAt),
+        })
+        .from(momentConnections)
+        .innerJoin(moments, eq(momentConnections.momentId, moments.id))
+        .where(eq(moments.organisationId, organisationId))
+        .groupBy(momentConnections.connectionId),
+    ]);
 
-    const edges = await db
-      .select({
-        id: networkLinks.id,
-        source: networkLinks.sourceConnectionId,
-        target: networkLinks.targetConnectionId,
-        strength: networkLinks.strength,
-        linkSource: networkLinks.source,
-      })
-      .from(networkLinks)
-      .where(
-        and(
-          eq(networkLinks.organisationId, organisationId),
-          gte(networkLinks.strength, minStrength)
-        )
-      );
-
-    // Last recorded moment per connection — lets the views show life and
-    // dormancy (fresh nodes flare, quiet ones fade)
-    const lastMoments = await db
-      .select({
-        connectionId: momentConnections.connectionId,
-        lastMomentAt: max(moments.createdAt),
-      })
-      .from(momentConnections)
-      .innerJoin(moments, eq(momentConnections.momentId, moments.id))
-      .where(eq(moments.organisationId, organisationId))
-      .groupBy(momentConnections.connectionId);
     const lastMomentByNode = new Map(
       lastMoments.map((row) => [row.connectionId, row.lastMomentAt])
     );

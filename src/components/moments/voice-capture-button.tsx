@@ -29,7 +29,7 @@ function probeAvailability(organisationId: string): Promise<boolean> {
 function pickMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
   return ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((type) =>
-    MediaRecorder.isTypeSupported(type),
+    MediaRecorder.isTypeSupported(type)
   );
 }
 
@@ -76,7 +76,7 @@ export function VoiceCaptureButton({
       const mimeType = pickMimeType();
       const recorder = new MediaRecorder(
         stream,
-        mimeType ? { mimeType } : undefined,
+        mimeType ? { mimeType } : undefined
       );
       const chunks: BlobPart[] = [];
 
@@ -138,15 +138,21 @@ export function VoiceCaptureButton({
 
   return (
     <div className="flex items-center gap-2">
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span role="alert" className="text-destructive text-xs">
+          {error}
+        </span>
+      )}
       {state === "recording" && (
-        <span className="flex items-center gap-1.5 text-xs text-terracotta-dark">
-          <span className="animate-glow h-2 w-2 rounded-full bg-terracotta" />
+        <span className="text-terracotta-dark flex items-center gap-1.5 text-xs">
+          <span className="animate-glow bg-terracotta h-2 w-2 rounded-full" />
           {seconds}s
         </span>
       )}
       {state === "transcribing" && (
-        <span className="text-xs text-muted">Listening back…</span>
+        <span role="status" className="text-muted text-xs">
+          Listening back…
+        </span>
       )}
       <button
         type="button"
@@ -158,8 +164,8 @@ export function VoiceCaptureButton({
         title={state === "recording" ? "Stop recording" : "Speak this moment"}
         className={
           state === "recording"
-            ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-terracotta text-white shadow-[0_0_14px_rgba(201,123,71,0.5)] transition-all"
-            : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-strong bg-white text-bark-light transition-all hover:border-moss/50 hover:text-moss-dark disabled:opacity-50"
+            ? "bg-terracotta flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-[0_0_14px_rgba(201,123,71,0.5)] transition-all"
+            : "border-border-strong text-bark-light hover:border-moss/50 hover:text-moss-dark flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white transition-all disabled:opacity-50"
         }
       >
         {state === "recording" ? (

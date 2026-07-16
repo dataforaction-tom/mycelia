@@ -1,4 +1,5 @@
 import {
+  index,
   pgTable,
   text,
   timestamp,
@@ -83,5 +84,8 @@ export const organisationMemberships = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.organisationId] }),
+    // PK is (userId, organisationId); listing an org's members filters by
+    // organisationId alone, which the PK's leading column can't serve.
+    index("memberships_org_idx").on(table.organisationId),
   ]
 );

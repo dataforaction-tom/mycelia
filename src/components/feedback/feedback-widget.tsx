@@ -64,7 +64,13 @@ export function FeedbackWidget({
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ type, title, body, pageUrl: pathname, organisationId }),
+        body: JSON.stringify({
+          type,
+          title,
+          body,
+          pageUrl: pathname,
+          organisationId,
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.success) {
@@ -84,7 +90,7 @@ export function FeedbackWidget({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-terracotta px-4 py-2.5 text-sm font-medium text-white shadow-hover transition-colors hover:bg-terracotta-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        className="bg-terracotta shadow-hover hover:bg-terracotta-dark focus-visible:ring-terracotta focus-visible:ring-offset-cream fixed right-5 bottom-5 z-40 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       >
         <span aria-hidden="true">✎</span>
         Feedback
@@ -124,7 +130,10 @@ export function FeedbackWidget({
 
               <div className="space-y-4 py-2">
                 {error && (
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <div
+                    role="alert"
+                    className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm"
+                  >
                     {error}
                   </div>
                 )}
@@ -138,11 +147,13 @@ export function FeedbackWidget({
                       setType(event.target.value as FeedbackType)
                     }
                   >
-                    {(Object.keys(TYPE_LABELS) as FeedbackType[]).map((value) => (
-                      <option key={value} value={value}>
-                        {TYPE_LABELS[value]}
-                      </option>
-                    ))}
+                    {(Object.keys(TYPE_LABELS) as FeedbackType[]).map(
+                      (value) => (
+                        <option key={value} value={value}>
+                          {TYPE_LABELS[value]}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -169,14 +180,20 @@ export function FeedbackWidget({
               </div>
 
               <DialogFooter>
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   onClick={submit}
                   disabled={
-                    submitting || title.trim().length < 3 || body.trim().length < 5
+                    submitting ||
+                    title.trim().length < 3 ||
+                    body.trim().length < 5
                   }
                 >
                   {submitting ? "Sending…" : "Send"}

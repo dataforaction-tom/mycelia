@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from "@/lib/utils/api";
 import { getApiContext, apiErrorResponse } from "@/lib/api-keys/context";
 import { parsePagination } from "@/lib/api/pagination";
 import { applyMomentSideEffects } from "@/lib/moments/side-effects";
+import { ownedConnectionIds } from "@/lib/db/scope";
 import { checkMomentQuota } from "@/lib/moments/quota";
 import { desc, eq } from "drizzle-orm";
 
@@ -60,6 +61,16 @@ export async function POST(request: NextRequest) {
       return errorResponse(quotaError.message, quotaError.status);
     }
 
+    // Reject the request if any supplied connection ID is stale or from another
+    // org, before inserting anything (fail fast rather than silently dropping).
+    const connectionIds = [...new Set(parsed.data.connectionIds ?? [])];
+    if (connectionIds.length) {
+      const owned = await ownedConnectionIds(connectionIds, organisationId);
+      if (owned.length !== connectionIds.length) {
+        return errorResponse("One or more connections not found", 404);
+      }
+    }
+
     const [moment] = await db
       .insert(moments)
       .values({
@@ -79,7 +90,7 @@ export async function POST(request: NextRequest) {
     await applyMomentSideEffects({
       organisationId,
       moment,
-      connectionIds: parsed.data.connectionIds ?? [],
+      connectionIds,
       actor: { kind: "system", ref: "tending:apikey" },
     });
 

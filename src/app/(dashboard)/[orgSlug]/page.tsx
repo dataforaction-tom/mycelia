@@ -197,7 +197,15 @@ export default async function OrgDashboard({
             type: connections.type,
           })
           .from(connections)
-          .where(inArray(connections.id, attentionConnectionIds))
+          // Scope to this org: observation `connections` arrays are resolved
+          // here, so an org filter ensures a stray/foreign ID can never surface
+          // another org's connection name/type on the dashboard.
+          .where(
+            and(
+              inArray(connections.id, attentionConnectionIds),
+              eq(connections.organisationId, org.id)
+            )
+          )
       : Promise.resolve([]),
     recentMoments.length
       ? db

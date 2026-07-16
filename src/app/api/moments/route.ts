@@ -3,8 +3,12 @@ import { db } from "@/lib/db";
 import { moments, momentConnections, observations } from "@/lib/db/schema";
 import { successResponse, errorResponse, getOrgContext } from "@/lib/utils/api";
 import { hasMinRole } from "@/lib/auth/permissions";
-import { createMomentSchema, listMomentsSchema } from "@/lib/validators/moments";
+import {
+  createMomentSchema,
+  listMomentsSchema,
+} from "@/lib/validators/moments";
 import { applyMomentSideEffects } from "@/lib/moments/side-effects";
+import { ownedConnectionIds } from "@/lib/db/scope";
 import { checkMomentQuota } from "@/lib/moments/quota";
 import { and, eq, asc, desc } from "drizzle-orm";
 
@@ -73,11 +77,11 @@ export async function GET(request: NextRequest) {
 
     return successResponse({ items: rows });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member")) return errorResponse(msg, 403);
-    if (msg.includes("Subscription required"))
-      return errorResponse(msg, 402);
+    if (msg.includes("Subscription required")) return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }
@@ -104,6 +108,19 @@ export async function POST(request: NextRequest) {
       return errorResponse(quotaError.message, quotaError.status);
     }
 
+    // Validate connection ownership BEFORE inserting anything: reject the whole
+    // request if any supplied ID is stale or belongs to another org. Fails fast
+    // rather than silently dropping IDs, so the moment links and the follow-up
+    // observation below can't diverge or persist foreign IDs. (Dedup first so a
+    // repeated ID isn't mistaken for a missing one.)
+    const connectionIds = [...new Set(parsed.data.connectionIds ?? [])];
+    if (connectionIds.length) {
+      const owned = await ownedConnectionIds(connectionIds, organisationId);
+      if (owned.length !== connectionIds.length) {
+        return errorResponse("One or more connections not found", 404);
+      }
+    }
+
     const [moment] = await db
       .insert(moments)
       .values({
@@ -119,7 +136,7 @@ export async function POST(request: NextRequest) {
     await applyMomentSideEffects({
       organisationId,
       moment,
-      connectionIds: parsed.data.connectionIds ?? [],
+      connectionIds,
       actor: {
         kind: "user",
         ref: `tending:user:${user.id}`,
@@ -141,7 +158,7 @@ export async function POST(request: NextRequest) {
           organisationId,
           type: "follow_up",
           content: parsed.data.followUp.note,
-          connections: parsed.data.connectionIds ?? [],
+          connections: connectionIds,
           severity: "noteworthy",
           status: alreadyDue ? "new" : "scheduled",
           dueAt: parsed.data.followUp.dueDate,
@@ -151,18 +168,18 @@ export async function POST(request: NextRequest) {
         console.error(
           "Follow-up reminder creation failed for moment",
           moment.id,
-          followUpError,
+          followUpError
         );
       }
     }
 
     return successResponse(moment, 201);
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg =
+      error instanceof Error ? error.message : "Internal server error";
     if (msg === "Not authenticated") return errorResponse(msg, 401);
     if (msg.includes("Not a member")) return errorResponse(msg, 403);
-    if (msg.includes("Subscription required"))
-      return errorResponse(msg, 402);
+    if (msg.includes("Subscription required")) return errorResponse(msg, 402);
     return errorResponse("Internal server error", 500);
   }
 }

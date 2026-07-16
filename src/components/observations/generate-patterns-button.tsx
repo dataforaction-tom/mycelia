@@ -42,11 +42,15 @@ export function GeneratePatternsButton({
         type="button"
         onClick={handleClick}
         disabled={isSubmitting}
-        className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+        className="bg-terracotta hover:bg-terracotta-dark rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
         {isSubmitting ? "Checking…" : "Check for patterns"}
       </button>
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive mt-2 text-sm">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -35,17 +35,14 @@ export function SpacePicker({
   async function persist(spaceId: string, method: "POST" | "DELETE") {
     setError(null);
     try {
-      const res = await fetch(
-        `/api/connections/${connectionId}/spaces`,
-        {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "x-organisation-id": organisationId,
-          },
-          body: JSON.stringify({ spaceIds: [spaceId] }),
-        }
-      );
+      const res = await fetch(`/api/connections/${connectionId}/spaces`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "x-organisation-id": organisationId,
+        },
+        body: JSON.stringify({ spaceIds: [spaceId] }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -65,7 +62,11 @@ export function SpacePicker({
 
   return (
     <div className="space-y-3">
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
+      )}
 
       {selectedSpaces.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -74,11 +75,11 @@ export function SpacePicker({
               key={s.id}
               type="button"
               onClick={() => persist(s.id, "DELETE")}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-white px-2.5 py-1 text-xs font-medium text-bark transition-colors hover:bg-cream-dark"
+              className="border-border text-bark hover:bg-cream-dark inline-flex items-center gap-1 rounded-full border bg-white px-2.5 py-1 text-xs font-medium transition-colors"
             >
               {s.name}
               <svg
-                className="h-3 w-3 text-muted"
+                className="text-muted h-3 w-3"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
@@ -100,11 +101,11 @@ export function SpacePicker({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Add to a space…"
-        className="block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+        className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta block w-full rounded-lg border bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
       />
 
       {search && filtered.length > 0 && (
-        <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-white">
+        <div className="border-border max-h-48 overflow-y-auto rounded-lg border bg-white">
           {filtered.slice(0, 10).map((s) => (
             <button
               key={s.id}
@@ -113,7 +114,7 @@ export function SpacePicker({
                 persist(s.id, "POST");
                 setSearch("");
               }}
-              className="flex w-full items-center px-3 py-2 text-left text-sm text-bark transition-colors hover:bg-cream"
+              className="text-bark hover:bg-cream flex w-full items-center px-3 py-2 text-left text-sm transition-colors"
             >
               {s.name}
             </button>

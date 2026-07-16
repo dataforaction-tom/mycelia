@@ -59,11 +59,15 @@ export function ExportButton({
         onClick={run}
         disabled={busy}
         aria-busy={busy}
-        className="inline-flex w-fit items-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-bark transition-colors hover:bg-cream-dark disabled:cursor-not-allowed disabled:opacity-60"
+        className="border-border bg-surface text-bark hover:bg-cream-dark inline-flex w-fit items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy ? "Preparing…" : label}
       </button>
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span role="alert" className="text-destructive text-xs">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

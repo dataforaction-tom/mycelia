@@ -28,9 +28,9 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
   if (emailSent) {
     return (
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-moss/10">
+        <div className="bg-moss/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
           <svg
-            className="h-6 w-6 text-moss"
+            className="text-moss h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -43,14 +43,14 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-bark">Check your email</h3>
-        <p className="mt-2 text-sm text-muted">
-          We sent a magic link to <strong className="text-bark">{email}</strong>.
-          Click it to sign in.
+        <h3 className="text-bark text-lg font-semibold">Check your email</h3>
+        <p className="text-muted mt-2 text-sm">
+          We sent a magic link to <strong className="text-bark">{email}</strong>
+          . Click it to sign in.
         </p>
         <button
           onClick={() => setEmailSent(false)}
-          className="mt-4 text-sm text-terracotta hover:text-terracotta-dark"
+          className="text-terracotta hover:text-terracotta-dark mt-4 text-sm"
         >
           Use a different email
         </button>
@@ -65,7 +65,7 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-bark"
+            className="text-bark block text-sm font-medium"
           >
             Email address
           </label>
@@ -76,17 +76,17 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+            className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
           />
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-lg bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+          className="bg-terracotta hover:bg-terracotta-dark w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
         >
           {isLoading ? "Sending link..." : "Send magic link"}
         </button>
-        <p className="text-center text-xs text-muted">
+        <p className="text-muted text-center text-xs">
           No passwords — we email you a link that signs you in.
         </p>
       </form>
@@ -96,10 +96,10 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
         <>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+              <div className="border-border w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted">dev only</span>
+              <span className="text-muted bg-white px-2">dev only</span>
             </div>
           </div>
           <button
@@ -109,7 +109,7 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
                 callbackUrl,
               })
             }
-            className="w-full rounded-lg border border-dashed border-amber bg-amber/5 px-4 py-2.5 text-sm font-medium text-bark transition-colors hover:bg-amber/10"
+            className="border-amber bg-amber/5 text-bark hover:bg-amber/10 w-full rounded-lg border border-dashed px-4 py-2.5 text-sm font-medium transition-colors"
           >
             Dev sign-in as {email || "tom@good-ship.co.uk"}
           </button>

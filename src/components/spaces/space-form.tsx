@@ -59,13 +59,16 @@ export function SpaceForm({ organisationId, orgSlug, space }: SpaceFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-bark">
+        <label htmlFor="name" className="text-bark block text-sm font-medium">
           Name
         </label>
         <input
@@ -75,14 +78,14 @@ export function SpaceForm({ organisationId, orgSlug, space }: SpaceFormProps) {
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Winter Programme"
           required
-          className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
       </div>
 
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-bark"
+          className="text-bark block text-sm font-medium"
         >
           Description
         </label>
@@ -92,14 +95,14 @@ export function SpaceForm({ organisationId, orgSlug, space }: SpaceFormProps) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder="What is this space for?"
-          className="mt-1 block w-full resize-none rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta mt-1 block w-full resize-none rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-lg bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+        className="bg-terracotta hover:bg-terracotta-dark w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
         {isSubmitting ? "Saving..." : space ? "Save changes" : "Create space"}
       </button>

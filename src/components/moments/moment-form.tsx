@@ -82,9 +82,7 @@ export function MomentForm({
 
       // Navigate back to the connection or moments list
       if (preselectedConnectionId) {
-        router.push(
-          `/${orgSlug}/connections/${preselectedConnectionId}`
-        );
+        router.push(`/${orgSlug}/connections/${preselectedConnectionId}`);
       } else {
         router.push(`/${orgSlug}`);
       }
@@ -106,7 +104,10 @@ export function MomentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
@@ -114,7 +115,7 @@ export function MomentForm({
       <div>
         <label
           htmlFor="content"
-          className="block text-sm font-medium text-bark"
+          className="text-bark block text-sm font-medium"
         >
           What happened?
         </label>
@@ -127,30 +128,26 @@ export function MomentForm({
           placeholder="Had coffee with Sarah — she's worried about funding for the winter programme..."
           required
           rows={4}
-          className="mt-1 block w-full resize-none rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta mt-1 block w-full resize-none rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
-        <p className="mt-1 text-xs text-muted">
-          Press Cmd+Enter to submit
-        </p>
+        <p className="text-muted mt-1 text-xs">Press Cmd+Enter to submit</p>
       </div>
 
       <MomentUnderstandingPanel
         content={content}
         organisationId={organisationId}
         onConnectionsMatched={(ids) =>
-          setSelectedConnectionIds((prev) => [
-            ...new Set([...prev, ...ids]),
-          ])
+          setSelectedConnectionIds((prev) => [...new Set([...prev, ...ids])])
         }
         onEventDateDetected={(date) =>
-          setEventDate((prev) =>
-            prev || (date ? date.toISOString().slice(0, 10) : prev)
+          setEventDate(
+            (prev) => prev || (date ? date.toISOString().slice(0, 10) : prev)
           )
         }
       />
 
       <div>
-        <label className="block text-sm font-medium text-bark">
+        <label className="text-bark block text-sm font-medium">
           Who was involved?
         </label>
         <div className="mt-1">
@@ -165,7 +162,7 @@ export function MomentForm({
       <div>
         <label
           htmlFor="eventDate"
-          className="block text-sm font-medium text-bark"
+          className="text-bark block text-sm font-medium"
         >
           When did this happen?
         </label>
@@ -174,9 +171,9 @@ export function MomentForm({
           type="date"
           value={eventDate}
           onChange={(e) => setEventDate(e.target.value)}
-          className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
-        <p className="mt-1 text-xs text-muted">
+        <p className="text-muted mt-1 text-xs">
           Defaults to when you record it, if left blank.
         </p>
       </div>
@@ -185,7 +182,7 @@ export function MomentForm({
         <div>
           <label
             htmlFor="spaceId"
-            className="block text-sm font-medium text-bark"
+            className="text-bark block text-sm font-medium"
           >
             Space
           </label>
@@ -193,7 +190,7 @@ export function MomentForm({
             id="spaceId"
             value={spaceId}
             onChange={(e) => setSpaceId(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+            className="border-border text-bark focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
           >
             <option value="">No space</option>
             {spaces.map((s) => (
@@ -208,7 +205,7 @@ export function MomentForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-lg bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+        className="bg-terracotta hover:bg-terracotta-dark w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
         {isSubmitting ? "Recording..." : "Record moment"}
       </button>

@@ -65,7 +65,11 @@ export function ConnectionComposerModal({
           "Content-Type": "application/json",
           "x-organisation-id": organisationId,
         },
-        body: JSON.stringify({ name: name.trim(), type, contactDetails: contact }),
+        body: JSON.stringify({
+          name: name.trim(),
+          type,
+          contactDetails: contact,
+        }),
       });
 
       const data = await res.json();
@@ -92,18 +96,21 @@ export function ConnectionComposerModal({
         else onOpenChange(true);
       }}
     >
-      <DialogContent className="max-w-[560px] overflow-hidden rounded-3xl border-none bg-cream p-0 shadow-[0_40px_100px_rgba(27,19,10,0.5)] [&>button]:text-soil-ink-soft [&>button]:opacity-80 [&>button]:hover:opacity-100">
+      <DialogContent className="bg-cream [&>button]:text-soil-ink-soft max-w-[560px] overflow-hidden rounded-3xl border-none p-0 shadow-[0_40px_100px_rgba(27,19,10,0.5)] [&>button]:opacity-80 [&>button]:hover:opacity-100">
         <div className="underground relative h-[86px] overflow-hidden rounded-none border-none">
           <Filaments width={560} height={86} count={4} seed={9} />
           <Spores count={3} seed={9} />
-          <DialogTitle className="absolute bottom-4 left-6 font-display text-2xl font-normal text-soil-ink">
+          <DialogTitle className="font-display text-soil-ink absolute bottom-4 left-6 text-2xl font-normal">
             Begin a thread
           </DialogTitle>
         </div>
 
         <div className="px-6 py-5">
           {error && (
-            <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="border-destructive/30 bg-destructive/10 text-destructive mb-3 rounded-lg border p-3 text-sm"
+            >
               {error}
             </div>
           )}
@@ -118,9 +125,10 @@ export function ConnectionComposerModal({
                 handleSubmit();
               }
             }}
+            aria-label="Who or what this thread is with"
             placeholder="Who — or what — is this thread with?"
             autoFocus
-            className="w-full rounded-2xl border border-border-strong bg-white px-4 py-3 text-[15px] text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+            className="border-border-strong text-bark placeholder:text-muted-light focus:border-moss/50 focus-visible:ring-terracotta w-full rounded-2xl border bg-white px-4 py-3 text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
           />
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -131,8 +139,8 @@ export function ConnectionComposerModal({
                 onClick={() => setType(option.value)}
                 className={
                   type === option.value
-                    ? "rounded-full border border-green/40 bg-green/15 px-3.5 py-1.5 text-xs font-semibold text-green-dark"
-                    : "rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-bark-light hover:bg-cream-dark"
+                    ? "border-green/40 bg-green/15 text-green-dark rounded-full border px-3.5 py-1.5 text-xs font-semibold"
+                    : "border-border-strong text-bark-light hover:bg-cream-dark rounded-full border px-3.5 py-1.5 text-xs"
                 }
               >
                 {option.label}
@@ -146,44 +154,56 @@ export function ConnectionComposerModal({
               <input
                 type="email"
                 value={contact.email}
-                onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                onChange={(e) =>
+                  setContact((c) => ({ ...c, email: e.target.value }))
+                }
+                aria-label="Email"
                 placeholder="Email"
-                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+                className="border-border-strong text-bark placeholder:text-muted-light focus:border-moss/50 focus-visible:ring-terracotta w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
               />
               <input
                 type="tel"
                 value={contact.phone}
-                onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                onChange={(e) =>
+                  setContact((c) => ({ ...c, phone: e.target.value }))
+                }
+                aria-label="Phone"
                 placeholder="Phone"
-                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+                className="border-border-strong text-bark placeholder:text-muted-light focus:border-moss/50 focus-visible:ring-terracotta w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
               />
               <input
                 type="url"
                 value={contact.website}
-                onChange={(e) => setContact((c) => ({ ...c, website: e.target.value }))}
+                onChange={(e) =>
+                  setContact((c) => ({ ...c, website: e.target.value }))
+                }
+                aria-label="Website"
                 placeholder="Website"
-                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+                className="border-border-strong text-bark placeholder:text-muted-light focus:border-moss/50 focus-visible:ring-terracotta w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
               />
               <input
                 type="text"
                 value={contact.location}
-                onChange={(e) => setContact((c) => ({ ...c, location: e.target.value }))}
+                onChange={(e) =>
+                  setContact((c) => ({ ...c, location: e.target.value }))
+                }
+                aria-label="Location"
                 placeholder="Location"
-                className="w-full rounded-xl border border-border-strong bg-white px-3.5 py-2.5 text-sm text-bark placeholder:text-muted-light focus:border-moss/50 focus:outline-none"
+                className="border-border-strong text-bark placeholder:text-muted-light focus:border-moss/50 focus-visible:ring-terracotta w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
               />
             </div>
           ) : (
             <button
               type="button"
               onClick={() => setShowContact(true)}
-              className="mt-4 text-xs font-medium text-moss-dark hover:underline"
+              className="text-moss-dark mt-4 text-xs font-medium hover:underline"
             >
               + Add contact details
             </button>
           )}
 
           <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-xs text-muted">
+            <p className="text-muted text-xs">
               A thread grows from its moments — you can plant the first one
               right after.
             </p>
@@ -191,7 +211,7 @@ export function ConnectionComposerModal({
               type="button"
               onClick={handleSubmit}
               disabled={!name.trim() || isSubmitting}
-              className="shrink-0 rounded-full bg-gradient-to-r from-green to-moss px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(111,154,79,0.35)] transition-all hover:brightness-105 disabled:opacity-50"
+              className="from-green-dark to-moss-dark shrink-0 rounded-full bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(111,154,79,0.35)] transition-all hover:brightness-105 disabled:opacity-50"
             >
               {isSubmitting ? "Beginning…" : "Begin the thread"}
             </button>

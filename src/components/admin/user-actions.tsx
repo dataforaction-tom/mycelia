@@ -23,7 +23,12 @@ interface UserActionsProps {
 
 type Notice = { kind: "ok" | "error"; message: string } | null;
 
-export function UserActions({ userId, email, status, isSelf }: UserActionsProps) {
+export function UserActions({
+  userId,
+  email,
+  status,
+  isSelf,
+}: UserActionsProps) {
   const router = useRouter();
   const [notice, setNotice] = useState<Notice>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -36,7 +41,7 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
   async function call(
     path: string,
     method: "POST" | "DELETE",
-    body?: Record<string, unknown>,
+    body?: Record<string, unknown>
   ): Promise<boolean> {
     setPending(path);
     setNotice(null);
@@ -48,7 +53,10 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.success) {
-        setNotice({ kind: "error", message: json.error ?? "Something went wrong" });
+        setNotice({
+          kind: "error",
+          message: json.error ?? "Something went wrong",
+        });
         return false;
       }
       return true;
@@ -79,7 +87,7 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
       !confirm(
         suspend
           ? "Suspend this user? They'll be signed out and blocked from signing in."
-          : "Reactivate this user?",
+          : "Reactivate this user?"
       )
     )
       return;
@@ -107,10 +115,12 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
     <div className="space-y-4">
       {notice && (
         <div
+          role="status"
+          aria-live="polite"
           className={
             notice.kind === "ok"
-              ? "rounded-lg border border-moss/30 bg-moss/10 px-3 py-2 text-sm text-bark"
-              : "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              ? "border-moss/30 bg-moss/10 text-bark rounded-lg border px-3 py-2 text-sm"
+              : "border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm"
           }
         >
           {notice.message}
@@ -118,13 +128,28 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={resendLink} disabled={pending !== null}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={resendLink}
+          disabled={pending !== null}
+        >
           Resend magic link
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setEmailOpen(true)} disabled={pending !== null}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setEmailOpen(true)}
+          disabled={pending !== null}
+        >
           Change email
         </Button>
-        <Button variant="outline" size="sm" onClick={forceSignout} disabled={pending !== null}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={forceSignout}
+          disabled={pending !== null}
+        >
           Force sign-out
         </Button>
         <Button
@@ -168,7 +193,11 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => setEmailOpen(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEmailOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -203,7 +232,11 @@ export function UserActions({ userId, email, status, isSelf }: UserActionsProps)
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDeleteOpen(false)}
+            >
               Cancel
             </Button>
             <Button

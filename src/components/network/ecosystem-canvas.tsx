@@ -100,8 +100,14 @@ export function EcosystemCanvas({
     const strengthById = new Map<string, number>();
     for (const n of data.nodes) strengthById.set(n.id, 0);
     for (const e of data.edges) {
-      strengthById.set(e.source, (strengthById.get(e.source) ?? 0) + e.strength);
-      strengthById.set(e.target, (strengthById.get(e.target) ?? 0) + e.strength);
+      strengthById.set(
+        e.source,
+        (strengthById.get(e.source) ?? 0) + e.strength
+      );
+      strengthById.set(
+        e.target,
+        (strengthById.get(e.target) ?? 0) + e.strength
+      );
     }
 
     const radiusScale = d3
@@ -190,10 +196,17 @@ export function EcosystemCanvas({
         router.push(`/${orgSlug}/connections/${d.id}`);
       })
       .on("mouseenter", (event, d) => {
-        setTooltip({ x: event.clientX, y: event.clientY, name: d.name, type: d.type });
+        setTooltip({
+          x: event.clientX,
+          y: event.clientY,
+          name: d.name,
+          type: d.type,
+        });
       })
       .on("mousemove", (event) => {
-        setTooltip((t) => (t ? { ...t, x: event.clientX, y: event.clientY } : t));
+        setTooltip((t) =>
+          t ? { ...t, x: event.clientX, y: event.clientY } : t
+        );
       })
       .on("mouseleave", () => setTooltip(null));
 
@@ -209,7 +222,16 @@ export function EcosystemCanvas({
     // propagation) open their own connection instead.
     <section
       onClick={() => router.push(`/${orgSlug}/network`)}
-      className="underground relative cursor-pointer overflow-hidden rounded-2xl border border-soil-line shadow-lift"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(`/${orgSlug}/network`);
+        }
+      }}
+      role="link"
+      tabIndex={0}
+      aria-label="Open the network view"
+      className="underground border-soil-line shadow-lift focus-visible:ring-spore/70 relative cursor-pointer overflow-hidden rounded-2xl border focus:outline-none focus-visible:ring-2"
     >
       <svg
         ref={svgRef}
@@ -220,7 +242,7 @@ export function EcosystemCanvas({
       />
       {/* Scrim keeps the words legible without caging the organism */}
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-soil/90 via-soil/40 to-transparent"
+        className="from-soil/90 via-soil/40 pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent"
         aria-hidden="true"
       />
       <Filaments width={WIDTH} height={110} count={7} seed={11} />
@@ -228,40 +250,40 @@ export function EcosystemCanvas({
 
       <div className="pointer-events-none relative flex min-h-[22rem] flex-col justify-between p-6 sm:p-8">
         <div className="max-w-md">
-          <h2 className="font-display text-3xl text-soil-ink">{headline}</h2>
-          <p className="mt-2 text-sm text-soil-ink-soft">{detail}</p>
+          <h2 className="font-display text-soil-ink text-3xl">{headline}</h2>
+          <p className="text-soil-ink-soft mt-2 text-sm">{detail}</p>
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-6">
           <dl className="flex gap-8">
             <div>
-              <dd className="font-display text-3xl text-soil-ink">
+              <dd className="font-display text-soil-ink text-3xl">
                 {stats.connections}
               </dd>
-              <dt className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-soil-ink-soft">
+              <dt className="text-soil-ink-soft mt-1 text-xs font-medium tracking-[0.14em] uppercase">
                 Connections
               </dt>
             </div>
             <div>
-              <dd className="font-display text-3xl text-soil-ink">
+              <dd className="font-display text-soil-ink text-3xl">
                 {stats.moments}
               </dd>
-              <dt className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-soil-ink-soft">
+              <dt className="text-soil-ink-soft mt-1 text-xs font-medium tracking-[0.14em] uppercase">
                 Moments
               </dt>
             </div>
             <div>
-              <dd className="font-display text-3xl text-soil-ink">
+              <dd className="font-display text-soil-ink text-3xl">
                 {stats.thisWeek}
               </dd>
-              <dt className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-soil-ink-soft">
+              <dt className="text-soil-ink-soft mt-1 text-xs font-medium tracking-[0.14em] uppercase">
                 This week
               </dt>
             </div>
           </dl>
           <Link
             href={`/${orgSlug}/network`}
-            className="pointer-events-auto rounded-lg border border-spore/40 px-4 py-2 text-sm font-medium text-spore transition-colors hover:bg-spore/10"
+            className="border-spore/40 text-spore hover:bg-spore/10 pointer-events-auto rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
           >
             Open the network →
           </Link>
@@ -270,11 +292,11 @@ export function EcosystemCanvas({
 
       {tooltip && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-soil-line bg-soil-raised px-3 py-2 text-xs shadow-lg"
+          className="border-soil-line bg-soil-raised pointer-events-none fixed z-50 rounded-lg border px-3 py-2 text-xs shadow-lg"
           style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
         >
-          <p className="font-semibold text-soil-ink">{tooltip.name}</p>
-          <p className="mt-0.5 capitalize text-soil-ink-soft">
+          <p className="text-soil-ink font-semibold">{tooltip.name}</p>
+          <p className="text-soil-ink-soft mt-0.5 capitalize">
             {tooltip.type} · click to open
           </p>
         </div>

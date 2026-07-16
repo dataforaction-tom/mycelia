@@ -49,15 +49,15 @@ export default async function SpacesPage({
         .select({
           spaceId: moments.spaceId,
           last: sql<Date>`max(coalesce(${moments.eventDate}, ${moments.createdAt}))`.mapWith(
-            (v) => new Date(v),
+            (v) => new Date(v)
           ),
         })
         .from(moments)
         .where(
           and(
             eq(moments.organisationId, org.id),
-            inArray(moments.spaceId, spaceIds),
-          ),
+            inArray(moments.spaceId, spaceIds)
+          )
         )
         .groupBy(moments.spaceId)
     : [];
@@ -67,23 +67,23 @@ export default async function SpacesPage({
     <div className="stagger-children space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl text-bark">
+          <h1 className="font-display text-bark text-4xl">
             Where threads cross
           </h1>
-          <p className="mt-2 text-muted">
+          <p className="text-muted mt-2">
             The places and gatherings where your relationships actually happen
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href={`/${orgSlug}/settings/spaces`}
-            className="text-sm text-muted transition-colors hover:text-bark"
+            className="text-muted hover:text-bark text-sm transition-colors"
           >
             Manage
           </Link>
           <Link
             href={`/${orgSlug}/settings/spaces/new`}
-            className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
+            className="bg-terracotta shadow-lift hover:bg-terracotta-dark hover:shadow-hover rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
           >
             New space
           </Link>
@@ -91,18 +91,16 @@ export default async function SpacesPage({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface/60 p-10 text-center">
-          <p className="font-display text-lg text-bark">
-            No spaces yet
-          </p>
-          <p className="mx-auto mt-1.5 max-w-md text-sm text-muted">
+        <div className="border-border bg-surface/60 rounded-2xl border border-dashed p-10 text-center">
+          <p className="font-display text-bark text-lg">No spaces yet</p>
+          <p className="text-muted mx-auto mt-1.5 max-w-md text-sm">
             Spaces are where threads cross — the allotment, the assembly, the
-            church hall. Name the places your relationships actually happen
-            and tending will gather the threads that pass through them.
+            church hall. Name the places your relationships actually happen and
+            tending will gather the threads that pass through them.
           </p>
           <Link
             href={`/${orgSlug}/settings/spaces/new`}
-            className="mt-5 inline-flex rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark"
+            className="bg-terracotta shadow-lift hover:bg-terracotta-dark mt-5 inline-flex rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
           >
             Create your first space
           </Link>
@@ -115,22 +113,22 @@ export default async function SpacesPage({
               <Link
                 key={space.id}
                 href={`/${orgSlug}/spaces/${space.id}`}
-                className="block rounded-[20px] border border-border bg-white/80 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.08)] transition-all hover:-translate-y-0.5 hover:border-terracotta/30 hover:shadow-hover"
+                className="border-border hover:border-terracotta/30 hover:shadow-hover block rounded-[20px] border bg-white/80 p-5 shadow-[0_6px_24px_rgba(111,154,79,0.08)] transition-all hover:-translate-y-0.5"
               >
                 <SpaceIcon seed={space.id} />
-                <p className="mt-3 font-semibold text-bark-dark">
+                <p className="text-bark-dark mt-3 font-semibold">
                   {space.name}
                 </p>
                 {space.description && (
-                  <p className="mt-1 text-[13px] leading-relaxed text-bark-light">
+                  <p className="text-bark-light mt-1 text-[13px] leading-relaxed">
                     {space.description}
                   </p>
                 )}
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="rounded-full bg-green/10 px-2.5 py-0.5 text-[11px] text-green-dark">
+                  <span className="bg-green/10 text-green-dark rounded-full px-2.5 py-0.5 text-[11px]">
                     {threads} {threads === 1 ? "thread" : "threads"}
                   </span>
-                  <span className="text-[11px] text-muted-light">
+                  <span className="text-muted-light text-[11px]">
                     {lastGatheringLabel(lastBySpace.get(space.id) ?? null)}
                   </span>
                 </div>

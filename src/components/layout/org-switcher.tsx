@@ -32,13 +32,11 @@ function MushroomMark({ className }: { className?: string }) {
         d="M6 17 C6 7, 34 7, 34 17 C34 20, 6 20, 6 17 Z"
         fill={`url(#${gradientId})`}
       />
-      <path d="M17 20 L16 27 C16 29, 24 29, 24 27 L23 20 Z" fill="var(--spore)" />
-      <g
-        stroke="#b99e6b"
-        strokeWidth="1.2"
-        fill="none"
-        strokeLinecap="round"
-      >
+      <path
+        d="M17 20 L16 27 C16 29, 24 29, 24 27 L23 20 Z"
+        fill="var(--spore)"
+      />
+      <g stroke="#b99e6b" strokeWidth="1.2" fill="none" strokeLinecap="round">
         <path d="M20 29 C 20 33, 18 36, 19 42" />
         <path d="M20 31 C 16 34, 13 36, 10 41" />
         <path d="M13 37 C 11 38, 9 38, 7 39" />
@@ -60,13 +58,13 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1 text-left transition-colors hover:bg-white/70 focus:outline-none">
-          <MushroomMark className="h-10 w-9 shrink-0 animate-breathe-soft" />
+        <button className="group focus-visible:ring-terracotta flex w-full items-center gap-2.5 rounded-xl px-2 py-1 text-left transition-colors hover:bg-white/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white">
+          <MushroomMark className="animate-breathe-soft h-10 w-9 shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="font-display text-[21px] leading-tight text-bark-dark">
+            <div className="font-display text-bark-dark text-[21px] leading-tight">
               tending
             </div>
-            <div className="truncate text-[10px] uppercase tracking-[0.14em] text-muted">
+            <div className="text-muted truncate text-[10px] tracking-[0.14em] uppercase">
               {current?.name ?? "Choose organisation"}
             </div>
           </div>
@@ -80,7 +78,7 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+            className="text-muted shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <path d="m6 9 6 6 6-6" />
           </svg>
@@ -91,16 +89,16 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
         <DropdownMenu.Content
           align="start"
           sideOffset={4}
-          className="z-50 min-w-[220px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
+          className="border-border bg-surface shadow-hover z-50 min-w-[220px] rounded-xl border p-1.5"
         >
           {organisations.map((org) => (
             <DropdownMenu.Item key={org.id} asChild>
               <Link
                 href={`/${org.slug}`}
                 className={cn(
-                  "block cursor-pointer rounded-md px-3 py-2 text-sm outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark",
+                  "hover:bg-cream-dark focus:bg-cream-dark block cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none",
                   org.slug === currentSlug
-                    ? "font-medium text-terracotta"
+                    ? "text-terracotta font-medium"
                     : "text-bark"
                 )}
               >
@@ -109,12 +107,12 @@ export function OrgSwitcher({ organisations, currentSlug }: OrgSwitcherProps) {
             </DropdownMenu.Item>
           ))}
 
-          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+          <DropdownMenu.Separator className="bg-border my-1 h-px" />
 
           <DropdownMenu.Item asChild>
             <Link
               href="/new-org"
-              className="block cursor-pointer rounded-md px-3 py-2 text-sm text-bark-light outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+              className="text-bark-light hover:bg-cream-dark focus:bg-cream-dark block cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
             >
               + New organisation
             </Link>

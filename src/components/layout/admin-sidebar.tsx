@@ -41,10 +41,12 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
   return (
     <>
       {/* Desktop rail */}
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[236px] flex-col border-r border-border bg-white/60 px-[18px] py-[26px] backdrop-blur-xl md:flex">
+      <aside className="border-border fixed top-0 left-0 z-30 hidden h-screen w-[236px] flex-col border-r bg-white/60 px-[18px] py-[26px] backdrop-blur-xl md:flex">
         <Link href="/admin" className="flex items-center gap-2 px-1">
-          <span className="font-display text-[21px] text-bark-dark">tending</span>
-          <span className="rounded-full bg-bark px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <span className="font-display text-bark-dark text-[21px]">
+            tending
+          </span>
+          <span className="bg-bark rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white uppercase">
             Admin
           </span>
         </Link>
@@ -62,18 +64,18 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
         <div className="mt-auto flex flex-col gap-1.5 pt-4">
           <Link
             href="/"
-            className="rounded-xl border border-transparent px-3 py-2.5 text-sm text-bark-light transition-colors hover:bg-white/85"
+            className="text-bark-light rounded-xl border border-transparent px-3 py-2.5 text-sm transition-colors hover:bg-white/85"
           >
             ← Back to app
           </Link>
 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <button className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-white/70 focus:outline-none">
-                <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber to-terracotta text-[11px] font-bold text-white">
+              <button className="focus-visible:ring-terracotta flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-white/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white">
+                <span className="from-amber to-terracotta flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white">
                   {initials}
                 </span>
-                <span className="truncate text-xs text-bark-light">
+                <span className="text-bark-light truncate text-xs">
                   {userName ?? userEmail ?? "Account"}
                 </span>
               </button>
@@ -83,14 +85,16 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
                 align="start"
                 side="top"
                 sideOffset={8}
-                className="z-50 min-w-[200px] rounded-xl border border-border bg-surface p-1.5 shadow-hover"
+                className="border-border bg-surface shadow-hover z-50 min-w-[200px] rounded-xl border p-1.5"
               >
                 {userEmail && (
-                  <div className="px-3 py-2 text-xs text-muted">{userEmail}</div>
+                  <div className="text-muted px-3 py-2 text-xs">
+                    {userEmail}
+                  </div>
                 )}
                 <DropdownMenu.Item
                   onSelect={() => signOut({ callbackUrl: "/" })}
-                  className="cursor-pointer rounded-md px-3 py-2 text-sm text-bark outline-none transition-colors hover:bg-cream-dark focus:bg-cream-dark"
+                  className="text-bark hover:bg-cream-dark focus:bg-cream-dark cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
                 >
                   Sign out
                 </DropdownMenu.Item>
@@ -101,10 +105,10 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="sticky top-0 z-30 flex items-center gap-3 overflow-x-auto border-b border-border bg-white/80 px-4 py-3 backdrop-blur-xl md:hidden">
+      <div className="border-border sticky top-0 z-30 flex items-center gap-3 overflow-x-auto border-b bg-white/80 px-4 py-3 backdrop-blur-xl md:hidden">
         <Link href="/admin" className="flex shrink-0 items-center gap-1.5">
-          <span className="font-display text-lg text-bark-dark">tending</span>
-          <span className="rounded-full bg-bark px-1.5 py-0.5 text-[9px] font-semibold uppercase text-white">
+          <span className="font-display text-bark-dark text-lg">tending</span>
+          <span className="bg-bark rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-white uppercase">
             Admin
           </span>
         </Link>
@@ -117,7 +121,7 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
                 "shrink-0 rounded-full px-3 py-1.5 text-sm transition-colors",
                 isAdminNavActive(pathname, item.href)
                   ? "bg-bark text-white"
-                  : "text-bark-light hover:bg-cream-dark",
+                  : "text-bark-light hover:bg-cream-dark"
               )}
             >
               {item.label}

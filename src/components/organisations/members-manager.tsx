@@ -31,10 +31,10 @@ interface MembersManagerProps {
 const ASSIGNABLE_ROLES = ["admin", "contributor", "viewer"] as const;
 
 const roleColors: Record<string, string> = {
-  owner: "bg-amber/10 text-amber",
-  admin: "bg-terracotta/10 text-terracotta",
-  contributor: "bg-moss/10 text-moss",
-  viewer: "bg-sky/10 text-sky",
+  owner: "bg-amber/10 text-amber-dark",
+  admin: "bg-terracotta/10 text-terracotta-dark",
+  contributor: "bg-moss/10 text-moss-dark",
+  viewer: "bg-sky/10 text-sky-dark",
 };
 
 function initialsOf(member: Member): string {
@@ -69,14 +69,11 @@ export function MembersManager({
     setError(null);
     setNotice(null);
     try {
-      const res = await fetch(
-        `/api/organisations/${organisationId}/members`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
-        }
-      );
+      const res = await fetch(`/api/organisations/${organisationId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Something went wrong");
@@ -177,12 +174,19 @@ export function MembersManager({
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
       {notice && (
-        <div className="rounded-lg border border-moss/30 bg-moss/10 p-3 text-sm text-moss-dark">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-moss/30 bg-moss/10 text-moss-dark rounded-lg border p-3 text-sm"
+        >
           {notice}
         </div>
       )}
@@ -191,22 +195,24 @@ export function MembersManager({
       {canManage && (
         <form
           onSubmit={handleInvite}
-          className="rounded-xl border border-border bg-white p-4"
+          className="border-border rounded-xl border bg-white p-4"
         >
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
+              aria-label="Email address to invite"
               placeholder="Email address"
               disabled={atLimit}
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta disabled:opacity-50"
+              className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:opacity-50"
             />
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value)}
               disabled={atLimit}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta disabled:opacity-50"
+              aria-label="Role for the invited member"
+              className="border-border text-bark focus:border-terracotta focus:ring-terracotta rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:opacity-50"
             >
               <option value="viewer">Viewer</option>
               <option value="contributor">Contributor</option>
@@ -215,12 +221,12 @@ export function MembersManager({
             <button
               type="submit"
               disabled={isInviting || atLimit || !inviteEmail.trim()}
-              className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+              className="bg-terracotta-dark hover:bg-bark rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
             >
               {isInviting ? "Adding…" : "Add member"}
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted">
+          <p className="text-muted mt-2 text-xs">
             {atLimit
               ? `Your plan allows up to ${memberLimit} members. Upgrade to add more.`
               : "The person must already have a Tending account with this email address."}
@@ -242,7 +248,7 @@ export function MembersManager({
             return (
               <div
                 key={member.userId}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-white p-4"
+                className="border-border flex items-center justify-between gap-3 rounded-lg border bg-white p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   {member.userImage ? (
@@ -253,19 +259,19 @@ export function MembersManager({
                       className="h-9 w-9 shrink-0 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream-dark text-xs font-medium text-bark">
+                    <div className="bg-cream-dark text-bark flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-medium">
                       {initialsOf(member)}
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-bark">
+                    <p className="text-bark truncate font-medium">
                       {member.userName ?? member.userEmail}
                       {isSelf && (
-                        <span className="ml-2 text-xs text-muted">(you)</span>
+                        <span className="text-muted ml-2 text-xs">(you)</span>
                       )}
                     </p>
                     {member.userName && (
-                      <p className="truncate text-sm text-muted">
+                      <p className="text-muted truncate text-sm">
                         {member.userEmail}
                       </p>
                     )}
@@ -278,7 +284,7 @@ export function MembersManager({
                       value={member.role}
                       disabled={isBusy}
                       onChange={(e) => handleRoleChange(member, e.target.value)}
-                      className="rounded-lg border border-border px-2 py-1 text-xs capitalize text-bark focus:border-terracotta focus:outline-none disabled:opacity-50"
+                      className="border-border text-bark focus:border-terracotta focus-visible:ring-terracotta rounded-lg border px-2 py-1 text-xs capitalize focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:opacity-50"
                     >
                       {ASSIGNABLE_ROLES.map((role) => (
                         <option key={role} value={role}>
@@ -298,7 +304,7 @@ export function MembersManager({
                       type="button"
                       onClick={() => handleRemove(member)}
                       disabled={isBusy}
-                      className="rounded-lg px-2 py-1 text-xs text-muted hover:text-destructive disabled:opacity-50"
+                      className="text-muted hover:text-destructive rounded-lg px-2 py-1 text-xs disabled:opacity-50"
                     >
                       Remove
                     </button>
@@ -313,7 +319,7 @@ export function MembersManager({
       {/* Pending invitations — people invited before they've signed up */}
       {invitations.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
+          <h2 className="text-muted text-xs font-medium tracking-[0.12em] uppercase">
             Pending invitations
           </h2>
           {invitations.map((invitation) => {
@@ -321,23 +327,23 @@ export function MembersManager({
             return (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border bg-cream/40 p-4"
+                className="border-border bg-cream/40 flex items-center justify-between gap-3 rounded-lg border border-dashed p-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-xs text-muted">
+                  <div className="border-border text-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed text-xs">
                     ✉
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-bark">
+                    <p className="text-bark truncate font-medium">
                       {invitation.email}
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-muted text-xs">
                       Invited as {invitation.role} · not yet joined
                     </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="rounded-full bg-amber/10 px-2.5 py-0.5 text-xs font-medium capitalize text-amber">
+                  <span className="bg-amber/10 text-amber-dark rounded-full px-2.5 py-0.5 text-xs font-medium capitalize">
                     Pending
                   </span>
                   {canManage && (
@@ -345,7 +351,7 @@ export function MembersManager({
                       type="button"
                       onClick={() => handleRevoke(invitation)}
                       disabled={isBusy}
-                      className="rounded-lg px-2 py-1 text-xs text-muted hover:text-destructive disabled:opacity-50"
+                      className="text-muted hover:text-destructive rounded-lg px-2 py-1 text-xs disabled:opacity-50"
                     >
                       Revoke
                     </button>

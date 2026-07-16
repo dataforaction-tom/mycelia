@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import * as d3 from "d3";
 import {
   CONNECTION_TYPE_COLORS_GLOW,
@@ -156,8 +157,14 @@ export function NetworkGraph({
     const strengthById = new Map<string, number>();
     for (const n of data.nodes) strengthById.set(n.id, 0);
     for (const e of data.edges) {
-      strengthById.set(e.source, (strengthById.get(e.source) ?? 0) + e.strength);
-      strengthById.set(e.target, (strengthById.get(e.target) ?? 0) + e.strength);
+      strengthById.set(
+        e.source,
+        (strengthById.get(e.source) ?? 0) + e.strength
+      );
+      strengthById.set(
+        e.target,
+        (strengthById.get(e.target) ?? 0) + e.strength
+      );
     }
     strengthByIdRef.current = strengthById;
 
@@ -167,7 +174,10 @@ export function NetworkGraph({
       .range([6, 26]);
 
     const strokeWidthScale = d3.scaleLinear().domain([0, 1]).range([1, 4.5]);
-    const strokeOpacityScale = d3.scaleLinear().domain([0, 1]).range([0.14, 0.6]);
+    const strokeOpacityScale = d3
+      .scaleLinear()
+      .domain([0, 1])
+      .range([0.14, 0.6]);
 
     const nodes: SimNode[] = data.nodes.map((n) => ({ ...n }));
     const links: SimLink[] = data.edges.map((e) => ({
@@ -199,11 +209,12 @@ export function NetworkGraph({
       .attr("stroke-opacity", (d) => strokeOpacityScale(d.strength));
     attachDashFlow(link);
 
-    const nodeRadius = (d: SimNode) =>
-      radiusScale(strengthById.get(d.id) ?? 0);
+    const nodeRadius = (d: SimNode) => radiusScale(strengthById.get(d.id) ?? 0);
 
     // Fresh relationships flare: an expanding, fading ring
-    const freshNodes = nodes.filter((n) => vitalityOf(n.lastMomentAt) === "fresh");
+    const freshNodes = nodes.filter(
+      (n) => vitalityOf(n.lastMomentAt) === "fresh"
+    );
     const halo = haloGroup
       .selectAll<SVGCircleElement, SimNode>("circle")
       .data(freshNodes)
@@ -414,7 +425,9 @@ export function NetworkGraph({
 
     applyVisibilityRef.current = () => {
       labelSel.style("display", (d) =>
-        nodeVisible(d) && zoomKRef.current >= LABEL_ZOOM_THRESHOLD ? null : "none"
+        nodeVisible(d) && zoomKRef.current >= LABEL_ZOOM_THRESHOLD
+          ? null
+          : "none"
       );
     };
     applyVisibilityRef.current();
@@ -433,8 +446,8 @@ export function NetworkGraph({
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="flex items-center gap-3">
-          <span className="h-2 w-2 animate-glow rounded-full bg-spore" />
-          <p className="text-sm text-soil-ink-soft">
+          <span className="animate-glow bg-spore h-2 w-2 rounded-full" />
+          <p className="text-soil-ink-soft text-sm">
             Listening for the network…
           </p>
         </div>
@@ -444,7 +457,7 @@ export function NetworkGraph({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+      <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
         {error}
       </div>
     );
@@ -457,17 +470,16 @@ export function NetworkGraph({
           className="relative mb-5 flex h-14 w-14 items-center justify-center"
           aria-hidden="true"
         >
-          <span className="absolute inset-0 animate-breathe rounded-full bg-spore/10" />
-          <span className="absolute inset-3 animate-breathe rounded-full bg-spore/20 [animation-delay:700ms]" />
-          <span className="relative h-3 w-3 rounded-full bg-spore shadow-[0_0_16px] shadow-spore/60" />
+          <span className="animate-breathe bg-spore/10 absolute inset-0 rounded-full" />
+          <span className="animate-breathe bg-spore/20 absolute inset-3 rounded-full [animation-delay:700ms]" />
+          <span className="bg-spore shadow-spore/60 relative h-3 w-3 rounded-full shadow-[0_0_16px]" />
         </div>
-        <h3 className="font-display text-xl text-soil-ink">
+        <h3 className="font-display text-soil-ink text-xl">
           Nothing has surfaced yet
         </h3>
-        <p className="mt-2 max-w-sm text-sm text-soil-ink-soft">
-          The network draws itself from your moments. Record conversations
-          that mention more than one connection, and threads will begin to
-          form here.
+        <p className="text-soil-ink-soft mt-2 max-w-sm text-sm">
+          The network draws itself from your moments. Record conversations that
+          mention more than one connection, and threads will begin to form here.
         </p>
       </div>
     );
@@ -480,13 +492,19 @@ export function NetworkGraph({
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Find someone in the network"
           placeholder="Find someone…"
-          className="w-44 rounded-full border border-soil-line bg-transparent px-4 py-1.5 text-sm text-soil-ink placeholder:text-soil-ink-soft/70 focus:border-spore/50 focus:outline-none"
+          className="border-soil-line text-soil-ink placeholder:text-soil-ink-soft/70 focus:border-spore/50 focus-visible:ring-spore/70 w-44 rounded-full border bg-transparent px-4 py-1.5 text-sm focus:outline-none focus-visible:ring-2"
         />
-        <div className="flex flex-wrap gap-2">
+        <div
+          role="radiogroup"
+          aria-label="Filter the network by connection type"
+          className="flex flex-wrap gap-2"
+        >
           {FILTER_CHIPS.map((chip) => (
             <ToggleChip
               key={chip.key}
+              role="radio"
               variant="dark"
               pressed={mode === chip.key}
               onPressedChange={() => setMode(chip.key)}
@@ -497,12 +515,28 @@ export function NetworkGraph({
         </div>
       </div>
 
+      {/* Text equivalent of the visual graph (WCAG 1.1.1 / 2.1.1): the SVG
+          nodes aren't focusable, so this visually-hidden list gives keyboard
+          and screen-reader users the same reach — every connection, its type
+          and vitality, linking through to its story. */}
+      <ul className="sr-only">
+        {data.nodes.map((node) => (
+          <li key={node.id}>
+            <Link href={`/${orgSlug}/connections/${node.id}`}>
+              {node.name} — {node.type}, {vitalityLabel(node.lastMomentAt)}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
       <div className="relative overflow-x-auto">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="w-full"
           style={{ minWidth: WIDTH, height: HEIGHT }}
+          role="img"
+          aria-label={`Network map of ${data.nodes.length} connections and ${data.edges.length} relationships. Brighter, closer nodes are warmer, stronger relationships; faded ones have gone quiet. The connections are also listed as links above.`}
         />
         <Filaments width={WIDTH} height={130} count={9} seed={23} />
         <Spores count={6} seed={23} />
@@ -510,8 +544,13 @@ export function NetworkGraph({
         {selected && (
           <button
             type="button"
-            onClick={() => router.push(`/${orgSlug}/connections/${selected.id}`)}
-            className="absolute bottom-6 right-6 z-20 w-72 rounded-2xl border border-soil-line bg-soil-raised p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
+            onClick={() =>
+              router.push(`/${orgSlug}/connections/${selected.id}`)
+            }
+            aria-label={`Read ${selected.name}'s story — ${selected.type}, ${vitalityLabel(
+              selected.lastMomentAt
+            )}`}
+            className="border-soil-line bg-soil-raised absolute right-6 bottom-6 z-20 w-72 rounded-2xl border p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-2.5">
               <span
@@ -521,24 +560,24 @@ export function NetworkGraph({
                 }}
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-soil-ink">
+                <p className="text-soil-ink truncate text-sm font-semibold">
                   {selected.name}
                 </p>
-                <p className="truncate text-xs capitalize text-soil-ink-soft">
+                <p className="text-soil-ink-soft truncate text-xs capitalize">
                   {selected.type} · strength {selected.strength.toFixed(1)}
                 </p>
               </div>
             </div>
-            <p className="mt-2.5 text-xs text-soil-ink-soft">
+            <p className="text-soil-ink-soft mt-2.5 text-xs">
               {vitalityLabel(selected.lastMomentAt)}
             </p>
-            <p className="mt-2.5 text-xs font-medium text-spore">
+            <p className="text-spore mt-2.5 text-xs font-medium">
               Read the story →
             </p>
           </button>
         )}
       </div>
-      <p className="text-xs text-soil-ink-soft/80">
+      <p className="text-soil-ink-soft/80 text-xs">
         Bright nodes have recent moments; fading ones are going quiet. Light
         pulses travel along your strongest threads, and fresh relationships
         ripple.

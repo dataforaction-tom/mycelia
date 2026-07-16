@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import * as d3 from "d3";
 import { buildConstellation } from "@/lib/network/constellation";
 import {
@@ -169,7 +170,10 @@ export function ConstellationView({
       .forceSimulation(simClusters)
       .force(
         "link",
-        d3.forceLink<SimCluster, SimLink>(simLinks).id((d) => d.id).distance(220)
+        d3
+          .forceLink<SimCluster, SimLink>(simLinks)
+          .id((d) => d.id)
+          .distance(220)
       )
       .force("charge", d3.forceManyBody().strength(-420))
       .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
@@ -264,7 +268,9 @@ export function ConstellationView({
         });
       })
       .on("mousemove", (event) => {
-        setTooltip((t) => (t ? { ...t, x: event.clientX, y: event.clientY } : t));
+        setTooltip((t) =>
+          t ? { ...t, x: event.clientX, y: event.clientY } : t
+        );
       })
       .on("mouseleave", () => setTooltip(null));
 
@@ -383,8 +389,8 @@ export function ConstellationView({
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="flex items-center gap-3">
-          <span className="h-2 w-2 animate-glow rounded-full bg-hypha" />
-          <p className="text-sm text-soil-ink-soft">
+          <span className="animate-glow bg-hypha h-2 w-2 rounded-full" />
+          <p className="text-soil-ink-soft text-sm">
             Watching for constellations…
           </p>
         </div>
@@ -394,7 +400,7 @@ export function ConstellationView({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+      <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
         {error}
       </div>
     );
@@ -403,12 +409,12 @@ export function ConstellationView({
   if (!data || data.nodes.length < 2) {
     return (
       <div className="flex flex-col items-center p-12 text-center">
-        <h3 className="font-display text-xl text-soil-ink">
+        <h3 className="font-display text-soil-ink text-xl">
           No constellations yet
         </h3>
-        <p className="mt-2 max-w-sm text-sm text-soil-ink-soft">
-          Clusters appear when groups of connections keep showing up in the
-          same moments. Keep recording, and shapes will emerge.
+        <p className="text-soil-ink-soft mt-2 max-w-sm text-sm">
+          Clusters appear when groups of connections keep showing up in the same
+          moments. Keep recording, and shapes will emerge.
         </p>
       </div>
     );
@@ -416,12 +422,26 @@ export function ConstellationView({
 
   return (
     <div className="relative">
+      {/* Text equivalent of the constellation (WCAG 1.1.1 / 2.1.1) — the same
+          connections as keyboard-navigable links for non-visual access. */}
+      <ul className="sr-only">
+        {data.nodes.map((node) => (
+          <li key={node.id}>
+            <Link href={`/${orgSlug}/connections/${node.id}`}>
+              {node.name} — {node.type}, {vitalityLabel(node.lastMomentAt)}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
       <div className="relative overflow-x-auto">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="w-full"
           style={{ minWidth: WIDTH, height: HEIGHT }}
+          role="img"
+          aria-label={`Constellation map of ${data.nodes.length} connections grouped into clusters. The connections are also listed as links above.`}
         />
         <Filaments width={WIDTH} height={130} count={9} seed={41} />
         <Spores count={6} seed={41} />
@@ -429,8 +449,13 @@ export function ConstellationView({
         {selected && (
           <button
             type="button"
-            onClick={() => router.push(`/${orgSlug}/connections/${selected.id}`)}
-            className="absolute bottom-6 right-6 z-20 w-72 rounded-2xl border border-soil-line bg-soil-raised p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
+            onClick={() =>
+              router.push(`/${orgSlug}/connections/${selected.id}`)
+            }
+            aria-label={`Read ${selected.name}'s story — ${selected.type}, ${vitalityLabel(
+              selected.lastMomentAt
+            )}`}
+            className="border-soil-line bg-soil-raised absolute right-6 bottom-6 z-20 w-72 rounded-2xl border p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-2.5">
               <span
@@ -440,36 +465,36 @@ export function ConstellationView({
                 }}
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-soil-ink">
+                <p className="text-soil-ink truncate text-sm font-semibold">
                   {selected.name}
                 </p>
-                <p className="truncate text-xs capitalize text-soil-ink-soft">
+                <p className="text-soil-ink-soft truncate text-xs capitalize">
                   {selected.type} · strength {selected.strength.toFixed(1)}
                 </p>
               </div>
             </div>
-            <p className="mt-2.5 text-xs text-soil-ink-soft">
+            <p className="text-soil-ink-soft mt-2.5 text-xs">
               {vitalityLabel(selected.lastMomentAt)}
             </p>
-            <p className="mt-2.5 text-xs font-medium text-spore">
+            <p className="text-spore mt-2.5 text-xs font-medium">
               Read the story →
             </p>
           </button>
         )}
       </div>
-      <p className="mt-4 text-xs text-soil-ink-soft/80">
-        Each constellation is a group of connections that keep appearing in
-        the same moments, named after its brightest member. Click any star to
-        see its details.
+      <p className="text-soil-ink-soft/80 mt-4 text-xs">
+        Each constellation is a group of connections that keep appearing in the
+        same moments, named after its brightest member. Click any star to see
+        its details.
       </p>
 
       {tooltip && (
         <div
-          className="pointer-events-none fixed z-50 max-w-xs rounded-lg border border-soil-line bg-soil-raised px-3 py-2 text-xs shadow-lg"
+          className="border-soil-line bg-soil-raised pointer-events-none fixed z-50 max-w-xs rounded-lg border px-3 py-2 text-xs shadow-lg"
           style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
         >
-          <p className="font-semibold text-soil-ink">{tooltip.title}</p>
-          <p className="mt-0.5 capitalize text-soil-ink-soft">
+          <p className="text-soil-ink font-semibold">{tooltip.title}</p>
+          <p className="text-soil-ink-soft mt-0.5 capitalize">
             {tooltip.detail}
           </p>
         </div>

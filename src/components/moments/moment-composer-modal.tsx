@@ -101,14 +101,19 @@ function formatFollowUpDate(dateInput: string): string {
 /** "1 person", "2 people and 1 space", "1 organisation, 1 space" … */
 function describeRecognised(
   connections: RosterConnection[],
-  spaceCount: number,
+  spaceCount: number
 ): string {
   const personCount = connections.filter((c) => c.type === "person").length;
   const orgCount = connections.length - personCount;
   const parts: string[] = [];
-  if (personCount) parts.push(`${personCount} ${personCount === 1 ? "person" : "people"}`);
-  if (orgCount) parts.push(`${orgCount} ${orgCount === 1 ? "organisation" : "organisations"}`);
-  if (spaceCount) parts.push(`${spaceCount} ${spaceCount === 1 ? "space" : "spaces"}`);
+  if (personCount)
+    parts.push(`${personCount} ${personCount === 1 ? "person" : "people"}`);
+  if (orgCount)
+    parts.push(
+      `${orgCount} ${orgCount === 1 ? "organisation" : "organisations"}`
+    );
+  if (spaceCount)
+    parts.push(`${spaceCount} ${spaceCount === 1 ? "space" : "spaces"}`);
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0];
   return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
@@ -124,9 +129,12 @@ export function MomentComposerModal({
   const router = useRouter();
   const [content, setContent] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [rosterConnections, setRosterConnections] = useState<RosterConnection[]>([]);
+  const [rosterConnections, setRosterConnections] = useState<
+    RosterConnection[]
+  >([]);
   const [rosterSpaces, setRosterSpaces] = useState<RosterSpace[]>([]);
-  const [understanding, setUnderstanding] = useState<MomentUnderstanding | null>(null);
+  const [understanding, setUnderstanding] =
+    useState<MomentUnderstanding | null>(null);
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,9 +144,10 @@ export function MomentComposerModal({
   // The follow-up reminder the composer will plant alongside the moment. Seeded
   // from the AI's detection, but once the user edits or removes it, `touched`
   // stops the debounced understanding from re-seeding over their choice.
-  const [followUp, setFollowUp] = useState<{ note: string; date: string } | null>(
-    null,
-  );
+  const [followUp, setFollowUp] = useState<{
+    note: string;
+    date: string;
+  } | null>(null);
   const [followUpTouched, setFollowUpTouched] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState(false);
   // The user's decisions about suggested new connections, keyed by normalised
@@ -180,13 +189,18 @@ export function MomentComposerModal({
         if (connRes.ok) {
           const json = await connRes.json();
           setRosterConnections(
-            (json.data.items as RosterConnection[]).map(({ id, name, type }) => ({ id, name, type })),
+            (json.data.items as RosterConnection[]).map(
+              ({ id, name, type }) => ({ id, name, type })
+            )
           );
         }
         if (spaceRes.ok) {
           const json = await spaceRes.json();
           setRosterSpaces(
-            (json.data.items as RosterSpace[]).map(({ id, name }) => ({ id, name })),
+            (json.data.items as RosterSpace[]).map(({ id, name }) => ({
+              id,
+              name,
+            }))
           );
         }
         rosterLoadedFor.current = organisationId;
@@ -209,23 +223,30 @@ export function MomentComposerModal({
         kind: "space" as const,
       })),
     ],
-    [rosterConnections, rosterSpaces],
+    [rosterConnections, rosterSpaces]
   );
 
   // Instant, deterministic recognition on every keystroke.
-  const matches = useMemo(() => matchEntities(content, roster), [content, roster]);
+  const matches = useMemo(
+    () => matchEntities(content, roster),
+    [content, roster]
+  );
   const recognised = useMemo(() => distinctEntities(matches), [matches]);
 
   // New people/orgs/groups the AI spotted that aren't existing connections.
   // The guard drops near-duplicates and generics, so this is safe to surface.
   const suggestions = useMemo(
-    () => newConnectionSuggestions(understanding?.entities ?? [], rosterConnections),
-    [understanding, rosterConnections],
+    () =>
+      newConnectionSuggestions(
+        understanding?.entities ?? [],
+        rosterConnections
+      ),
+    [understanding, rosterConnections]
   );
 
   const connectionById = useMemo(
     () => new Map(rosterConnections.map((c) => [c.id, c])),
-    [rosterConnections],
+    [rosterConnections]
   );
   const recognisedConnectionIds = recognised
     .filter((e) => e.kind === "connection")
@@ -262,7 +283,7 @@ export function MomentComposerModal({
       }
       return null;
     },
-    [organisationId],
+    [organisationId]
   );
 
   // AI enhancement, best-effort and silent: catches mentions the literal
@@ -292,7 +313,7 @@ export function MomentComposerModal({
     setFollowUp(
       detected
         ? { note: detected.note, date: toDateInput(detected.dueDate) }
-        : null,
+        : null
     );
   }, [understanding, followUpTouched]);
 
@@ -310,8 +331,8 @@ export function MomentComposerModal({
             type: suggestion.type,
             selected: newConnectionSuggestionsMode === "opt_out",
           },
-        ]),
-      ),
+        ])
+      )
     );
   }, [suggestions, newConnectionChoicesTouched, newConnectionSuggestionsMode]);
 
@@ -319,7 +340,7 @@ export function MomentComposerModal({
     .map((e) => e.connectionId)
     .filter(
       (id): id is string =>
-        Boolean(id) && !recognisedConnectionIds.includes(id!),
+        Boolean(id) && !recognisedConnectionIds.includes(id!)
     );
 
   const allRecognisedConnections = [
@@ -331,7 +352,7 @@ export function MomentComposerModal({
 
   const recognisedSummary = describeRecognised(
     allRecognisedConnections,
-    recognisedSpaceIds.length,
+    recognisedSpaceIds.length
   );
 
   /** Reset every field/selection — used both on close and after a partial-
@@ -375,7 +396,7 @@ export function MomentComposerModal({
       .map((e) => e.connectionId)
       .filter(
         (id): id is string =>
-          Boolean(id) && !recognisedConnectionIds.includes(id!),
+          Boolean(id) && !recognisedConnectionIds.includes(id!)
       );
     const recognisedIds = [...recognisedConnectionIds, ...aiExtraIds]
       .map((id) => connectionById.get(id))
@@ -389,7 +410,7 @@ export function MomentComposerModal({
     // applies (opt_out pre-selects, opt_in does not).
     const selectedNewConnections = newConnectionSuggestions(
       effective?.entities ?? [],
-      rosterConnections,
+      rosterConnections
     )
       .map(
         (suggestion) =>
@@ -397,7 +418,7 @@ export function MomentComposerModal({
             name: suggestion.name,
             type: suggestion.type,
             selected: newConnectionSuggestionsMode === "opt_out",
-          },
+          }
       )
       .filter((choice) => choice.selected);
 
@@ -477,8 +498,8 @@ export function MomentComposerModal({
         clearComposer();
         setNotice(
           `Moment planted — but couldn't add ${failedNewConnections.join(
-            ", ",
-          )}. You can add ${failedNewConnections.length === 1 ? "it" : "them"} from Connections.`,
+            ", "
+          )}. You can add ${failedNewConnections.length === 1 ? "it" : "them"} from Connections.`
         );
       } else {
         resetAndClose();
@@ -498,24 +519,31 @@ export function MomentComposerModal({
         else onOpenChange(true);
       }}
     >
-      <DialogContent className="max-w-[640px] overflow-hidden rounded-3xl border-none bg-cream p-0 shadow-[0_40px_100px_rgba(27,19,10,0.5)] [&>button]:text-soil-ink-soft [&>button]:opacity-80 [&>button]:hover:opacity-100">
+      <DialogContent className="bg-cream [&>button]:text-soil-ink-soft max-w-[640px] overflow-hidden rounded-3xl border-none p-0 shadow-[0_40px_100px_rgba(27,19,10,0.5)] [&>button]:opacity-80 [&>button]:hover:opacity-100">
         <div className="underground relative h-[86px] overflow-hidden rounded-none border-none">
           <Filaments width={640} height={86} count={5} seed={3} />
           <Spores count={3} seed={3} />
-          <DialogTitle className="absolute bottom-4 left-6 font-display text-2xl font-normal text-soil-ink">
+          <DialogTitle className="font-display text-soil-ink absolute bottom-4 left-6 text-2xl font-normal">
             Plant a moment
           </DialogTitle>
         </div>
 
         <div className="px-6 py-5">
           {error && (
-            <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="border-destructive/30 bg-destructive/10 text-destructive mb-3 rounded-lg border p-3 text-sm"
+            >
               {error}
             </div>
           )}
 
           {notice && (
-            <div className="mb-3 rounded-lg border border-amber/30 bg-amber/10 p-3 text-sm text-amber-dark">
+            <div
+              role="status"
+              aria-live="polite"
+              className="border-amber/30 bg-amber/10 text-amber-dark mb-3 rounded-lg border p-3 text-sm"
+            >
               {notice}
             </div>
           )}
@@ -535,8 +563,8 @@ export function MomentComposerModal({
 
           <div className="mt-3 flex min-h-9 items-center justify-between gap-3">
             {content.trim().length > 0 ? (
-              <div className="flex items-center gap-2 text-xs text-muted">
-                <span className="animate-glow h-[7px] w-[7px] shrink-0 rounded-full bg-moss" />
+              <div className="text-muted flex items-center gap-2 text-xs">
+                <span className="animate-glow bg-moss h-[7px] w-[7px] shrink-0 rounded-full" />
                 {recognisedSummary
                   ? `tending recognised ${recognisedSummary} — new threads will grow from this moment`
                   : "mention people, organisations or spaces by name and tending will recognise them"}
@@ -554,7 +582,7 @@ export function MomentComposerModal({
           </div>
 
           {followUp && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-3 py-2">
+            <div className="border-amber/30 bg-amber/5 mt-3 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2">
               <span aria-hidden="true">🔔</span>
               {editingFollowUp ? (
                 <>
@@ -564,11 +592,11 @@ export function MomentComposerModal({
                     onChange={(e) => {
                       setFollowUpTouched(true);
                       setFollowUp((prev) =>
-                        prev ? { ...prev, note: e.target.value } : prev,
+                        prev ? { ...prev, note: e.target.value } : prev
                       );
                     }}
                     placeholder="What to check in about"
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-white px-2.5 py-1 text-sm text-bark placeholder:text-muted-light focus:border-amber focus:outline-none"
+                    className="border-border text-bark placeholder:text-muted-light focus:border-amber focus-visible:ring-terracotta min-w-0 flex-1 rounded-lg border bg-white px-2.5 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                   />
                   <input
                     type="date"
@@ -576,23 +604,24 @@ export function MomentComposerModal({
                     onChange={(e) => {
                       setFollowUpTouched(true);
                       setFollowUp((prev) =>
-                        prev ? { ...prev, date: e.target.value } : prev,
+                        prev ? { ...prev, date: e.target.value } : prev
                       );
                     }}
-                    className="rounded-lg border border-border bg-white px-2 py-1 text-sm text-bark focus:border-amber focus:outline-none"
+                    className="border-border text-bark focus:border-amber focus-visible:ring-terracotta rounded-lg border bg-white px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                   />
                   <button
                     type="button"
                     onClick={() => setEditingFollowUp(false)}
-                    className="rounded-lg bg-amber/20 px-2.5 py-1 text-xs font-semibold text-amber-dark hover:bg-amber/30"
+                    className="bg-amber/20 text-amber-dark hover:bg-amber/30 rounded-lg px-2.5 py-1 text-xs font-semibold"
                   >
                     Done
                   </button>
                 </>
               ) : (
                 <>
-                  <span className="min-w-0 flex-1 text-sm text-bark">
-                    <span className="text-muted">Reminder:</span> {followUp.note}
+                  <span className="text-bark min-w-0 flex-1 text-sm">
+                    <span className="text-muted">Reminder:</span>{" "}
+                    {followUp.note}
                     {followUp.date && (
                       <span className="text-amber-dark">
                         {" · "}
@@ -603,7 +632,7 @@ export function MomentComposerModal({
                   <button
                     type="button"
                     onClick={() => setEditingFollowUp(true)}
-                    className="text-xs font-medium text-muted hover:text-bark"
+                    className="text-muted hover:text-bark text-xs font-medium"
                   >
                     edit
                   </button>
@@ -615,7 +644,7 @@ export function MomentComposerModal({
                       setFollowUp(null);
                       setEditingFollowUp(false);
                     }}
-                    className="text-muted transition-colors hover:text-terracotta-dark"
+                    className="text-muted hover:text-terracotta-dark transition-colors"
                   >
                     ✕
                   </button>
@@ -625,8 +654,8 @@ export function MomentComposerModal({
           )}
 
           {suggestions.length > 0 && (
-            <div className="mt-3 flex flex-col gap-2 rounded-xl border border-moss/25 bg-moss/5 px-3 py-2.5">
-              <p className="text-xs text-muted">
+            <div className="border-moss/25 bg-moss/5 mt-3 flex flex-col gap-2 rounded-xl border px-3 py-2.5">
+              <p className="text-muted text-xs">
                 New here — add {suggestions.length === 1 ? "this" : "these"} as
                 {suggestions.length === 1 ? " a connection" : " connections"}?
               </p>
@@ -642,11 +671,13 @@ export function MomentComposerModal({
                       key={key}
                       className={
                         selected
-                          ? "flex items-center gap-1.5 rounded-full border border-green/40 bg-green/15 py-1 pl-3 pr-1.5"
-                          : "flex items-center gap-1.5 rounded-full border border-border-strong bg-white py-1 pl-3 pr-1.5"
+                          ? "border-green/40 bg-green/15 flex items-center gap-1.5 rounded-full border py-1 pr-1.5 pl-3"
+                          : "border-border-strong flex items-center gap-1.5 rounded-full border bg-white py-1 pr-1.5 pl-3"
                       }
                     >
-                      <span className="text-sm text-bark">{suggestion.name}</span>
+                      <span className="text-bark text-sm">
+                        {suggestion.name}
+                      </span>
                       <select
                         aria-label={`Type for ${suggestion.name}`}
                         value={type}
@@ -661,7 +692,7 @@ export function MomentComposerModal({
                             },
                           }));
                         }}
-                        className="rounded-md border border-border bg-cream px-1.5 py-0.5 text-xs text-bark-light focus:border-moss focus:outline-none"
+                        className="border-border bg-cream text-bark-light focus:border-moss focus-visible:ring-terracotta rounded-md border px-1.5 py-0.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                       >
                         {CONNECTION_TYPE_OPTIONS.map((option) => (
                           <option key={option} value={option}>
@@ -685,8 +716,8 @@ export function MomentComposerModal({
                         }}
                         className={
                           selected
-                            ? "rounded-full bg-green/20 px-2.5 py-0.5 text-xs font-semibold text-green-dark hover:bg-green/30"
-                            : "rounded-full bg-cream-dark px-2.5 py-0.5 text-xs font-medium text-bark-light hover:bg-border-strong/40"
+                            ? "bg-green/20 text-green-dark hover:bg-green/30 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                            : "bg-cream-dark text-bark-light hover:bg-border-strong/40 rounded-full px-2.5 py-0.5 text-xs font-medium"
                         }
                       >
                         {selected ? "✓ Added" : "＋ Add"}
@@ -708,8 +739,8 @@ export function MomentComposerModal({
                 }
                 className={
                   selectedType === label
-                    ? "rounded-full border border-green/40 bg-green/15 px-3.5 py-1.5 text-xs font-semibold text-green-dark"
-                    : "rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-bark-light hover:bg-cream-dark"
+                    ? "border-green/40 bg-green/15 text-green-dark rounded-full border px-3.5 py-1.5 text-xs font-semibold"
+                    : "border-border-strong text-bark-light hover:bg-cream-dark rounded-full border px-3.5 py-1.5 text-xs"
                 }
               >
                 {label}
@@ -718,15 +749,14 @@ export function MomentComposerModal({
           </div>
 
           <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-xs text-muted">
-              Write it as you&apos;d tell a colleague — tending does the
-              filing.
+            <p className="text-muted text-xs">
+              Write it as you&apos;d tell a colleague — tending does the filing.
             </p>
             <button
               type="button"
               onClick={handlePlantIt}
               disabled={!content.trim() || isSubmitting}
-              className="shrink-0 rounded-full bg-gradient-to-r from-green to-moss px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(111,154,79,0.35)] transition-all hover:brightness-105 disabled:opacity-50"
+              className="from-green-dark to-moss-dark shrink-0 rounded-full bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(111,154,79,0.35)] transition-all hover:brightness-105 disabled:opacity-50"
             >
               {isSubmitting ? "Planting…" : "Plant it"}
             </button>

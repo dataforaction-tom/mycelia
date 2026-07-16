@@ -57,19 +57,26 @@ export function OrgSettingsForm({ org }: { org: Organisation }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-lg border border-moss/30 bg-moss/10 p-3 text-sm text-moss-dark">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-moss/30 bg-moss/10 text-moss-dark rounded-lg border p-3 text-sm"
+        >
           Settings updated successfully.
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-bark">
+        <label htmlFor="name" className="text-bark block text-sm font-medium">
           Organisation name
         </label>
         <input
@@ -78,12 +85,12 @@ export function OrgSettingsForm({ org }: { org: Organisation }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-bark">
+        <label htmlFor="slug" className="text-bark block text-sm font-medium">
           URL slug
         </label>
         <input
@@ -93,15 +100,15 @@ export function OrgSettingsForm({ org }: { org: Organisation }) {
           onChange={(e) => setSlug(e.target.value)}
           required
           pattern="^[a-z0-9][a-z0-9-]*[a-z0-9]$"
-          className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-bark focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+          className="border-border text-bark focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
         />
-        <p className="mt-1 text-xs text-muted">
+        <p className="text-muted mt-1 text-xs">
           Lowercase letters, numbers, and dashes only
         </p>
       </div>
 
-      <div className="rounded-lg border border-border bg-cream-dark p-4">
-        <p className="text-sm text-muted">
+      <div className="border-border bg-cream-dark rounded-lg border p-4">
+        <p className="text-muted text-sm">
           <strong className="text-bark">Plan:</strong>{" "}
           <span className="capitalize">{org.plan}</span>
         </p>
@@ -110,7 +117,7 @@ export function OrgSettingsForm({ org }: { org: Organisation }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-lg bg-terracotta px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-terracotta-dark disabled:opacity-50"
+        className="bg-terracotta hover:bg-terracotta-dark rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
         {isSubmitting ? "Saving..." : "Save changes"}
       </button>

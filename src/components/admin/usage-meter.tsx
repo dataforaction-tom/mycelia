@@ -13,7 +13,7 @@ interface UsageMeterProps {
 export function UsageMeter({ used, limit }: UsageMeterProps) {
   if (!Number.isFinite(limit)) {
     return (
-      <span className="font-mono text-xs text-muted">
+      <span className="text-muted font-mono text-xs">
         {used} <span className="text-muted/60">/ ∞</span>
       </span>
     );
@@ -22,18 +22,14 @@ export function UsageMeter({ used, limit }: UsageMeterProps) {
   const ratio = limit > 0 ? used / limit : 0;
   const pct = Math.min(100, Math.round(ratio * 100));
   const tone =
-    ratio > 1
-      ? "bg-destructive"
-      : ratio >= 0.75
-        ? "bg-amber"
-        : "bg-moss";
+    ratio > 1 ? "bg-destructive" : ratio >= 0.75 ? "bg-amber" : "bg-moss";
 
   return (
     <div className="min-w-[92px]">
-      <div className="mb-1 font-mono text-xs text-muted">
+      <div className="text-muted mb-1 font-mono text-xs">
         {used} <span className="text-muted/60">/ {limit}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-dark">
+      <div className="bg-cream-dark h-1.5 w-full overflow-hidden rounded-full">
         <div
           className={cn("h-full rounded-full", tone)}
           style={{ width: `${Math.max(2, pct)}%` }}

@@ -26,12 +26,23 @@ export function DashboardShell({
 
   return (
     <MomentComposerProvider organisations={organisations ?? []}>
-      <div className="flex min-h-screen bg-cream">
+      {/* Skip link: lets keyboard users jump past the sidebar's nav +
+          org-switcher + user menu straight to page content (WCAG 2.4.1). */}
+      <a
+        href="#main-content"
+        className="bg-terracotta-dark focus-visible:ring-terracotta focus-visible:ring-offset-cream sr-only rounded-lg px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      >
+        Skip to main content
+      </a>
+      <div className="bg-cream flex min-h-screen">
         {/* Iridescent washes: the shell's ambient light, drifting through
             hues so the parchment never reads as flat white */}
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 overflow-hidden"
+        >
           <div
-            className="animate-hue absolute -right-32 -top-44 h-[560px] w-[560px] rounded-full"
+            className="animate-hue absolute -top-44 -right-32 h-[560px] w-[560px] rounded-full"
             style={{
               background:
                 "radial-gradient(circle, rgba(173,184,120,0.45), transparent 65%)",
@@ -48,7 +59,7 @@ export function DashboardShell({
             }}
           />
           <div
-            className="absolute -left-48 top-44 h-[480px] w-[480px] rounded-full"
+            className="absolute top-44 -left-48 h-[480px] w-[480px] rounded-full"
             style={{
               background:
                 "radial-gradient(circle, rgba(205,139,87,0.35), transparent 65%)",
@@ -71,7 +82,7 @@ export function DashboardShell({
             userEmail={userEmail}
             userImage={userImage}
           />
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
+          <main id="main-content" className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
             <div className="mx-auto w-full max-w-6xl">{children}</div>
           </main>
         </div>

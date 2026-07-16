@@ -30,13 +30,13 @@ export function QualitySpectrums({
         return (
           <div
             key={key}
-            className="rounded-xl border border-border bg-surface p-4 shadow-lift"
+            className="border-border bg-surface shadow-lift rounded-xl border p-4"
           >
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span className="flex items-center gap-1.5 font-medium text-bark-light">
+            <div className="text-muted flex items-center justify-between text-xs">
+              <span className="text-bark-light flex items-center gap-1.5 font-medium">
                 {config.label}
                 {current?.source === "inferred" && (
-                  <span className="rounded-full bg-amber/10 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+                  <span className="bg-amber/10 text-amber-dark rounded-full px-1.5 py-0.5 text-[10px] font-medium">
                     AI-suggested
                   </span>
                 )}
@@ -44,19 +44,19 @@ export function QualitySpectrums({
               {history.length >= 2 && <QualitySparkline points={history} />}
             </div>
 
-            <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
+            <div className="text-muted mt-1.5 flex items-center gap-2 text-xs">
               <span>{config.low}</span>
-              <div className="relative h-1.5 flex-1 rounded-full bg-cream-dark">
+              <div className="bg-cream-dark relative h-1.5 flex-1 rounded-full">
                 {current && (
                   <>
                     <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-moss-light to-green"
+                      className="from-moss-light to-green absolute inset-y-0 left-0 rounded-full bg-gradient-to-r"
                       style={{
                         width: `${((current.position + 1) / 2) * 100}%`,
                       }}
                     />
                     <div
-                      className="animate-breathe-soft absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-cream bg-green shadow-[0_0_10px_rgba(111,154,79,0.6)]"
+                      className="animate-breathe-soft border-cream bg-green absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-[0_0_10px_rgba(111,154,79,0.6)]"
                       style={{ left: `${((current.position + 1) / 2) * 100}%` }}
                     />
                   </>
@@ -65,9 +65,7 @@ export function QualitySpectrums({
               <span>{config.high}</span>
             </div>
 
-            {!current && (
-              <p className="mt-1 text-xs text-muted">Not yet set</p>
-            )}
+            {!current && <p className="text-muted mt-1 text-xs">Not yet set</p>}
 
             <QualitySetControl
               connectionId={connectionId}

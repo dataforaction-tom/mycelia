@@ -16,10 +16,10 @@ interface ConnectionPickerProps {
 }
 
 const typeColors: Record<string, string> = {
-  person: "bg-sky/10 text-sky",
-  organisation: "bg-terracotta/10 text-terracotta",
-  group: "bg-moss/10 text-moss",
-  community: "bg-amber/10 text-amber",
+  person: "bg-sky/10 text-sky-dark",
+  organisation: "bg-terracotta/10 text-terracotta-dark",
+  group: "bg-moss/10 text-moss-dark",
+  community: "bg-amber/10 text-amber-dark",
 };
 
 export function ConnectionPicker({
@@ -57,11 +57,11 @@ export function ConnectionPicker({
               key={c.id}
               type="button"
               onClick={() => toggle(c.id)}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-white px-2.5 py-1 text-xs font-medium text-bark transition-colors hover:bg-cream-dark"
+              className="border-border text-bark hover:bg-cream-dark inline-flex items-center gap-1 rounded-full border bg-white px-2.5 py-1 text-xs font-medium transition-colors"
             >
               {c.name}
               <svg
-                className="h-3 w-3 text-muted"
+                className="text-muted h-3 w-3"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
@@ -83,13 +83,14 @@ export function ConnectionPicker({
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        aria-label="Search connections to link"
         placeholder="Search connections to link..."
-        className="block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-bark placeholder:text-muted-light focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta"
+        className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta block w-full rounded-lg border bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
       />
 
       {/* Options */}
       {search && filtered.length > 0 && (
-        <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-white">
+        <div className="border-border max-h-48 overflow-y-auto rounded-lg border bg-white">
           {filtered.slice(0, 10).map((c) => (
             <button
               key={c.id}
@@ -98,7 +99,7 @@ export function ConnectionPicker({
                 toggle(c.id);
                 setSearch("");
               }}
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-bark transition-colors hover:bg-cream"
+              className="text-bark hover:bg-cream flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors"
             >
               <span>{c.name}</span>
               <Badge className={typeColors[c.type] ?? ""}>{c.type}</Badge>

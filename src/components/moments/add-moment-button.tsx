@@ -13,7 +13,7 @@ export function AddMomentButton({ seedText }: { seedText?: string }) {
     <button
       type="button"
       onClick={() => openComposer({ seedText })}
-      className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark hover:shadow-hover"
+      className="bg-terracotta shadow-lift hover:bg-terracotta-dark hover:shadow-hover rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
     >
       Add moment
     </button>

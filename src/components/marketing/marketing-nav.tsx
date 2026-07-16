@@ -19,8 +19,8 @@ export function MarketingNav({ dark = false }: { dark?: boolean }) {
           href="/pricing"
           className={
             dark
-              ? "text-soil-ink-soft transition-colors hover:text-soil-ink"
-              : "text-bark-light transition-colors hover:text-bark"
+              ? "text-soil-ink-soft hover:text-soil-ink transition-colors"
+              : "text-bark-light hover:text-bark transition-colors"
           }
         >
           Pricing
@@ -29,8 +29,8 @@ export function MarketingNav({ dark = false }: { dark?: boolean }) {
           href="/sign-in"
           className={
             dark
-              ? "rounded-full border border-spore/40 px-4 py-2 font-medium text-spore transition-colors hover:bg-spore/10"
-              : "rounded-full bg-terracotta px-4 py-2 font-medium text-white shadow-lift transition-all hover:bg-terracotta-dark"
+              ? "border-spore/40 text-spore hover:bg-spore/10 rounded-full border px-4 py-2 font-medium transition-colors"
+              : "bg-terracotta shadow-lift hover:bg-terracotta-dark rounded-full px-4 py-2 font-medium text-white transition-all"
           }
         >
           Sign in

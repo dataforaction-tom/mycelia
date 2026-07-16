@@ -22,7 +22,7 @@ export function ClearDemoData({ organisationId }: { organisationId: string }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "clear-demo" }),
-        },
+        }
       );
       if (!res.ok) {
         const data = await res.json();
@@ -38,19 +38,23 @@ export function ClearDemoData({ organisationId }: { organisationId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-amber/30 bg-amber/5 p-4">
-      <p className="text-sm font-medium text-bark">Example data</p>
-      <p className="mt-1 text-xs text-muted">
+    <div className="border-amber/30 bg-amber/5 rounded-xl border p-4">
+      <p className="text-bark text-sm font-medium">Example data</p>
+      <p className="text-muted mt-1 text-xs">
         Your organisation still contains the example network from sign-up.
         Clearing removes only those seeded connections, moments and spaces —
         everything your team added is kept.
       </p>
-      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive mt-2 text-xs">
+          {error}
+        </p>
+      )}
       <button
         type="button"
         onClick={handleClear}
         disabled={isClearing}
-        className="mt-3 rounded-full border border-amber/40 px-4 py-1.5 text-xs font-medium text-amber-dark transition-colors hover:bg-amber/10 disabled:opacity-50"
+        className="border-amber/40 text-amber-dark hover:bg-amber/10 mt-3 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
       >
         {isClearing ? "Clearing…" : "Clear example data"}
       </button>

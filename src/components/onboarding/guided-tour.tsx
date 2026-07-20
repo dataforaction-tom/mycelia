@@ -23,7 +23,7 @@ const STEPS: TourStep[] = [
   {
     target: "composer",
     title: "Plant a moment",
-    body: "Everything grows from here. Write what happened as you'd tell a colleague — or speak it — and tending recognises who was there and where.",
+    body: "Everything grows from here. Write what happened as you'd tell a colleague — or speak it — and tending recognises who was there and where. Mention someone new and it offers to add them as a connection (you choose how eager it is in Settings).",
   },
   {
     target: "stats",
@@ -157,15 +157,21 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
   const hasSpotlight = rect !== null;
 
   // Card placement: under the spotlight if there's room, above otherwise.
+  // The card is w-[min(24rem,calc(100vw-2rem))], so clamp against its real
+  // width — on narrow screens 100vw - 400 goes negative and pushes it off.
+  const cardWidth = hasSpotlight ? Math.min(384, window.innerWidth - 32) : 0;
+  const cardLeft = hasSpotlight
+    ? Math.max(16, Math.min(rect.left, window.innerWidth - cardWidth - 16))
+    : 0;
   const cardStyle: React.CSSProperties = hasSpotlight
     ? rect.bottom + 240 < window.innerHeight
       ? {
           top: rect.bottom + SPOTLIGHT_PADDING + 14,
-          left: Math.min(Math.max(rect.left, 16), window.innerWidth - 400),
+          left: cardLeft,
         }
       : {
           bottom: window.innerHeight - rect.top + SPOTLIGHT_PADDING + 14,
-          left: Math.min(Math.max(rect.left, 16), window.innerWidth - 400),
+          left: cardLeft,
         }
     : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 

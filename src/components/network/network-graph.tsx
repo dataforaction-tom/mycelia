@@ -529,12 +529,11 @@ export function NetworkGraph({
         ))}
       </ul>
 
-      <div className="relative overflow-x-auto">
+      <div className="relative">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          className="w-full"
-          style={{ minWidth: WIDTH, height: HEIGHT }}
+          className="h-[420px] w-full sm:h-[560px]"
           role="img"
           aria-label={`Network map of ${data.nodes.length} connections and ${data.edges.length} relationships. Brighter, closer nodes are warmer, stronger relationships; faded ones have gone quiet. The connections are also listed as links above.`}
         />
@@ -550,7 +549,7 @@ export function NetworkGraph({
             aria-label={`Read ${selected.name}'s story — ${selected.type}, ${vitalityLabel(
               selected.lastMomentAt
             )}`}
-            className="border-soil-line bg-soil-raised absolute right-6 bottom-6 z-20 w-72 rounded-2xl border p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
+            className="border-soil-line bg-soil-raised absolute right-6 bottom-6 z-20 w-72 max-w-[calc(100%-3rem)] rounded-2xl border p-5 text-left shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur transition-transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-2.5">
               <span

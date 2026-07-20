@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 interface GuidedTourProps {
@@ -23,7 +29,7 @@ const STEPS: TourStep[] = [
   {
     target: "composer",
     title: "Plant a moment",
-    body: "Everything grows from here. Write what happened as you'd tell a colleague — or speak it — and tending recognises who was there and where.",
+    body: "Everything grows from here. Write what happened as you'd tell a colleague — or speak it — and tending recognises who was there and where. Mention someone new and it offers to add them as a connection (you choose how eager it is in Settings).",
   },
   {
     target: "stats",
@@ -58,6 +64,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
 
   const step = STEPS[stepIndex];
   const isFinal = stepIndex === STEPS.length - 1;
+  const [cardHeight, setCardHeight] = useState(240);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -96,6 +103,12 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
   useEffect(() => {
     cardRef.current?.focus();
   }, [stepIndex]);
+
+  // Measure the card before paint so placement works from its real height —
+  // longer step copy wraps well past any fixed guess on narrow viewports.
+  useLayoutEffect(() => {
+    if (cardRef.current) setCardHeight(cardRef.current.offsetHeight);
+  }, [stepIndex, rect]);
 
   // Trap Tab within the card and let Escape dismiss the tour (WCAG 2.1.2,
   // 2.4.3). The overlay is modal, so focus must not reach the page behind it.
@@ -156,17 +169,26 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
 
   const hasSpotlight = rect !== null;
 
-  // Card placement: under the spotlight if there's room, above otherwise.
+  // Card placement: under the spotlight if there's room, above if not, and
+  // pinned to the bottom edge (overlapping the spotlight) when neither side
+  // fits — a short viewport must never clip the card's controls. Clamps use
+  // the card's measured size: the card is w-[min(24rem,calc(100vw-2rem))],
+  // and its height grows as step copy wraps on narrow screens.
+  const cardGap = SPOTLIGHT_PADDING + 14;
+  const cardWidth = hasSpotlight ? Math.min(384, window.innerWidth - 32) : 0;
+  const cardLeft = hasSpotlight
+    ? Math.max(16, Math.min(rect.left, window.innerWidth - cardWidth - 16))
+    : 0;
+  const fitsBelow =
+    hasSpotlight &&
+    rect.bottom + cardGap + cardHeight + 16 <= window.innerHeight;
+  const fitsAbove = hasSpotlight && rect.top - cardGap - cardHeight >= 16;
   const cardStyle: React.CSSProperties = hasSpotlight
-    ? rect.bottom + 240 < window.innerHeight
-      ? {
-          top: rect.bottom + SPOTLIGHT_PADDING + 14,
-          left: Math.min(Math.max(rect.left, 16), window.innerWidth - 400),
-        }
-      : {
-          bottom: window.innerHeight - rect.top + SPOTLIGHT_PADDING + 14,
-          left: Math.min(Math.max(rect.left, 16), window.innerWidth - 400),
-        }
+    ? fitsBelow
+      ? { top: rect.bottom + cardGap, left: cardLeft }
+      : fitsAbove
+        ? { bottom: window.innerHeight - rect.top + cardGap, left: cardLeft }
+        : { bottom: 16, left: cardLeft }
     : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 
   return (
@@ -198,7 +220,7 @@ export function GuidedTour({ organisationId }: GuidedTourProps) {
       <div
         ref={cardRef}
         tabIndex={-1}
-        className="bg-cream fixed w-[min(24rem,calc(100vw-2rem))] rounded-2xl p-5 shadow-[0_24px_70px_rgba(27,19,10,0.5)] focus:outline-none"
+        className="bg-cream fixed max-h-[calc(100dvh-2rem)] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl p-5 shadow-[0_24px_70px_rgba(27,19,10,0.5)] focus:outline-none"
         style={cardStyle}
       >
         <span className="sr-only">

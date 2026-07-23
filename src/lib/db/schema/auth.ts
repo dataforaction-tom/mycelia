@@ -16,6 +16,11 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: timestamp("email_verified", { mode: "date", withTimezone: true }),
   image: text("image"),
+  // Set only by password sign-up; null for magic-link-only accounts. Cleared
+  // the moment the account is first proven via magic link (see the `signIn`
+  // callback in lib/auth) — closes account pre-hijacking, where an attacker
+  // pre-registers a password against an email they don't own.
+  passwordHash: text("password_hash"),
   platformRole: platformRoleEnum("platform_role").notNull().default("user"),
   // Account lifecycle. Suspended accounts cannot sign in and their existing
   // sessions are invalidated on the next request (see the auth jwt callback).

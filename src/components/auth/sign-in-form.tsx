@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +27,29 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
       setEmailSent(true);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handlePasswordSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsPasswordLoading(true);
+    setPasswordError(null);
+    try {
+      const result = await signIn("password", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
+      });
+      if (result?.error) {
+        setPasswordError("Incorrect email or password.");
+        return;
+      }
+      window.location.href = callbackUrl;
+    } finally {
+      setIsPasswordLoading(false);
     }
   }
 
@@ -87,9 +115,60 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
           {isLoading ? "Sending link..." : "Send magic link"}
         </button>
         <p className="text-muted text-center text-xs">
-          No passwords — we email you a link that signs you in.
+          We&apos;ll email you a link that signs you in — no password needed.
         </p>
       </form>
+
+      {!showPassword ? (
+        <button
+          type="button"
+          onClick={() => setShowPassword(true)}
+          className="text-muted hover:text-bark w-full text-center text-sm underline decoration-dotted underline-offset-4"
+        >
+          Sign in with a password instead
+        </button>
+      ) : (
+        <form onSubmit={handlePasswordSignIn} className="space-y-4 border-t border-border pt-4">
+          {passwordError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              {passwordError}
+            </div>
+          )}
+          <div>
+            <label htmlFor="password" className="text-bark block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="border-border text-bark placeholder:text-muted-light focus:border-terracotta focus:ring-terracotta mt-1 block w-full rounded-lg border bg-white px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isPasswordLoading}
+            className="w-full rounded-lg border border-terracotta px-4 py-2.5 text-sm font-medium text-terracotta transition-colors hover:bg-terracotta/5 disabled:opacity-50"
+          >
+            {isPasswordLoading ? "Signing in..." : "Sign in with password"}
+          </button>
+        </form>
+      )}
+
+      <p className="text-muted text-center text-sm">
+        New here?{" "}
+        <Link
+          href="/sign-up"
+          className="font-medium text-terracotta hover:text-terracotta-dark"
+        >
+          Create an account
+        </Link>
+      </p>
 
       {/* Dev-only instant sign-in */}
       {process.env.NODE_ENV === "development" && (

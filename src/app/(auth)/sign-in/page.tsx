@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { safeCallbackUrl } from "@/lib/utils/safe-callback-url";
 
 export const dynamic = "force-dynamic";
 
@@ -8,12 +9,6 @@ export const metadata = {
   title: "Sign in",
   description: "Sign in to your Tending account",
 };
-
-/** Relative in-app paths only — anything else invites an open redirect. */
-function safeCallbackUrl(raw: string | undefined): string {
-  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  return "/";
-}
 
 export default async function SignInPage({
   searchParams,
@@ -27,7 +22,7 @@ export default async function SignInPage({
   const { error, callbackUrl } = await searchParams;
   // The middleware sends signed-out visitors here with their original
   // destination as callbackUrl — preserve it so deep links round-trip.
-  const destination = safeCallbackUrl(callbackUrl);
+  const destination = safeCallbackUrl(callbackUrl, "/");
 
   // Already signed in? Straight through — landing on the sign-in form
   // while authenticated reads as a failed sign-in.

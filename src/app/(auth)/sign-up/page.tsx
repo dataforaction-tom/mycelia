@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { SignUpForm } from "@/components/auth/sign-up-form";
+import { safeCallbackUrl } from "@/lib/utils/safe-callback-url";
 
 export const dynamic = "force-dynamic";
 
@@ -10,19 +11,13 @@ export const metadata = {
   description: "Create your Tending account",
 };
 
-/** Relative in-app paths only — anything else invites an open redirect. */
-function safeCallbackUrl(raw: string | undefined): string {
-  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  return "/new-org";
-}
-
 export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: Promise<{ callbackUrl?: string }>;
 }) {
   const { callbackUrl } = await searchParams;
-  const destination = safeCallbackUrl(callbackUrl);
+  const destination = safeCallbackUrl(callbackUrl, "/new-org");
 
   const session = await auth();
   if (session?.user) redirect(destination);

@@ -3,9 +3,16 @@ import { z } from "zod/v3";
 export const registerSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   email: z.string().trim().toLowerCase().email("Invalid email address"),
-  // bcrypt only uses the first 72 bytes of input; 200 is a generous UI-facing
-  // ceiling that never gets close to that limit.
-  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    // bcrypt only ever looks at the first 72 bytes of input — anything
+    // beyond that is silently ignored, so two passwords differing only
+    // after byte 72 would hash identically. Reject rather than truncate.
+    .refine(
+      (value) => new TextEncoder().encode(value).length <= 72,
+      "Password must be at most 72 bytes",
+    ),
 });
 
 export const inviteMemberSchema = z.object({

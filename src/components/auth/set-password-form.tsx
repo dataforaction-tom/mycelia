@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 
-export function SetPasswordForm({ hasPassword }: { hasPassword: boolean }) {
+export function SetPasswordForm({
+  hasPassword,
+  recoveryMode = false,
+}: {
+  hasPassword: boolean;
+  /** Just proved ownership via a fresh magic-link sign-in — skip asking for
+   *  the old password even though one is already set. */
+  recoveryMode?: boolean;
+}) {
+  const requireCurrentPassword = hasPassword && !recoveryMode;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +29,7 @@ export function SetPasswordForm({ hasPassword }: { hasPassword: boolean }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentPassword: hasPassword ? currentPassword : undefined,
+          currentPassword: requireCurrentPassword ? currentPassword : undefined,
           newPassword,
         }),
       });
@@ -63,7 +72,7 @@ export function SetPasswordForm({ hasPassword }: { hasPassword: boolean }) {
         </div>
       )}
 
-      {hasPassword && (
+      {requireCurrentPassword && (
         <div>
           <label
             htmlFor="currentPassword"
@@ -105,9 +114,11 @@ export function SetPasswordForm({ hasPassword }: { hasPassword: boolean }) {
       >
         {isSubmitting
           ? "Saving..."
-          : hasPassword
+          : requireCurrentPassword
             ? "Change password"
-            : "Set password"}
+            : hasPassword
+              ? "Set new password"
+              : "Set password"}
       </button>
     </form>
   );

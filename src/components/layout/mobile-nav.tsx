@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -138,6 +139,15 @@ function MobileNav({
                   sideOffset={8}
                   className="border-border bg-surface shadow-hover z-50 min-w-[200px] rounded-xl border p-1.5"
                 >
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      href="/account"
+                      onClick={() => onOpenChange(false)}
+                      className="text-bark hover:bg-cream-dark focus:bg-cream-dark block cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
+                    >
+                      Account
+                    </Link>
+                  </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={() => signOut({ callbackUrl: "/" })}
                     className="text-bark hover:bg-cream-dark focus:bg-cream-dark cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"

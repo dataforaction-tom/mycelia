@@ -142,6 +142,14 @@ function Sidebar({ organisations = [], userName, userEmail }: SidebarProps) {
               {userEmail && (
                 <div className="text-muted px-3 py-2 text-xs">{userEmail}</div>
               )}
+              <DropdownMenu.Item asChild>
+                <Link
+                  href="/account"
+                  className="text-bark hover:bg-cream-dark focus:bg-cream-dark block cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"
+                >
+                  Account
+                </Link>
+              </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() => signOut({ callbackUrl: "/" })}
                 className="text-bark hover:bg-cream-dark focus:bg-cream-dark cursor-pointer rounded-md px-3 py-2 text-sm transition-colors outline-none"

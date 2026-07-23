@@ -18,6 +18,10 @@ declare module "next-auth" {
       image?: string | null;
       platformRole: PlatformRole;
     };
+    /** Provider used for the sign-in that minted this session's token. */
+    authProvider?: string;
+    /** When that sign-in happened, as epoch millis. */
+    authTime?: number;
   }
 }
 
@@ -26,5 +30,7 @@ declare module "next-auth/jwt" {
     id: string;
     platformRole: PlatformRole;
     tokenVersion?: number;
+    authProvider?: string;
+    authTime?: number;
   }
 }

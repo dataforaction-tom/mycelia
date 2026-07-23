@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { wasRecentlyVerifiedByEmail } from "@/lib/auth/recovery";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { SetPasswordForm } from "@/components/auth/set-password-form";
@@ -23,6 +24,10 @@ export default async function AccountPage() {
 
   if (!user) redirect("/sign-in");
 
+  // Just arrived via a magic link (e.g. from "Forgot password?") — that's
+  // proof of ownership fresh enough to skip asking for the old password.
+  const recoveryMode = wasRecentlyVerifiedByEmail(session);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -34,12 +39,17 @@ export default async function AccountPage() {
         <div>
           <h2 className="text-sm font-semibold text-bark">Password</h2>
           <p className="mt-1 text-sm text-muted">
-            {user.hasPassword
-              ? "Sign in with your password, or a magic link — whichever's handy."
-              : "You currently sign in with a magic link. Set a password for a faster way in."}
+            {recoveryMode && user.hasPassword
+              ? "You just verified your email — set a new password below."
+              : user.hasPassword
+                ? "Sign in with your password, or a magic link — whichever's handy."
+                : "You currently sign in with a magic link. Set a password for a faster way in."}
           </p>
         </div>
-        <SetPasswordForm hasPassword={Boolean(user.hasPassword)} />
+        <SetPasswordForm
+          hasPassword={Boolean(user.hasPassword)}
+          recoveryMode={recoveryMode}
+        />
       </div>
     </div>
   );

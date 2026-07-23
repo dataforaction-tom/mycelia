@@ -207,11 +207,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id!;
         token.platformRole = user.platformRole ?? "user";
         token.tokenVersion = user.tokenVersion ?? 0;
+      }
+
+      // `account` is only present on the JWT callback invocation right
+      // after a sign-in, not on later refreshes — so this records which
+      // provider authenticated *this* token, and when, rather than being
+      // overwritten on every request. See wasRecentlyVerifiedByEmail, which
+      // uses it to let a magic link stand in for a forgotten password.
+      if (account) {
+        token.authProvider = account.provider;
+        token.authTime = Date.now();
       }
 
       if (!user && token.id) {
@@ -242,6 +252,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.platformRole = token.platformRole;
+      session.authProvider = token.authProvider;
+      session.authTime = token.authTime;
       return session;
     },
   },

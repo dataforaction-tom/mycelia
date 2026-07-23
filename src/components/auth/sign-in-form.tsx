@@ -13,10 +13,8 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
-  async function handleEmailSignIn(e: React.FormEvent) {
-    e.preventDefault();
+  async function sendMagicLink() {
     if (!email) return;
-
     setIsLoading(true);
     try {
       // Explicit callbackUrl: without it NextAuth defaults to the current
@@ -28,6 +26,25 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function handleEmailSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    await sendMagicLink();
+  }
+
+  // There's no separate password-reset flow — a magic link already proves
+  // inbox ownership, which is exactly what resetting a password requires.
+  // "Forgot password" here just sends one and points the user at /account
+  // to set a new one once they're back in.
+  async function handleForgotPassword() {
+    if (!email) {
+      setPasswordError("Enter your email address above first.");
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setPasswordError(null);
+    await sendMagicLink();
   }
 
   async function handlePasswordSignIn(e: React.FormEvent) {
@@ -74,7 +91,8 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
         <h3 className="text-bark text-lg font-semibold">Check your email</h3>
         <p className="text-muted mt-2 text-sm">
           We sent a magic link to <strong className="text-bark">{email}</strong>
-          . Click it to sign in.
+          . Click it to sign in — you can set or change your password from
+          Account once you&apos;re back in.
         </p>
         <button
           onClick={() => setEmailSent(false)}
@@ -138,9 +156,19 @@ export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
             </div>
           )}
           <div>
-            <label htmlFor="password" className="text-bark block text-sm font-medium">
-              Password
-            </label>
+            <div className="flex items-baseline justify-between">
+              <label htmlFor="password" className="text-bark block text-sm font-medium">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                className="text-terracotta hover:text-terracotta-dark text-xs"
+              >
+                Forgot password?
+              </button>
+            </div>
             <input
               id="password"
               type="password"

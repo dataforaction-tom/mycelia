@@ -2,9 +2,16 @@ import NextAuth from "next-auth";
 import Resend from "next-auth/providers/resend";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 import { users, accounts, verificationTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+
+// Never a valid bcrypt hash for any real password — compared against on
+// every failed lookup so authorize() takes the same time whether the email
+// exists or not, closing a user-enumeration timing side-channel.
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$CwTycUXWue0Thq9StjUM0uJ8Q3f2jjOxOOAmyMNPKlp5GsjR7yCu6";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let _adapter: ReturnType<typeof DrizzleAdapter> | null = null;
@@ -44,8 +51,10 @@ const lazyAdapter = new Proxy({} as Adapter, {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: lazyAdapter,
   providers: [
-    // Magic link is the only sign-in: passwordless, and the email address
-    // doubles as the identity invites are sent to.
+    // Magic link is the primary sign-in and always available: the email
+    // address doubles as the identity invites are sent to, and a
+    // successful magic-link sign-in is the one action that proves inbox
+    // ownership (see the `signIn` callback's reclaim logic below).
     Resend({
       from: process.env.EMAIL_FROM ?? "noreply@tending.network",
       // Tending-styled magic link instead of NextAuth's default template.
@@ -53,7 +62,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // than claiming "check your email".
       async sendVerificationRequest({ identifier, url }) {
         const { sendMagicLinkEmail } = await import("@/lib/email/messages");
-        await sendMagicLinkEmail(identifier, url);
+        // Never email the raw callback URL directly: corporate link
+        // scanners (Microsoft Safe Links, Proofpoint, Mimecast) prefetch
+        // every link in an email to scan it for phishing, which silently
+        // burns the single-use token before the real user ever clicks.
+        // Wrapping it in an interstitial page that requires an actual
+        // button click defeats that prefetch (scanners fetch, they don't
+        // click) — see src/app/(auth)/sign-in/confirm/page.tsx.
+        const confirmUrl = new URL("/sign-in/confirm", url);
+        confirmUrl.search = "";
+        confirmUrl.searchParams.set("url", url);
+        await sendMagicLinkEmail(identifier, confirmUrl.toString());
+      },
+    }),
+    Credentials({
+      id: "password",
+      name: "Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email ?? "")
+          .trim()
+          .toLowerCase();
+        const password = String(credentials?.password ?? "");
+        if (!email || !password) return null;
+
+        const db = getDb();
+        const [existing] = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        // Compare against a dummy hash even on a miss so a non-existent
+        // account and a wrong password take the same amount of time.
+        const hash = existing?.passwordHash ?? DUMMY_PASSWORD_HASH;
+        const valid = await bcrypt.compare(password, hash);
+        if (!existing || !existing.passwordHash || !valid) return null;
+
+        return existing;
       },
     }),
     ...(process.env.NODE_ENV === "development"
@@ -111,8 +160,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     // Block suspended accounts at sign-in. The verification email may still be
     // sent, but the sign-in cannot complete.
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if ((user as { status?: string }).status === "suspended") return false;
+
+      // A successful magic-link sign-in is the one moment we know for
+      // certain the person controls this inbox. If this is the *first*
+      // time that's been proven (emailVerified still null on the existing
+      // row), treat it as reclaiming the account: evict any password set
+      // before proof — closing the account-pre-hijacking hole where an
+      // attacker pre-registers someone else's email with a password of
+      // their own choosing — and release invitations that were withheld
+      // pending verification (see the register route, which deliberately
+      // skips acceptPendingInvitations for unverified accounts).
+      //
+      // Re-fetch by email rather than trusting `user` here: for a
+      // brand-new magic-link signup `user.id` is a client-fabricated stub
+      // that doesn't exist in the DB yet (the row is created after this
+      // callback runs), so `existing` is correctly undefined and this
+      // block is skipped — that case is already handled by the
+      // `createUser` event below.
+      if (account?.provider === "resend" && user.email) {
+        const db = getDb();
+        const [existing] = await db
+          .select({
+            id: users.id,
+            emailVerified: users.emailVerified,
+            passwordHash: users.passwordHash,
+          })
+          .from(users)
+          .where(eq(users.email, user.email))
+          .limit(1);
+
+        if (existing && !existing.emailVerified) {
+          if (existing.passwordHash) {
+            await db
+              .update(users)
+              .set({ passwordHash: null })
+              .where(eq(users.id, existing.id));
+          }
+          const { acceptPendingInvitations } = await import(
+            "@/lib/invitations/accept"
+          );
+          await acceptPendingInvitations(existing.id, user.email);
+        }
+      }
+
       return true;
     },
     async jwt({ token, user }) {

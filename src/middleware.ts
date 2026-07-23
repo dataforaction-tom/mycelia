@@ -23,6 +23,7 @@ export default auth((req) => {
     PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
     pathname.startsWith("/sign-out") ||
     pathname.startsWith("/new-org") ||
     pathname.startsWith("/_next/") ||
